@@ -1,6 +1,6 @@
 """Startup-only runtime configuration."""
 
-import logging
+from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import SecretStr, field_validator
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: SecretStr | None = None
     local_timezone: str = "Europe/Madrid"
-    log_level: str = "WARNING"
+    traces_dir: Path = Path("traces")
 
     @field_validator("local_timezone")
     @classmethod
@@ -25,12 +25,3 @@ class Settings(BaseSettings):
         except ZoneInfoNotFoundError as error:
             raise ValueError("LOCAL_TIMEZONE must be a valid IANA timezone name.") from error
         return local_timezone
-
-    @field_validator("log_level")
-    @classmethod
-    def validate_log_level(cls, log_level: str) -> str:
-        """Accept only a stdlib logging level name; default keeps the console quiet."""
-        normalized = log_level.upper()
-        if not isinstance(getattr(logging, normalized, None), int):
-            raise ValueError("LOG_LEVEL must be a valid logging level name.")
-        return normalized

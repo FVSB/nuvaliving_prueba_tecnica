@@ -2,7 +2,7 @@
 
 ## Estado y fuentes
 
-Esta guía acompaña TECHNICAL_ARCHITECTURE.md y BUSINESS_RULES.md. Es documentación inicial para el agente de código: el logger, `Settings` y el contenedor todavía no se han implementado en esta entrega documental.
+Esta guía acompaña TECHNICAL_ARCHITECTURE.md y BUSINESS_RULES.md. `Settings`, el contenedor y las trazas JSONL por corrida están implementados; mantener esta guía sincronizada con cada cambio aprobado.
 
 En el repositorio destino, mantener esta información en `docs/configuration.md`, referenciarla desde README y actualizarla con cada cambio aprobado. Las reglas de negocio prevalecen para políticas funcionales; arquitectura define mecanismos.
 
@@ -13,14 +13,13 @@ En el repositorio destino, mantener esta información en `docs/configuration.md`
 | `src/maintenance_agent/config.py` | Settings tipados, validaciones y constantes |
 | `src/maintenance_agent/bootstrap.py` | Única lectura del entorno e inicialización |
 | `src/maintenance_agent/dependencies.py` | Contenedor dependency-injector y ciclo de vida |
-| `src/maintenance_agent/infrastructure/logger_factory.py` | Construcción única del logger JSONL |
-| `src/maintenance_agent/infrastructure/trace_writer.py` | Trazas funcionales estructuradas |
+| `src/maintenance_agent/infrastructure/trace_writer.py` | Contexto de corrida y trazas JSONL estructuradas |
 | `.env.example` | Solo variables aprobadas e implementadas, sin secretos |
 | `docs/configuration.md` | Catálogo vigente, restricciones y aplicación de cambios |
 | `docs/decisions/` | Motivos y aprobación de decisiones relevantes |
 | `.agents/skills/maintain-runtime-configuration/SKILL.md` | Procedimiento de mantenimiento |
 
-Las rutas anteriores son propuestas para la aplicación, no una afirmación de archivos ya creados allí.
+Las rutas listadas reflejan la implementación vigente; crear módulos adicionales solo cuando estén justificados.
 
 ## Catálogo inicial
 
@@ -30,10 +29,10 @@ Las rutas anteriores son propuestas para la aplicación, no una afirmación de a
 | Duración visita | Regla de negocio vinculante | Constante de dos horas | Semántica DST pendiente; no cambiar duración |
 | Número de handyman | Regla de negocio vinculante | Constante: uno | No parametrizar para cambiar contrato |
 | CSV | Regla de negocio vinculante | `/app/work_orders.csv`, solo lectura | Mantener ruta de evaluación |
-| Logs/trazas | Regla de negocio vinculante | Bajo `/app/traces`, JSONL | Organización por corrida definida en arquitectura |
+| Logs/trazas | Regla de negocio vinculante | `TRACES_DIR=traces` local; `/app/traces` Docker, JSONL | Startup-only; una carpeta por corrida |
 | Credencial Anthropic | Credencial documentada | `ANTHROPIC_API_KEY`, si el cliente la necesita | Secreto; no registrar valor ni versionar .env |
 | Modelo LLM | Técnico | Preguntar antes de crear variable | Nombre/default/validación pendientes |
-| Nivel de logging | Técnico | Preguntar antes de crear variable | Nunca filtrar eventos funcionales obligatorios |
+| Directorio de trazas | Configuración startup-only aprobada | `TRACES_DIR=traces` local; Docker fija `/app/traces` | No cambia una corrida activa; no registrar secretos |
 | Concurrencia LLM | Técnico | Preguntar antes de crear variable | No bloquear recepción de otras órdenes |
 | Referencia de fechas relativas | Política abierta | Aprobar política y después preguntar si entorno | `reported_at` no implica «hoy» |
 | Horario laboral | Política no definida | Preguntar si se desea añadir y si usar entorno | No inventar franjas/disponibilidades |
@@ -52,7 +51,7 @@ Organización prevista:
   runtime.jsonl
 ```
 
-El comando de evaluación documentado en `BUSINESS_RULES.md` monta `./traces` del host en `/app/traces`: en el host, consultar `traces/runs/` y localizar la carpeta por fecha/hora de inicio. Mantener una carpeta por corrida aunque dure varias horas o días.
+El comando de evaluación documentado en `BUSINESS_RULES.md` monta `./traces` del host en `/app/traces`: en el host, consultar `traces/runs/` y localizar la carpeta por fecha/hora de inicio. Mantener una carpeta por corrida aunque dure varias horas o días. La aplicación crea las tres rutas JSONL al arrancar y no instala handlers de consola.
 
 - `manifest.jsonl`: inicio/cierre, run ID y snapshot efectivo sin secretos.
 - `events.jsonl`: mensajes, decisiones, cambios y terminales por orden.

@@ -7,5 +7,5 @@ COPY pyproject.toml uv.lock ./
 COPY src ./src
 RUN uv sync --frozen --no-dev --no-editable
 
-ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 TRACES_DIR=/app/traces
 ENTRYPOINT ["maintenance-agent"]

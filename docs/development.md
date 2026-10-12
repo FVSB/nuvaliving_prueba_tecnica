@@ -61,7 +61,8 @@ the standalone application Dockerfile builds.
 
 The root `work_orders.csv` is the supplied development example. It is mounted read-only at
 `/app/work_orders.csv`. Edit it from the workspace and restart the CLI to reload it. Host `traces/`
-is mounted at `/app/traces`; this does not imply the application has implemented JSONL logging.
+is mounted at `/app/traces`. Every process run writes JSONL files below
+`/app/traces/runs/<Madrid_start_with_offset>-<run_id>/`.
 An optional workspace `.env` is read by the application at startup, not copied into the image.
 Use `.env.example` with `LOCAL_TIMEZONE=Europe/Madrid` and keep real credentials out of Git.
 
@@ -131,17 +132,28 @@ language-recognition adapter. Install or update them only with `uv add langgraph
 updates both `pyproject.toml` and `uv.lock`. Focused tests use a static recognizer and do not
 require `ANTHROPIC_API_KEY`; a configured key selects the Anthropic adapter at startup.
 
-## Logging
+## Run traces
 
-The CLI keeps stderr silent by default. To opt into one structured INFO record per node transition
-(work-order id, direction in/out, node name, role and body, plus
-`language <code> recognized for the supplied description`), set `LOG_LEVEL`:
+The CLI never writes logs to the console: stdout remains the protocol stream and stderr remains
+empty. Each new local process creates exactly one folder under `TRACES_DIR` (default `traces/`);
+the Docker image fixes it to `/app/traces` for the evaluator mount:
 
-```bash
-LOG_LEVEL=INFO uv run maintenance-agent --csv ./work_orders.csv
+```text
+traces/runs/<Madrid_start_with_offset>-<run_id>/
+  manifest.jsonl
+  events.jsonl
+  runtime.jsonl
 ```
 
-Accepted values follow stdlib `logging` (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`); case is
-ignored; unknown values fall back to `WARNING`. The third-party loggers `httpx`, `httpcore`, and
-`anthropic` are pinned to `WARNING` so provider transport traces never appear on the console. The
-stdout protocol stream emitted by `AsyncStdoutWriter` is never affected.
+`manifest.jsonl` records lifecycle and the startup snapshot without credentials. `events.jsonl`
+records every functional transition with `run_id`, `sequence`, timestamp with Madrid offset,
+`work_order_id`, event type, and structured detail. `runtime.jsonl` contains sanitized technical
+errors. To inspect a run after Docker execution:
+
+```bash
+latest=$(ls -dt traces/runs/* | head -1)
+cat "$latest/events.jsonl"
+```
+
+Set `TRACES_DIR` before startup to override the local path; changing it does not affect an active
+run.

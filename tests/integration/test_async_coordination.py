@@ -1,8 +1,7 @@
 from datetime import datetime
 from io import StringIO
+from pathlib import Path
 from zoneinfo import ZoneInfo
-
-import pytest
 
 from maintenance_agent.agents.scheduling.graph import build_scheduling_graph
 from maintenance_agent.agents.scheduling.nodes.initialize_coordination import (
@@ -17,8 +16,13 @@ from maintenance_agent.domain.languages import LanguageCode, LanguageRecognition
 from maintenance_agent.domain.work_orders import Urgency, WorkOrder
 from maintenance_agent.infrastructure.cli_transport import AsyncStdoutWriter
 from maintenance_agent.infrastructure.csv_work_orders import CsvWorkOrderReader
+from maintenance_agent.infrastructure.trace_writer import TraceWriter
 
 from .fakes import FakeStdinReader
+
+
+def _writer(path: Path) -> TraceWriter:
+    return TraceWriter(path, "test-run", ZoneInfo("Europe/Madrid"))
 
 
 def work_order() -> WorkOrder:
@@ -32,8 +36,13 @@ def work_order() -> WorkOrder:
     )
 
 
-async def test_coordinator_starts_each_work_order_then_reflects_live_message() -> None:
+async def test_coordinator_starts_each_work_order_then_reflects_live_message(
+    tmp_path: Path,
+) -> None:
     output = StringIO()
+    events = _writer(tmp_path / "events.jsonl")
+    runtime = _writer(tmp_path / "runtime.jsonl")
+    manifest = _writer(tmp_path / "manifest.jsonl")
     coordinator = AsyncCoordinator(
         reader=FakeStdinReader(["WO-4|tenant Need help | urgent"]),
         writer=AsyncStdoutWriter(output),
@@ -42,8 +51,12 @@ async def test_coordinator_starts_each_work_order_then_reflects_live_message() -
                 LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
             ),
             InitializeCoordinationNode(),
+            events,
         ),
-        inbound_node=ReflectInboundMessageNode(),
+        inbound_node=ReflectInboundMessageNode(events),
+        trace_writer=events,
+        runtime_writer=runtime,
+        manifest_writer=manifest,
     )
 
     await coordinator.run([work_order()])
@@ -67,10 +80,13 @@ async def test_csv_reader_normalizes_all_rows_to_injected_timezone(tmp_path) -> 
     assert work_orders[0].reported_at.isoformat() == "2026-10-07T09:15:00+02:00"
 
 
-async def test_coordinator_logs_recognized_language_per_work_order(
-    caplog: pytest.LogCaptureFixture,
+async def test_coordinator_writes_language_recognition_event_to_events_jsonl(
+    tmp_path: Path,
 ) -> None:
     output = StringIO()
+    events = _writer(tmp_path / "events.jsonl")
+    runtime = _writer(tmp_path / "runtime.jsonl")
+    manifest = _writer(tmp_path / "manifest.jsonl")
     coordinator = AsyncCoordinator(
         reader=FakeStdinReader([]),
         writer=AsyncStdoutWriter(output),
@@ -79,42 +95,46 @@ async def test_coordinator_logs_recognized_language_per_work_order(
                 LanguageRecognitionResult(language_code=LanguageCode.SPANISH)
             ),
             InitializeCoordinationNode(),
+            events,
         ),
-        inbound_node=ReflectInboundMessageNode(),
+        inbound_node=ReflectInboundMessageNode(events),
+        trace_writer=events,
+        runtime_writer=runtime,
+        manifest_writer=manifest,
     )
 
-    with caplog.at_level("INFO"):
-        await coordinator.run([work_order()])
+    await coordinator.run([work_order()])
 
-    messages = [record.getMessage() for record in caplog.records]
+    payloads = events.path.read_text(encoding="utf-8").splitlines()
     assert any(
-        "[recognize_language]" in message
-        and "wo=WO-4" in message
-        and "language=es" in message
-        and "Leak under sink" in message
-        and "language 'es' recognized for the supplied description" in message
-        for message in messages
-    )
-    assert any(
-        "[initialize_coordination]" in message
-        and "wo=WO-4" in message
-        and "direction=in" in message
-        for message in messages
+        '"event_type": "language_recognized"' in line
+        and '"work_order_id": "WO-4"' in line
+        and '"language_code": "es"' in line
+        and "Leak under sink" in line
+        for line in payloads
     )
     assert any(
-        "[initialize_coordination]" in message
-        and "wo=WO-4" in message
-        and "direction=out" in message
-        and "role=tenant" in message
-        and "Nueva orden de trabajo iniciada." in message
-        for message in messages
+        '"event_type": "initialize_coordination_entered"' in line
+        and '"work_order_id": "WO-4"' in line
+        for line in payloads
     )
+    assert any(
+        '"event_type": "initialize_coordination_completed"' in line
+        and '"work_order_id": "WO-4"' in line
+        and "Nueva orden de trabajo iniciada." in line
+        for line in payloads
+    )
+    assert any('"event_type": "run_completed"' in line for line in payloads)
+    assert '"event_type": "run_finished"' in manifest.path.read_text(encoding="utf-8")
 
 
-async def test_coordinator_logs_inbound_dispatch_and_reflection(
-    caplog: pytest.LogCaptureFixture,
+async def test_coordinator_writes_inbound_dispatch_and_reflection_events(
+    tmp_path: Path,
 ) -> None:
     output = StringIO()
+    events = _writer(tmp_path / "events.jsonl")
+    runtime = _writer(tmp_path / "runtime.jsonl")
+    manifest = _writer(tmp_path / "manifest.jsonl")
     coordinator = AsyncCoordinator(
         reader=FakeStdinReader(["WO-4|tenant Need help | urgent"]),
         writer=AsyncStdoutWriter(output),
@@ -123,26 +143,26 @@ async def test_coordinator_logs_inbound_dispatch_and_reflection(
                 LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
             ),
             InitializeCoordinationNode(),
+            events,
         ),
-        inbound_node=ReflectInboundMessageNode(),
+        inbound_node=ReflectInboundMessageNode(events),
+        trace_writer=events,
+        runtime_writer=runtime,
+        manifest_writer=manifest,
     )
 
-    with caplog.at_level("INFO"):
-        await coordinator.run([work_order()])
+    await coordinator.run([work_order()])
 
-    messages = [record.getMessage() for record in caplog.records]
+    payloads = events.path.read_text(encoding="utf-8").splitlines()
     assert any(
-        "[coordinator]" in message
-        and "wo=WO-4" in message
-        and "node=reflect_inbound_message" in message
-        and "direction=in" in message
-        and "Need help | urgent" in message
-        for message in messages
+        '"event_type": "inbound_dispatched"' in line
+        and '"work_order_id": "WO-4"' in line
+        and "Need help | urgent" in line
+        for line in payloads
     )
     assert any(
-        "[reflect_inbound_message]" in message
-        and "wo=WO-4" in message
-        and "direction=out" in message
-        and "Need help | urgent" in message
-        for message in messages
+        '"event_type": "inbound_reflected"' in line
+        and '"work_order_id": "WO-4"' in line
+        and "Need help | urgent" in line
+        for line in payloads
     )
