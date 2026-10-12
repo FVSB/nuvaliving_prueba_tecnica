@@ -90,6 +90,10 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+*For scheduling workflow features, requirements MUST also state tenant scope, handyman capacity
+effect, affected LangGraph nodes and typed state, retry/failure behavior, and whether Anthropic
+is used. AI behavior MUST not be the authority for authorization or booking conflicts.*
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
@@ -99,6 +103,10 @@
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
+
+*Scheduling features MUST include the tenant, shared handyman resource, appointment or hold,
+and workflow state where applicable. Persisted timestamps MUST be UTC and the presentation
+timezone must be explicit.*
 
 ## Success Criteria *(mandatory)*
 

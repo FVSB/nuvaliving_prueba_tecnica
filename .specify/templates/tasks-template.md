@@ -10,6 +10,10 @@ description: "Task list template for feature implementation"
 
 **Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
 
+**Constitution-required tests**: For scheduling workflows, include tests for tenant isolation,
+capacity-one overlap prevention, and every changed LangGraph branch. Anthropic calls MUST use
+deterministic test doubles.
+
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -68,6 +72,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T007 Create base models/entities that all stories depend on
 - [ ] T008 Configure error handling and logging infrastructure
 - [ ] T009 Setup environment configuration management
+- [ ] T009a [P] Define typed LangGraph state, checkpointing, and transition logging
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -155,6 +160,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
+- [ ] TXXX Validate that logs and configuration never expose Anthropic API keys or sensitive prompts
 - [ ] TXXX Run quickstart.md validation
 
 ---
