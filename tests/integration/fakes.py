@@ -26,9 +26,7 @@ class FakeStdinReader:
 class FakeConversationHandler:
     """Scripted structured provider for deterministic conversation and CLI tests."""
 
-    def __init__(
-        self, availability=None, availability_results=None, slot_verdicts=None
-    ) -> None:
+    def __init__(self, availability=None, availability_results=None, slot_verdicts=None) -> None:
         self.slot_verdicts: list[ValidationVerdict] = list(slot_verdicts or [])
         self.slot_compose_calls: list[tuple[str, dict[str, str]]] = []
         self.slot_validate_calls: list[tuple[str, dict[str, str]]] = []
@@ -40,6 +38,7 @@ class FakeConversationHandler:
         }
         self.compositions: list[tuple[str, str, dict[str, str]]] = []
         self.availability_calls: list[tuple[str, ParticipantRole, datetime, str]] = []
+        self.history_calls: list[tuple[tuple[str, str], ...]] = []
 
     async def interpret_availability(
         self,
@@ -47,8 +46,10 @@ class FakeConversationHandler:
         role: ParticipantRole,
         reference_time: datetime,
         timezone_name: str,
+        history: tuple[tuple[str, str], ...] = (),
     ) -> AvailabilityInterpretation:
         self.availability_calls.append((text, role, reference_time, timezone_name))
+        self.history_calls.append(history)
         scripted = self.availability_results.get(role, [])
         if scripted:
             return scripted.pop(0)

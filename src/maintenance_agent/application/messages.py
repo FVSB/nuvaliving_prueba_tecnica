@@ -29,3 +29,15 @@ class TerminalFrame:
     work_order_id: str
     result: str
     detail: str
+
+
+@dataclass(frozen=True, slots=True)
+class RejectedInbound:
+    """A line with a recognizable work order and role whose body was invalid."""
+
+    work_order_id: str
+    role: str
+    reason: str
+    length: int
+    preview: str
+    limit: int

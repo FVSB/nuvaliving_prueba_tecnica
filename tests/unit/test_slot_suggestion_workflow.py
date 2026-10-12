@@ -1,12 +1,14 @@
 """T005-T006, T009, T011, T014: routing, composition, validation gate, fallback."""
 
+from datetime import datetime
+
 import pytest
 
 from maintenance_agent.application.conversation import (
     AmbiguityReason,
     AvailabilityInterpretation,
-    PartOfDay,
     MessageClass,
+    PartOfDay,
     ValidationVerdict,
 )
 from maintenance_agent.application.messages import InboundMessage
@@ -18,8 +20,6 @@ from maintenance_agent.domain.negotiation import (
 )
 from tests.integration.fakes import FakeConversationHandler
 from tests.unit.slot_helpers import MADRID, NOW, VAGUE, StubAgenda, appointment_at, started
-
-from datetime import datetime
 
 
 def _workflow(handler: FakeConversationHandler, *appointments) -> NegotiationWorkflow:
@@ -38,9 +38,9 @@ async def test_vague_request_replies_with_deterministic_table() -> None:
     workflow = _workflow(handler, appointment_at(9))
     state = await workflow.handle(await started(workflow), _msg())
     body = state["outbound_message"].body
-    assert "SLOT-20261012T0700Z" not in body  # 09:00 Madrid is occupied
-    assert "SLOT-20261012T0900Z01" in body
-    assert "| Slot" in body and "Spanish: intro" in body and "Spanish: ask" in body
+    assert "| 2026-10-12   | Monday     | 09:00–11:00" not in body  # 09:00 Madrid is occupied
+    assert "11:00–13:00" in body and "SLOT-" not in body
+    assert "| Date" in body and "Spanish: intro" in body and "Spanish: ask" in body
     assert state["graph_cursor"] is GraphCursor.TENANT_AVAILABILITY
     assert state["pending_question"].action is PendingAction.TENANT_AVAILABILITY
     assert [e["event_type"] for e in state["trace_events"]] == ["slot_suggestion_attempt"]
@@ -50,7 +50,7 @@ async def test_vague_request_replies_with_deterministic_table() -> None:
 @pytest.mark.asyncio
 async def test_explicit_intervals_do_not_enter_slot_node() -> None:
     interval = TimeInterval(
-        datetime(2026, 10, 20, 9, tzinfo=MADRID), datetime(2026, 10, 20, 12, tzinfo=MADRID)
+        datetime(2026, 10, 14, 9, tzinfo=MADRID), datetime(2026, 10, 14, 12, tzinfo=MADRID)
     )
     result = AvailabilityInterpretation(
         (interval,), True, False, classification=MessageClass.EXPLICIT_INTERVALS
@@ -71,7 +71,7 @@ async def test_decision_or_unclassified_keeps_clarification(cls: MessageClass) -
     state = await workflow.handle(await started(workflow), _msg("si"))
     assert handler.slot_compose_calls == []
     assert any(c[0] == "clarify_absolute_availability" for c in handler.compositions)
-    assert "trace_events" not in state
+    assert not state.get("trace_events")
 
 
 @pytest.mark.asyncio
@@ -80,7 +80,7 @@ async def test_ambiguous_relative_time_routes_to_slot_node() -> None:
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("mañana a las 2"))
     assert len(handler.slot_compose_calls) == 1
-    assert "Slot" in state["outbound_message"].body
+    assert "| Date" in state["outbound_message"].body
 
 
 @pytest.mark.asyncio
@@ -134,8 +134,9 @@ async def test_third_failure_emits_deterministic_fallback() -> None:
     assert len(handler.slot_compose_calls) == 3
     assert len(handler.slot_validate_calls) == 3
     body = state["outbound_message"].body
-    assert "SLOT-" not in body and "| Slot" not in body  # fallback never names a slot
+    assert "SLOT-" not in body and "| Date" in body  # fixed text plus the deterministic table
     assert "Su mensaje no indica" in body
+    assert state["slot_table_request"] is not None  # the table is linkable afterwards
     assert state["trace_events"][-1]["event_type"] == "slot_fallback_emitted"
     assert state["trace_events"][-1]["detail"]["ambiguity_reason"] == "other"
     assert state.get("terminal_status") is None
@@ -152,7 +153,7 @@ async def test_counter_resets_on_next_tenant_message() -> None:
     state = await workflow.handle(await started(workflow), _msg())
     state = await workflow.handle({**state, "trace_events": ()}, _msg())
     assert len(handler.slot_compose_calls) == 4  # 3 failed + 1 fresh valid
-    assert "| Slot" in state["outbound_message"].body
+    assert "| Date" in state["outbound_message"].body
 
 
 @pytest.mark.asyncio
@@ -183,7 +184,7 @@ async def test_tomorrow_early_resolves_to_tomorrow_morning_slots_only() -> None:
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("mañana temprano puedo"))
     body = state["outbound_message"].body
-    assert body.count("| SLOT-") == 1 and "2026-10-13" in body and "09:00–11:00" in body
+    assert body.count("| 2026-10-") == 1 and "2026-10-13" in body and "09:00–11:00" in body
     assert "2026-10-12" not in body  # today is not offered
     assert handler.slot_compose_calls[0][1]["window"] == "2026-10-13, mañana (hasta las 12:00)"
 
@@ -206,21 +207,78 @@ async def test_fallback_explains_why_the_request_was_ambiguous() -> None:
     assert "hora exacta" in state["outbound_message"].body
 
 
-@pytest.mark.asyncio
-async def test_start_of_next_week_extends_grid_beyond_seven_days() -> None:
-    nxt = AvailabilityInterpretation(
+def _window(date_from: str, date_to: str) -> AvailabilityInterpretation:
+    return AvailabilityInterpretation(
         (),
         False,
         True,
         classification=MessageClass.VAGUE_DATE_REQUEST,
-        date_from="2026-10-19",
-        date_to="2026-10-20",
+        date_from=date_from,
+        date_to=date_to,
         part_of_day=PartOfDay.NONE,
     )
-    handler = FakeConversationHandler(availability_results={"tenant": [nxt]})
+
+
+LIMIT = "Solo conozco la disponibilidad hasta el lunes 2026-10-19."
+
+
+@pytest.mark.asyncio
+async def test_window_inside_the_horizon_extends_grid_without_limit_note() -> None:
+    handler = FakeConversationHandler(
+        availability_results={"tenant": [_window("2026-10-16", "2026-10-19")]}
+    )
+    workflow = _workflow(handler)
+    state = await workflow.handle(await started(workflow), _msg("hasta el lunes"))
+    body = state["outbound_message"].body
+    assert body.count("| 2026-10-") == 20  # 5 slots on each of Fri 16, Sat 17, Sun 18, Mon 19
+    assert LIMIT not in body
+
+
+@pytest.mark.asyncio
+async def test_window_partly_beyond_the_horizon_shows_only_known_days_and_the_limit() -> None:
+    handler = FakeConversationHandler(
+        availability_results={"tenant": [_window("2026-10-19", "2026-10-20")]}
+    )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("la semana próxima a inicio"))
     body = state["outbound_message"].body
-    assert body.count("| SLOT-") == 10  # 5 slots on each of Mon 19 and Tue 20
-    assert "2026-10-19" in body and "2026-10-21" not in body
-    assert handler.slot_compose_calls[0][1]["window"] == "2026-10-19 → 2026-10-20"
+    assert body.count("| 2026-10-") == 5
+    assert "2026-10-19" in body and "2026-10-20" not in body
+    assert LIMIT in body and "fecha dentro de ese límite" in body
+
+
+@pytest.mark.asyncio
+async def test_window_entirely_beyond_the_horizon_states_the_limit_without_a_table() -> None:
+    handler = FakeConversationHandler(
+        availability_results={"tenant": [_window("2026-10-26", "2026-10-27")]}
+    )
+    workflow = _workflow(handler)
+    state = await workflow.handle(await started(workflow), _msg("dentro de dos semanas"))
+    body = state["outbound_message"].body
+    assert body == (
+        "Solo conozco la disponibilidad hasta el lunes 2026-10-19. "
+        "Indíqueme una fecha dentro de ese límite."
+    )
+    assert "| 2026-10-" not in body and handler.slot_compose_calls == []
+    assert state["pending_question"].action is PendingAction.TENANT_AVAILABILITY
+    assert state["trace_events"][0]["event_type"] == "slot_window_beyond_horizon"
+
+
+@pytest.mark.asyncio
+async def test_taken_time_offers_open_slots_instead_of_reasking() -> None:
+    taken = appointment_at(9, day=13)
+    handler = FakeConversationHandler(
+        availability_results={
+            "tenant": [AvailabilityInterpretation((taken.interval,), True, False)]
+        }
+    )
+    workflow = _workflow(handler, taken)
+    state = await workflow.handle(await started(workflow), _msg("mañana a las 9am"))
+    body = state["outbound_message"].body
+    assert body.startswith(
+        "Ese horario ya no está disponible: está reservado para otra visita confirmada."
+    )
+    assert "| Date" in body and "SLOT-" not in body
+    assert "| 2026-10-13   | Tuesday    | 09:00–11:00" not in body
+    assert state["pending_question"].action is PendingAction.TENANT_AVAILABILITY
+    assert state.get("tenant_evidence") is None

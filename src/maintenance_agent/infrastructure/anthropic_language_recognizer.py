@@ -25,6 +25,7 @@ class AnthropicLanguageRecognizer:
         response = await self._client.messages.create(
             model=self._model,
             max_tokens=16,
+            thinking={"type": "disabled"},
             messages=[{"role": "user", "content": build_language_recognition_prompt(description)}],
         )
         text = next(

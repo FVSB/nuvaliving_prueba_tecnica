@@ -24,19 +24,19 @@ class FakeClient:
 @pytest.mark.asyncio
 async def test_availability_interpreter_validates_absolute_aware_intervals() -> None:
     client = FakeClient(
-        '{"intervals":[{"start":"2026-10-20T09:00:00+02:00",'
-        '"end":"2026-10-20T13:00:00+02:00"}],"suggested_intervals":[],'
+        '{"intervals":[{"start":"2026-10-14T09:00:00+02:00",'
+        '"end":"2026-10-14T13:00:00+02:00"}],"suggested_intervals":[],'
         '"complete":true,"clarification_required":false,"date_confirmation_required":false,'
         '"weekday_is_today":false,"clarification":""}'
     )
     result = await AnthropicConversationHandler(client).interpret_availability(
-        "October 20, 9 to 13",
+        "October 14, 9 to 13",
         ParticipantRole.TENANT,
         __import__("datetime").datetime(2026, 10, 12, 12),
         "Europe/Madrid",
     )
     assert result.complete is True
-    assert result.intervals[0].start.isoformat() == "2026-10-20T07:00:00+00:00"
+    assert result.intervals[0].start.isoformat() == "2026-10-14T07:00:00+00:00"
     assert client.messages.calls[0]["output_config"]["format"]["type"] == "json_schema"
 
 

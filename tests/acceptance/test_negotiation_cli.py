@@ -11,6 +11,8 @@ from maintenance_agent.domain.languages import LanguageCode, LanguageRecognition
 from maintenance_agent.infrastructure.cli_transport import parse_inbound_message
 from tests.integration.fakes import FakeConversationHandler, FakeStdinReader
 
+_NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
+
 
 @pytest.mark.asyncio
 async def test_cli_runs_isolated_orders_and_emits_one_terminal_result_each(
@@ -20,11 +22,13 @@ async def test_cli_runs_isolated_orders_and_emits_one_terminal_result_each(
     end = start + timedelta(hours=2)
     monkeypatch.setenv("TRACES_DIR", str(tmp_path / "traces"))
     await run(
+        now=_NOW,
         csv_path=Path(__file__).resolve().parents[1] / "fixtures" / "work_orders.csv",
         stdin_reader=FakeStdinReader(
             [
                 "WO-001|tenant I can do October 20 from 9 to 11",
                 "WO-001|handyman I am available October 20 from 9 to 11",
+                "WO-001|handyman yes",
                 "WO-001|tenant yes",
                 "WO-001|handyman yes",
                 "WO-002|handyman <NO RESPONSE>",
@@ -37,7 +41,7 @@ async def test_cli_runs_isolated_orders_and_emits_one_terminal_result_each(
             },
         ),
         language_recognizer=StaticLanguageRecognizer(
-            LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
+            LanguageRecognitionResult(language_code=LanguageCode.ENGLISH)
         ),
     )
     output = capsys.readouterr().out
@@ -48,6 +52,18 @@ async def test_cli_runs_isolated_orders_and_emits_one_terminal_result_each(
     trace_files = list((tmp_path / "traces" / "runs").glob("*/events.jsonl"))
     assert len(trace_files) == 1
     events = [json.loads(line) for line in trace_files[0].read_text(encoding="utf-8").splitlines()]
+    completed = [e for e in events if e["event_type"] == "terminal_result"]
+    assert len(completed) == 2
+    scheduled = next(e for e in completed if e["detail"]["result"] == "scheduled")
+    confirmations = [
+        e
+        for e in events
+        if e["event_type"] == "outgoing_message"
+        and e["work_order_id"] == "WO-001"
+        and "confirm the scheduled visit" in e["detail"]["body"]
+    ]
+    assert {e["detail"]["role"] for e in confirmations} == {"tenant", "handyman"}
+    assert all(e["sequence"] < scheduled["sequence"] for e in confirmations)
     assert any(
         item["event_type"] == "availability_evidence_recorded"
         and item["work_order_id"] == "WO-001"
@@ -82,9 +98,11 @@ async def test_priority_transfer_notifies_displaced_tenant_with_known_alternativ
             lines = [
                 "WO-LOW|tenant available",
                 "WO-LOW|handyman available",
+                "WO-LOW|handyman yes",
                 "WO-LOW|tenant yes",
                 "WO-HIGH|tenant available",
                 "WO-HIGH|handyman available",
+                "WO-HIGH|handyman yes",
                 "WO-HIGH|tenant yes",
             ]
             for line in lines:
@@ -101,6 +119,7 @@ async def test_priority_transfer_notifies_displaced_tenant_with_known_alternativ
 
     monkeypatch.setenv("TRACES_DIR", str(tmp_path / "traces"))
     await run(
+        now=_NOW,
         csv_path=csv_path,
         stdin_reader=OrderedReader(),
         conversation_handler=FakeConversationHandler(

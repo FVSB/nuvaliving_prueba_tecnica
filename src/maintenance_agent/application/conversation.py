@@ -6,6 +6,7 @@ from enum import StrEnum
 from typing import Protocol
 
 from maintenance_agent.application.messages import OutboundMessage
+from maintenance_agent.domain.date_validation import DateCheck
 from maintenance_agent.domain.negotiation import (
     DecisionValue,
     ParticipantRole,
@@ -55,6 +56,7 @@ class MessageInterpreter(Protocol):
         role: ParticipantRole,
         reference_time: datetime,
         timezone_name: str,
+        history: tuple[tuple[str, str], ...] = (),
     ) -> "AvailabilityInterpretation": ...
 
 
@@ -65,9 +67,7 @@ class MessageComposer(Protocol):
 class ConversationHandler(MessageInterpreter, MessageComposer, Protocol):
     """Combined injected port used by the negotiation workflow."""
 
-    async def compose_slot_reply(
-        self, language: str, facts: dict[str, str]
-    ) -> tuple[str, str]:
+    async def compose_slot_reply(self, language: str, facts: dict[str, str]) -> tuple[str, str]:
         """Return (intro, ask) prose lines around the deterministic slot table."""
 
     async def validate_slot_reply(self, reply: str, facts: dict[str, str]) -> "ValidationVerdict":
@@ -92,6 +92,7 @@ class AvailabilityInterpretation:
     date_to: str | None = None
     part_of_day: PartOfDay = PartOfDay.NONE
     ambiguity_reason: AmbiguityReason = AmbiguityReason.OTHER
+    invalid_reason: DateCheck | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +113,7 @@ class SafeFallbackConversationHandler:
         role: ParticipantRole,
         reference_time: datetime,
         timezone_name: str,
+        history: tuple[tuple[str, str], ...] = (),
     ) -> AvailabilityInterpretation:
         return AvailabilityInterpretation((), False, True)
 
@@ -123,15 +125,11 @@ class SafeFallbackConversationHandler:
             "en que está disponible."
         )
 
-    async def compose_slot_reply(
-        self, language: str, facts: dict[str, str]
-    ) -> tuple[str, str]:
+    async def compose_slot_reply(self, language: str, facts: dict[str, str]) -> tuple[str, str]:
         return (
             "We can help with this maintenance request.",
             "Please share the dates and times when you are available.",
         )
 
-    async def validate_slot_reply(
-        self, reply: str, facts: dict[str, str]
-    ) -> ValidationVerdict:
+    async def validate_slot_reply(self, reply: str, facts: dict[str, str]) -> ValidationVerdict:
         return ValidationVerdict(True, None)

@@ -18,6 +18,8 @@ from maintenance_agent.domain.work_orders import Urgency
 from maintenance_agent.infrastructure.in_memory_schedule import InMemoryScheduleAuthority
 from tests.integration.fakes import FakeConversationHandler, FakeStdinReader
 
+_NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
+
 
 def candidate(order: str, hour: int) -> VisitCandidate:
     start = datetime(2026, 10, 20, hour, tzinfo=timezone.utc)
@@ -65,14 +67,17 @@ async def test_displaced_order_receives_earliest_known_replacement(capsys, tmp_p
     end = start + timedelta(hours=4)
     monkeypatch.setenv("TRACES_DIR", str(tmp_path / "traces"))
     await run(
+        now=_NOW,
         csv_path=Path(__file__).resolve().parents[1] / "fixtures" / "work_orders.csv",
         stdin_reader=FakeStdinReader(
             [
                 "WO-002|tenant available",
                 "WO-002|handyman available",
+                "WO-002|handyman yes",
                 "WO-002|tenant yes",
                 "WO-001|tenant available",
                 "WO-001|handyman available",
+                "WO-001|handyman yes",
                 "WO-001|tenant yes",
                 "WO-001|handyman yes",
             ]
@@ -89,5 +94,5 @@ async def test_displaced_order_receives_earliest_known_replacement(capsys, tmp_p
     )
     output = capsys.readouterr().out
     assert "notify the tenant that their tentative visit was displaced" in output
-    assert "2026-10-20T11:00:00+02:00" in output
+    assert "Tuesday 2026-10-20" in output and "'start': '11:00'" in output
     assert output.count("RESULT:scheduled") == 1

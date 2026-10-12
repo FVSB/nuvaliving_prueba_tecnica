@@ -40,7 +40,8 @@ def test_render_is_byte_deterministic_and_ordered() -> None:
         tuple(reversed(derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID))), "en"
     )
     assert first.render_markdown() == second.render_markdown()
-    assert first.render_markdown().splitlines()[2].startswith("| SLOT-20261012T0700Z")
+    assert first.render_markdown().splitlines()[2].startswith("| 2026-10-12")
+    assert "SLOT-" not in first.render_markdown()
 
 
 def test_slot_id_uses_utc() -> None:
@@ -58,7 +59,7 @@ def test_reply_embeds_table_and_disclaimer_verbatim() -> None:
     table = SlotTable(derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID), "es")
     reply = compose_slot_reply_text("Hola", table, "Elija uno")
     assert reply_embeds_table(reply, table)
-    assert not reply_embeds_table(reply.replace("open", "OPEN"), table)
+    assert not reply_embeds_table(reply.replace("09:00", "10:00"), table)
 
 
 def test_past_slots_of_today_are_not_offered() -> None:
@@ -97,3 +98,16 @@ def test_fallback_explains_ambiguity_and_names_no_slot() -> None:
         reply = render_slot_fallback_reply("en", reason)
         assert "SLOT-" not in reply and "Please share your complete availability" in reply
     assert "exact time" in render_slot_fallback_reply("en", AmbiguityReason.UNSPECIFIED_TIME)
+
+
+def test_outbound_guard_catches_internal_identifiers() -> None:
+    from maintenance_agent.application.outbound_guard import leaks_internal_identifier
+
+    for leak in (
+        "pick SLOT-20261013T0700Z01",
+        "slot_id abc",
+        "counter:WO-1:2026-10-13T07:00:00+00:00",
+        "id 0123456789abcdef",
+    ):
+        assert leaks_internal_identifier(leak)
+    assert not leaks_internal_identifier("| 2026-10-13 | Tuesday | 09:00–11:00 | open |")

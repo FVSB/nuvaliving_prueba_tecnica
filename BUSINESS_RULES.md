@@ -24,9 +24,11 @@ This document is the binding functional source for the scheduling solution.
   human-timeout event: atomically close it as `requires_review` immediately, with no retry or
   approval. Prefix/suffix/whitespace variants do not match. A delayed message cannot change a
   terminal result. Do not use wall-clock timeouts or treat provider failure as human absence.
-- A malformed inbound CLI line is ignored, logged to the current run's `runtime.jsonl` as
-  `malformed_input` with its length, validation reason, and submitted line, and does not stop the
-  process.
+- A malformed inbound CLI line (no `|` separator or an invalid role, so no sender can be
+  identified) is ignored, logged to the current run's `runtime.jsonl` as `malformed_input` with its
+  length, validation reason, and submitted line, and does not stop the process. A line with a
+  valid work order id and role but an empty or oversized body, or an unknown work order id, is
+  instead answered with a fixed reply (see Agreement and Scheduling Invariants) and traced as `message_rejected`.
 
 ## External Interfaces
 
@@ -149,14 +151,36 @@ sequentially/idempotently to both before emitting the scheduled terminal frame. 
 the appointment and pending finalization; it cannot free the time or emit a premature frame. Graph
 progress and pending questions are not terminal statuses. Use the approved `LOCAL_TIMEZONE` display
 zone (default `Europe/Madrid`) and UTC comparison instants. Ambiguous local time requires
-clarification; a two-hour block crossing a DST transition is deferred to authorized human review
-without defining new DST policy.
+clarification. Daylight-saving transitions need no special policy: offsets come from the IANA
+timezone database and visits run only 09:00-19:00, never during the overnight transition.
+
+Every inbound participant message except the exact `<NO RESPONSE>` sentinel passes a prompt-injection
+guard before any workflow logic. When an Anthropic credential is configured, the guard asks a
+structured yes/no question with a self-reported probability; a probability strictly above
+`INJECTION_THRESHOLD` (default 0.6) triggers extraction of the suspect fragment, a second
+assessment of that fragment alone, and, if confirmed, removal of the fragment with deterministic
+code followed by a third assessment of the remainder. A clean non-empty remainder continues as the
+only content of the message; otherwise the message is not processed and its sender receives a
+fixed localized security notice followed by the last message previously sent to that role. The
+guard is evidence only and fails open on provider errors, which are recorded in `runtime.jsonl`;
+deterministic validation downstream remains authoritative. Urgency comes only from the CSV, never
+from message text.
+
+Visits are allowed only between 09:00 and 19:00 `Europe/Madrid`: the whole two-hour visit, start
+and end, must fall inside that window. Availability or a proposal dated in the past, more than
+`VISIT_HORIZON_DAYS` natural days ahead (default 7), outside visit hours, with a non-existent
+date/time, or whose stated weekday disagrees with the calendar date is rejected by deterministic
+code, never recorded as availability, and answered to its sender with the reason and a new request.
+Model output is evidence only and cannot override this check.
+
+An inbound message for an unknown work order, with an empty body, or longer than
+`MAX_MESSAGE_LENGTH` characters (default 2000) is rejected before any model call and its sender
+receives a fixed Spanish/English reply (bilingual when the language is unknown). A participant cancelling a pending proposal is treated as rejecting it.
 
 ## Pending Policies Requiring Approval
 
 - Invalid/duplicate CSV rows, unknown IDs, EOF, and terminal-result separator.
 - Reference clock for interpreting relative dates such as “tomorrow”.
-- DST semantics for a two-hour visit.
 
 Policies 005-visit-negotiation records the user-approved rules above. They are binding policy
 changes, not evidence of implementation. Other open policies remain unresolved and out of Feature

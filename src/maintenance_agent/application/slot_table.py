@@ -1,7 +1,8 @@
 """Deterministic agenda-open slot table for vague date requests (Feature 005)."""
 
+import re
 from dataclasses import dataclass
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from maintenance_agent.application.conversation import AmbiguityReason, PartOfDay
@@ -42,11 +43,11 @@ _WEEKDAYS = (
 
 _DISCLAIMERS = {
     "es": (
-        "Nota: «libre» significa únicamente libre en la agenda de trabajo compartida; "
+        "Nota: estos horarios están libres únicamente en la agenda de trabajo compartida; "
         "no garantiza que el técnico esté disponible. Una visita dura dos horas."
     ),
     "en": (
-        "Note: \"open\" means free in the shared work schedule only; it does not guarantee "
+        "Note: these times are free in the shared work schedule only; it does not guarantee "
         "the technician is available. A visit lasts two hours."
     ),
 }
@@ -59,6 +60,27 @@ _NO_SLOTS = {
 _NO_SLOTS_WINDOW = {
     "es": "No hay espacios libres para el día y la franja solicitados.",
     "en": "No open slots for the requested day and time of day.",
+}
+
+_REQUESTED_TAKEN = {
+    "confirmed": {
+        "es": "Ese horario ya no está disponible: está reservado para otra visita confirmada.",
+        "en": "That time is no longer available: it is booked for another confirmed visit.",
+    },
+    "held": {
+        "es": (
+            "Ese horario no está disponible ahora: está retenido para otra visita "
+            "de igual o mayor prioridad."
+        ),
+        "en": (
+            "That time is not available right now: it is held for another visit of equal "
+            "or higher priority."
+        ),
+    },
+    "infeasible": {
+        "es": "Ese horario no está disponible: la visita no cabe en esa franja.",
+        "en": "That time is not available: the visit does not fit in that window.",
+    },
 }
 
 _FALLBACK_REASON = {
@@ -89,6 +111,17 @@ _FALLBACK_ASK = {
     "en": (
         "Please share your complete availability intervals, with explicit calendar dates "
         "and exact times (for example: March 14, 2026, 9:00 to 11:30)."
+    ),
+}
+
+_FALLBACK_TABLE_ASK = {
+    "es": (
+        "Indíquenos qué día y hora de la tabla prefiere, o su disponibilidad completa con "
+        "fechas de calendario y horarios exactos."
+    ),
+    "en": (
+        "Please tell us which date and time from the table you prefer, or share your complete "
+        "availability with explicit calendar dates and exact times."
     ),
 }
 
@@ -137,9 +170,7 @@ def derive_open_slots(
         start_hour = grid.daily_start_hour
         while start_hour + grid.slot_hours <= grid.daily_end_hour:
             start_local = datetime.combine(current, time(start_hour), tzinfo=zone)
-            end_local = datetime.combine(
-                current, time(start_hour + grid.slot_hours), tzinfo=zone
-            )
+            end_local = datetime.combine(current, time(start_hour + grid.slot_hours), tzinfo=zone)
             interval = TimeInterval(start_local, end_local)
             if start_local < local_reference:
                 start_hour += grid.slot_hours
@@ -169,12 +200,10 @@ def render_slot_table(slots: tuple[OpenSlot, ...], language: str = "en") -> str:
     if not slots:
         return _NO_SLOTS.get(language, _NO_SLOTS["en"])
     header = (
-        "| Slot   | Date         | Day        | Time (local) | Status |\n"
-        "|--------|--------------|------------|--------------|--------|"
+        "| Date         | Day        | Time (local) |\n|--------------|------------|--------------|"
     )
     rows = [
-        f"| {slot.slot_id} | {slot.local_date:<12} | {slot.weekday:<10} | "
-        f"{slot.start_local}–{slot.end_local} | open   |"
+        f"| {slot.local_date:<12} | {slot.weekday:<10} | {slot.start_local}–{slot.end_local} |"
         for slot in slots
     ]
     return "\n".join((header, *rows))
@@ -226,11 +255,26 @@ def describe_window(
     return ", ".join(parts)
 
 
+def render_requested_taken(language: str, cause: str = "confirmed") -> str:
+    texts = _REQUESTED_TAKEN.get(cause, _REQUESTED_TAKEN["confirmed"])
+    return texts.get(language, texts["en"])
+
+
 def render_slot_fallback_reply(language: str, reason: AmbiguityReason) -> str:
     """Deterministic third-retry fallback: explain the ambiguity, name no slots, no LLM."""
     explanation = _FALLBACK_REASON[reason].get(language, _FALLBACK_REASON[reason]["en"])
     ask = _FALLBACK_ASK.get(language, _FALLBACK_ASK["en"])
     return f"{explanation}\n{ask}"
+
+
+def render_slot_fallback_table_reply(table: SlotTable, reason: AmbiguityReason) -> str:
+    """Fixed localized reply with the deterministic table, used when the prose attempts fail."""
+    language = table.language
+    if not table.slots:
+        return table.render_markdown()
+    intro = _FALLBACK_REASON[reason].get(language, _FALLBACK_REASON[reason]["en"])
+    ask = _FALLBACK_TABLE_ASK.get(language, _FALLBACK_TABLE_ASK["en"])
+    return compose_slot_reply_text(intro, table, ask)
 
 
 def compose_slot_reply_text(intro: str, table: SlotTable, ask: str) -> str:
@@ -241,3 +285,143 @@ def compose_slot_reply_text(intro: str, table: SlotTable, ask: str) -> str:
 def reply_embeds_table(reply: str, table: SlotTable) -> bool:
     """Deterministic pre-check: table block and disclaimer appear verbatim."""
     return table.render_markdown() in reply and table.disclaimer() in reply
+
+
+_WEEKDAY_WORDS = {
+    "monday": "Monday",
+    "lunes": "Monday",
+    "tuesday": "Tuesday",
+    "martes": "Tuesday",
+    "wednesday": "Wednesday",
+    "miercoles": "Wednesday",
+    "miércoles": "Wednesday",
+    "thursday": "Thursday",
+    "jueves": "Thursday",
+    "friday": "Friday",
+    "viernes": "Friday",
+    "saturday": "Saturday",
+    "sabado": "Saturday",
+    "sábado": "Saturday",
+    "sunday": "Sunday",
+    "domingo": "Sunday",
+}
+_WEEKDAY_PATTERN = re.compile(r"\b(" + "|".join(_WEEKDAY_WORDS) + r")\b", re.IGNORECASE)
+_DAY_PATTERN = re.compile(
+    r"\b(?:el|the|day)\s+(\d{1,2})(?:st|nd|rd|th)?\b(?!\s*[:h])", re.IGNORECASE
+)
+_MONTH_PATTERN = re.compile(
+    r"\b(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|"
+    r"noviembre|diciembre|january|february|march|april|may|june|july|august|september|"
+    r"october|november|december)\b",
+    re.IGNORECASE,
+)
+_HOUR_PATTERN = re.compile(r"\b(?:a\s+las?|at|@)\s*(\d{1,2})(?::(\d{2}))?\b", re.IGNORECASE)
+
+
+@dataclass(frozen=True, slots=True)
+class TableReference:
+    """What a reply names about an already displayed slot table; every field is optional."""
+
+    weekday: str | None = None
+    day_of_month: int | None = None
+    hour: int | None = None
+
+    def __bool__(self) -> bool:
+        return any(value is not None for value in (self.weekday, self.day_of_month, self.hour))
+
+
+def parse_table_reference(text: str) -> TableReference:
+    """Extract a weekday, day of month and start hour from a short reply, without any model."""
+    weekday = _WEEKDAY_PATTERN.search(text)
+    day = None if _MONTH_PATTERN.search(text) else _DAY_PATTERN.search(text)
+    hour = _HOUR_PATTERN.search(text)
+    return TableReference(
+        _WEEKDAY_WORDS[weekday.group(1).lower()] if weekday else None,
+        int(day.group(1)) if day else None,
+        int(hour.group(1)) if hour else None,
+    )
+
+
+def _reference_hours(hour: int | None, start_hour: int, end_hour: int) -> set[int]:
+    """24h readings of a bare hour: the single one inside the visit window, or none."""
+    if hour is None:
+        return set()
+    if hour >= 12:
+        return {hour}
+    resolved = _resolve_bare_hour(hour, start_hour, end_hour)
+    return {resolved} if resolved is not None else set()
+
+
+def _resolve_bare_hour(hour: int, start_hour: int, end_hour: int) -> int | None:
+    readings = [value for value in (hour, hour + 12) if start_hour <= value < end_hour]
+    return readings[0] if len(readings) == 1 else None
+
+
+def match_table_reference(
+    slots: tuple[OpenSlot, ...],
+    reference: TableReference,
+    start_hour: int = 9,
+    end_hour: int = 19,
+) -> tuple[OpenSlot, ...]:
+    """Shown slots consistent with the reference; a bare hour is read inside the visit window."""
+    hours = _reference_hours(reference.hour, start_hour, end_hour)
+
+    def keep(slot: OpenSlot) -> bool:
+        if reference.weekday is not None and slot.weekday != reference.weekday:
+            return False
+        day = int(slot.local_date[-2:])
+        if reference.day_of_month is not None and day != reference.day_of_month:
+            return False
+        if reference.hour is None:
+            return True
+        start = int(slot.start_local[:2])
+        end = int(slot.end_local[:2])
+        return any(start <= hour < end for hour in hours)
+
+    return tuple(slot for slot in slots if keep(slot))
+
+
+_WEEKDAYS_ES = (
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+    "domingo",
+)
+
+_HORIZON_LIMIT = {
+    "es": "Solo conozco la disponibilidad hasta el {weekday} {date}. "
+    "Indíqueme una fecha dentro de ese límite.",
+    "en": "I only know the availability until {weekday} {date}. "
+    "Please give me a date within that limit.",
+}
+
+
+def render_horizon_limit(language: str, last_known: date) -> str:
+    """Deterministic statement of how far the agenda is known, asking for an earlier date."""
+    weekday = (_WEEKDAYS_ES if language == "es" else _WEEKDAYS)[last_known.weekday()]
+    template = _HORIZON_LIMIT.get(language, _HORIZON_LIMIT["en"])
+    return template.format(weekday=weekday, date=last_known.isoformat())
+
+
+def format_local_date(day: date, language: str) -> str:
+    """Date with its correct weekday, e.g. 'martes 2026-10-13' / 'Tuesday 2026-10-13'."""
+    names = _WEEKDAYS_ES if language == "es" else _WEEKDAYS
+    return f"{names[day.weekday()]} {day.isoformat()}"
+
+
+def resolve_reference_dates(reference: TableReference, today: date) -> tuple[str, str] | None:
+    """Next calendar day named by a weekday or day-of-month reply (possibly past the horizon)."""
+    if reference.weekday is None and reference.day_of_month is None:
+        return None
+    first = 1 if reference.day_of_month is None else 0
+    for offset in range(first, 70):
+        day = today + timedelta(days=offset)
+        if reference.weekday is not None and _WEEKDAYS[day.weekday()] != reference.weekday:
+            continue
+        if reference.day_of_month is not None and day.day != reference.day_of_month:
+            continue
+        return day.isoformat(), day.isoformat()
+    return None

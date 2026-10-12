@@ -10,6 +10,8 @@ from maintenance_agent.domain.work_orders import Urgency, WorkOrder
 from maintenance_agent.infrastructure.in_memory_schedule import InMemoryScheduleAuthority
 from tests.integration.fakes import FakeConversationHandler
 
+_NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
+
 
 @pytest.mark.asyncio
 async def test_matching_role_consents_commit_then_finalize_both_participants() -> None:
@@ -22,7 +24,7 @@ async def test_matching_role_consents_commit_then_finalize_both_participants() -
         },
     )
     agenda = InMemoryScheduleAuthority()
-    workflow = NegotiationWorkflow(handler, agenda)
+    workflow = NegotiationWorkflow(handler, agenda, clock=lambda: _NOW)
     order = WorkOrder(
         work_order_id="WO-CONSENT",
         work_order="Leak",
@@ -38,6 +40,7 @@ async def test_matching_role_consents_commit_then_finalize_both_participants() -
     state = await workflow.handle(
         state, InboundMessage(order.work_order_id, "handyman", "available")
     )
+    state = await workflow.handle(state, InboundMessage(order.work_order_id, "handyman", "yes"))
     state = await workflow.handle(state, InboundMessage(order.work_order_id, "tenant", "yes"))
     assert state["pending_question"].role is ParticipantRole.HANDYMAN
     assert state.get("terminal_status") is None

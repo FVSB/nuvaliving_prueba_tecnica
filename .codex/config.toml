@@ -1,12 +1,7 @@
-model_instructions_file = "/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.codex/engram-instructions.md"
-experimental_compact_prompt_file = "/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.codex/engram-compact-prompt.md"
+
 [features]
 multi_agent = true
 
 [agents]
 max_depth = 2
 max_threads = 4
-
-[mcp_servers.engram]
-command = "engram"
-args = ["mcp", "--tools=agent"]

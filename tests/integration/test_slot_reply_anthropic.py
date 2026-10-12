@@ -12,9 +12,7 @@ class _Messages:
 
     async def create(self, **kwargs):
         self.calls.append(kwargs)
-        return SimpleNamespace(
-            content=[SimpleNamespace(type="text", text=self.responses.pop(0))]
-        )
+        return SimpleNamespace(content=[SimpleNamespace(type="text", text=self.responses.pop(0))])
 
 
 class _Client:
@@ -121,8 +119,9 @@ async def test_read_skill_tool_returns_body_on_demand() -> None:
         _availability_tool_results,
     )
 
-    call = SimpleNamespace(type="tool_use", id="s1", name="read_skill",
-                           input={"name": "relative-date-phrases"})
+    call = SimpleNamespace(
+        type="tool_use", id="s1", name="read_skill", input={"name": "relative-date-phrases"}
+    )
     (result,) = _availability_tool_results([call], datetime(2026, 10, 12, 8), "Europe/Madrid")
     assert "Monday and Tuesday" in json.loads(result["content"])["skill"]
 
@@ -140,7 +139,7 @@ class _TruncatedMessages(_Messages):
 async def test_truncated_compose_reply_reports_stop_reason() -> None:
     from maintenance_agent.infrastructure.anthropic_conversation import LlmOutputError
 
-    client = SimpleNamespace(messages=_TruncatedMessages(['{"intro":"Hola'] ))
+    client = SimpleNamespace(messages=_TruncatedMessages(['{"intro":"Hola']))
     with pytest.raises(LlmOutputError, match="truncated at max_tokens"):
         await AnthropicConversationHandler(client).compose_slot_reply("Spanish", FACTS)
 
@@ -151,7 +150,9 @@ async def test_compose_without_text_block_names_block_types() -> None:
 
     class _NoText(_Messages):
         async def create(self, **kwargs):
-            return SimpleNamespace(stop_reason="end_turn", content=[SimpleNamespace(type="thinking")])
+            return SimpleNamespace(
+                stop_reason="end_turn", content=[SimpleNamespace(type="thinking")]
+            )
 
     client = SimpleNamespace(messages=_NoText([]))
     with pytest.raises(LlmOutputError, match="blocks=\\['thinking'\\]"):
@@ -165,3 +166,136 @@ async def test_unreadable_validator_verdict_keeps_diagnostic_out_of_feedback() -
     assert verdict.valid is False
     assert verdict.feedback == "The validator returned an unreadable verdict."
     assert "truncated at max_tokens" in (verdict.diagnostic or "")
+
+
+def _availability_json(start: str, end: str) -> str:
+    return (
+        '{"intervals":[{"start":"%s","end":"%s"}],"suggested_intervals":[],'
+        '"complete":true,"clarification_required":false,"date_confirmation_required":false,'
+        '"weekday_is_today":false,"clarification":"","classification":"explicit_intervals"}'
+        % (start, end)
+    )
+
+
+async def _interpret(client, text: str = "x"):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from maintenance_agent.domain.negotiation import ParticipantRole
+
+    now = datetime(2026, 10, 12, 12, tzinfo=ZoneInfo("Europe/Madrid"))
+    return await AnthropicConversationHandler(client).interpret_availability(
+        text, ParticipantRole.TENANT, now, "Europe/Madrid"
+    )
+
+
+@pytest.mark.asyncio
+async def test_every_model_call_disables_thinking() -> None:
+    client = _Client(
+        _availability_json("2026-10-13T10:00:00+02:00", "2026-10-13T12:00:00+02:00"),
+        '{"intro":"a","ask":"b"}',
+        '{"valid":true,"feedback":""}',
+        "Hola",
+    )
+    handler = AnthropicConversationHandler(client)
+    await _interpret(client)
+    await handler.compose_slot_reply("Spanish", FACTS)
+    await handler.validate_slot_reply("draft", FACTS)
+    await handler.compose("intent", "Spanish", {})
+    assert len(client.messages.calls) == 4
+    assert all(call["thinking"] == {"type": "disabled"} for call in client.messages.calls)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("start", "end", "code"),
+    [
+        ("2026-10-13T03:00:00+02:00", "2026-10-13T05:00:00+02:00", "outside_visit_hours"),
+        ("2062-10-20T10:00:00+02:00", "2062-10-20T12:00:00+02:00", "too_far_ahead"),
+        ("2026-10-11T10:00:00+02:00", "2026-10-11T12:00:00+02:00", "in_the_past"),
+        ("2026-02-30T10:00:00+01:00", "2026-02-30T12:00:00+01:00", "not_a_calendar_date"),
+        ("2026-10-13T25:00:00+02:00", "2026-10-13T27:00:00+02:00", "invalid_time"),
+    ],
+)
+async def test_invalid_interval_is_rejected_with_reason(start: str, end: str, code: str) -> None:
+    result = await _interpret(_Client(_availability_json(start, end)))
+    assert result.invalid_reason is not None and result.invalid_reason.code.value == code
+    assert result.intervals == ()
+    assert result.complete is False and result.clarification_required is True
+
+
+@pytest.mark.asyncio
+async def test_valid_interval_has_no_invalid_reason() -> None:
+    result = await _interpret(
+        _Client(_availability_json("2026-10-13T10:00:00+02:00", "2026-10-13T12:00:00+02:00"))
+    )
+    assert result.invalid_reason is None and len(result.intervals) == 1
+
+
+@pytest.mark.asyncio
+async def test_broken_json_is_retried_once_then_falls_back() -> None:
+    client = _Client("nope", "still nope")
+    result = await _interpret(client)
+    assert len(client.messages.calls) == 2
+    assert result.intervals == () and result.clarification_required and not result.complete
+    assert result.invalid_reason is None
+
+    good = _Client(
+        "nope", _availability_json("2026-10-13T10:00:00+02:00", "2026-10-13T12:00:00+02:00")
+    )
+    assert len((await _interpret(good)).intervals) == 1
+
+
+@pytest.mark.asyncio
+async def test_validate_date_tool_reports_weekday_mismatch() -> None:
+    import json
+    from datetime import datetime
+
+    from maintenance_agent.infrastructure.anthropic_conversation import (
+        _availability_tool_results,
+    )
+
+    call = SimpleNamespace(
+        type="tool_use",
+        id="v1",
+        name="validate_date",
+        input={"date": "2026-10-15", "time": "10:00", "claimed_weekday": "lunes"},
+    )
+    (result,) = _availability_tool_results([call], datetime(2026, 10, 12, 12), "Europe/Madrid")
+    payload = json.loads(result["content"])
+    assert payload["valid"] is False and payload["code"] == "weekday_mismatch"
+    assert payload["actual_weekday"] == "Thursday"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("mention", "code"),
+    [
+        ('{"day":31,"month":4,"year":2027,"hour":10,"minute":0}', "not_a_calendar_date"),
+        ('{"day":13,"month":10,"year":2026,"hour":25,"minute":0}', "invalid_time"),
+        ('{"day":15,"month":10,"year":2026,"hour":10,"weekday":"Monday"}', "weekday_mismatch"),
+        ('{"day":1,"month":10,"year":2026,"hour":10}', "in_the_past"),
+    ],
+)
+async def test_mentioned_dates_reject_without_intervals_or_tool_call(mention, code) -> None:
+    body = (
+        '{"intervals":[],"suggested_intervals":[],"complete":true,"clarification_required":false,'
+        '"date_confirmation_required":false,"weekday_is_today":false,"clarification":"",'
+        '"mentioned_dates":[{"text":"x","day":null,"month":null,"year":null,"hour":null,'
+        '"minute":null,"weekday":"","relative":false}]}'
+    ).replace(
+        '{"text":"x","day":null,"month":null,"year":null,"hour":null,'
+        '"minute":null,"weekday":"","relative":false}',
+        '{"text":"x",' + mention[1:],
+    )
+    result = await _interpret(_Client(body))
+    assert result.invalid_reason is not None and result.invalid_reason.code.value == code
+    assert not result.complete and result.clarification_required and not result.intervals
+
+
+@pytest.mark.asyncio
+async def test_missing_mentioned_dates_field_still_parses() -> None:
+    result = await _interpret(
+        _Client(_availability_json("2026-10-13T10:00:00+02:00", "2026-10-13T12:00:00+02:00"))
+    )
+    assert result.invalid_reason is None and len(result.intervals) == 1

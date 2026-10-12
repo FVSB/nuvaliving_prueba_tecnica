@@ -11,6 +11,8 @@ from maintenance_agent.domain.work_orders import Urgency, WorkOrder
 from maintenance_agent.infrastructure.in_memory_schedule import InMemoryScheduleAuthority
 from tests.integration.fakes import FakeConversationHandler
 
+_NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
+
 
 def order(order_id="WO-LANG"):
     return WorkOrder(
@@ -31,7 +33,7 @@ async def test_tenant_availability_is_first_and_creates_full_utc_candidates() ->
             "tenant": ((start.isoformat(), (start + timedelta(hours=4)).isoformat()),),
         }
     )
-    workflow = NegotiationWorkflow(handler, InMemoryScheduleAuthority())
+    workflow = NegotiationWorkflow(handler, InMemoryScheduleAuthority(), clock=lambda: _NOW)
     state = await workflow.start(
         order(), LanguageRecognitionResult(language_code=LanguageCode.ENGLISH)
     )
@@ -54,7 +56,11 @@ async def test_one_complete_interval_with_no_more_dates_is_accepted() -> None:
     handler = FakeConversationHandler(
         availability={"tenant": ((start.isoformat(), end.isoformat()),)}
     )
-    workflow = NegotiationWorkflow(handler, InMemoryScheduleAuthority())
+    workflow = NegotiationWorkflow(
+        handler,
+        InMemoryScheduleAuthority(),
+        clock=lambda: datetime(2027, 1, 14, 12, tzinfo=timezone.utc),
+    )
     state = await workflow.start(
         order(), LanguageRecognitionResult(language_code=LanguageCode.ENGLISH)
     )

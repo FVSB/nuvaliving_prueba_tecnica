@@ -15,6 +15,9 @@ from maintenance_agent.domain.languages import LanguageCode, LanguageRecognition
 from maintenance_agent.domain.negotiation import TimeInterval
 from tests.integration.fakes import FakeConversationHandler, FakeStdinReader
 
+_NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
+
+
 CSV = Path(__file__).resolve().parents[1] / "fixtures" / "work_orders.csv"
 VAGUE = AvailabilityInterpretation((), False, True, classification=MessageClass.VAGUE_DATE_REQUEST)
 
@@ -27,6 +30,7 @@ def _events(tmp_path: Path) -> list[dict]:
 async def _run(tmp_path, monkeypatch, handler, lines):
     monkeypatch.setenv("TRACES_DIR", str(tmp_path / "traces"))
     await run(
+        now=_NOW,
         csv_path=CSV,
         stdin_reader=FakeStdinReader(lines),
         conversation_handler=handler,

@@ -1,0 +1,59 @@
+OUT: WOID:WO-001|ROLE:tenant
+Hello,
+
+We are writing about a maintenance visit request for your home at 24 Oak Street. The work order is "Gas leak - 24 Oak Street." You reported a strong smell of gas in the kitchen on Wednesday 2026-10-07 at 09:15.
+
+To arrange a visit as soon as possible, please reply with all the explicit date and time intervals when you are available. If you can, include the specific dates and times, and note any that are not possible for you.
+
+If you believe there is an immediate danger, please leave the property and contact your local emergency number or your gas supplier right away.
+
+Thank you,
+Maintenance Team
+
+OUT: WOID:WO-002|ROLE:tenant
+Hola,
+
+Le escribimos para coordinar una visita de mantenimiento en su vivienda de Calle Mayor 18.
+
+Motivo: fuga de agua debajo del fregadero, informada el miércoles 2026-10-07 a las 10:40.
+Orden de trabajo: Fuga de agua - Calle Mayor 18.
+
+Para programar la visita, ¿podría indicarnos todos los intervalos horarios en los que tendría disponibilidad? Por favor, indique para cada día la franja horaria exacta (fecha, día de la semana y horas de inicio y fin).
+
+Gracias por su colaboración.
+
+IN: WO-001|tenant I am available tomorrow from 16:00 to 18:00, Madrid time.
+IN: WO-002|tenant <NO RESPONSE>
+OUT: WOID:WO-002|RESULT:requires_review
+REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question 4f6882ef11864646af325dc232fcce83; tenant requested intervals unknown.
+
+OUT: WOID:WO-001|ROLE:handyman
+Hola, ¿podría usted hacer la visita completa de dos horas el martes 2026-10-13 de 16:00 a 18:00? Por favor, responda únicamente "sí" o "no".
+
+IN: WO-001|handyman Sí, puedo el martes 13 de octubre de 2026 de 16:00 a 18:00, hora de Madrid.
+OUT: WOID:WO-001|ROLE:tenant
+Hello,
+
+We would like to arrange a visit to your home on Tuesday 2026-10-13, between 16:00 and 18:00. Please reply to confirm whether you accept or reject this visit.
+
+Thank you.
+
+IN: WO-001|tenant Yes.
+OUT: WOID:WO-001|ROLE:handyman
+Hola, le escribimos para confirmar su visita. ¿Podría responder con un sí o un no a la visita exacta propuesta: martes 2026-10-13, de 16:00 a 18:00? Gracias.
+
+IN: WO-001|handyman Sí.
+OUT: WOID:WO-001|ROLE:tenant
+Hello,
+
+This is a confirmation of your scheduled visit on Tuesday 2026-10-13, from 16:00 to 18:00.
+
+We look forward to seeing you. If you need to make any changes, please contact us as soon as possible.
+
+Thank you.
+
+OUT: WOID:WO-001|ROLE:handyman
+Hola, le confirmamos su visita programada para el martes 2026-10-13, de 16:00 a 18:00. Si necesita hacer algún cambio, por favor avísenos con antelación. ¡Le esperamos!
+
+OUT: WOID:WO-001|RESULT:scheduled
+SCHEDULED_FOR:2026-10-13T16:00:00+02:00

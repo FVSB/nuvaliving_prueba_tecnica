@@ -43,18 +43,20 @@ The root Dockerfile is separate from the optional Dev Container and installs the
 the same Python lockfile, without development tools, workspace agents, indexes or secrets.
 
 ```bash
-docker build -t maintenance-agent:local .
 mkdir -p traces
-docker run --rm -it \
-  --mount type=bind,src="$PWD/work_orders.csv",dst=/app/work_orders.csv,readonly \
-  --mount type=bind,src="$PWD/traces",dst=/app/traces \
-  maintenance-agent:local
+docker build -t agent .
+docker run --rm --env-file .env -i \
+  -v "$(pwd)/work_orders.csv:/app/work_orders.csv:ro" \
+  -v "$(pwd)/traces:/app/traces" \
+  agent
 ```
 
-If you have a local `.env`, add `--env-file .env` to `docker run`. Environment files and
-authentication data are excluded from the image by the allowlist in `.dockerignore`.
-Do not claim full scheduling/logging delivery: this is currently the CSV startup and message echo
-slice, not a completed scheduling agent.
+The evaluator run was verified on 2026-10-12: the image built, and the container exited
+successfully with empty stderr. With Anthropic configured, startup recognized both English and
+Spanish work orders; exact `<NO RESPONSE>` inputs produced one `requires_review` result per order.
+Captured input, output, and traces are in [`examples/docker-run/`](../examples/docker-run/).
+This smoke run checks Docker startup, protocol, and timeout behavior. It does not cover a
+successful scheduled negotiation inside Docker. The local suite passed 357 tests on this date.
 
 ## Optional Dev Container
 
@@ -145,6 +147,45 @@ VS Code supplies its own Dev Containers CLI.
 language-recognition adapter. Install or update them only with `uv add langgraph anthropic`, which
 updates both `pyproject.toml` and `uv.lock`. Focused tests use a static recognizer and do not
 require `ANTHROPIC_API_KEY`; a configured key selects the Anthropic adapter at startup.
+
+## Prompt-injection guard
+
+With `ANTHROPIC_API_KEY` set, the graph routes every inbound participant message through the
+`injection_guard` node before `negotiation_transition` (`<NO RESPONSE>` and empty bodies skip it).
+Up to three structured calls decide the outcome: whole message, the extracted suspect fragment
+alone, and the message with that fragment removed by deterministic code. `INJECTION_THRESHOLD`
+(default `0.6`, strictly-greater-than) is compared with the model's self-reported
+`probability_yes`; the Anthropic API exposes no token log-probabilities. Outcomes recorded as
+`injection_guard_screened` in `events.jsonl`: `pass`, `pass_cleaned` (only the cleaned body
+continues) or `block` (the sender gets a fixed localized notice plus the last message sent to that
+role, and the workflow never sees the text). Provider errors fail open and are written to
+`runtime.jsonl` as `injection_guard_error`. Without an API key, or when tests inject a conversation
+handler without a guard, the node is not built. The guard calls disable extended thinking because
+a `thinking` block consumes the small `max_tokens` budget and leaves no JSON.
+
+## Date and input validation
+
+`domain/date_validation.py` is a pure tool (`validate_interval`, `validate_date_text`) that checks
+every interval extracted from a message against the injected clock, `LOCAL_TIMEZONE`, the visit
+hours (`SLOT_DAILY_START_HOUR`-`SLOT_DAILY_END_HOUR`, default 09-19) and `VISIT_HORIZON_DAYS`
+(default 7). Failures return a `DateCheck` with a `DateErrorCode` and a short English reason; the
+sender is asked again and the trace records `availability_rejected`. Inbound input is checked first:
+unknown work order, empty body, or more than `MAX_MESSAGE_LENGTH` characters (default 2000) is
+rejected with a fixed reply before the guard or any LLM. Order: deterministic checks, then the
+injection guard, then LLM stages. Tests use `--now` or an injected clock and fakes; see
+`specs/006-validate-date-tool/`.
+Input rejections are fixed Spanish/English replies (`application/rejections.py`) for `empty_body`,
+`too_long` and `unknown_work_order`; events `message_rejected` and `unknown_work_order` go to
+`events.jsonl`. Unreadable lines (no `|`, invalid role) stay silent and are traced in
+`runtime.jsonl` as `malformed_input` plus `message_rejected` with `protocol_mismatch`. Date
+rejections come from `reject_invalid_availability` and the slot table is capped to the horizon.
+Exact texts: `specs/006-validate-date-tool/spec.md`.
+
+## Live conversation tests
+
+Scenarios against the real API (not part of `pytest`) live in `integration_test/`; see
+[`integration_test/README.md`](../integration_test/README.md) for how to run them, what
+PASS/FAIL/XFAIL/XPASS mean and how to add one.
 
 ## Run traces
 

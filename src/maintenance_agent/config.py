@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     slot_daily_start_hour: int = 9
     slot_daily_end_hour: int = 19
     slot_hours: int = 2
+    injection_threshold: float = 0.6
+    visit_horizon_days: int = 7
+    max_message_length: int = 2000
 
     @field_validator("anthropic_language_model", "anthropic_conversation_model")
     @classmethod
@@ -29,6 +32,22 @@ class Settings(BaseSettings):
         if not model.strip():
             raise ValueError("Anthropic model names must not be empty.")
         return model
+
+    @field_validator("injection_threshold")
+    @classmethod
+    def validate_injection_threshold(cls, threshold: float) -> float:
+        """The guard blocks above this self-reported probability, so it must be below 1."""
+        if not 0.0 <= threshold < 1.0:
+            raise ValueError("INJECTION_THRESHOLD must satisfy 0 <= value < 1.")
+        return threshold
+
+    @field_validator("visit_horizon_days", "max_message_length")
+    @classmethod
+    def validate_positive(cls, value: int) -> int:
+        """Both limits only make sense as positive integers."""
+        if value < 1:
+            raise ValueError("VISIT_HORIZON_DAYS and MAX_MESSAGE_LENGTH must be positive.")
+        return value
 
     @model_validator(mode="after")
     def validate_slot_grid(self) -> "Settings":

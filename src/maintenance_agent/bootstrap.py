@@ -7,11 +7,15 @@ from zoneinfo import ZoneInfo
 from anthropic import AsyncAnthropic
 
 from maintenance_agent.application.conversation import SafeFallbackConversationHandler
+from maintenance_agent.application.injection_guard import InjectionGuard
 from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
 from maintenance_agent.config import Settings
 from maintenance_agent.dependencies import Container
 from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
 from maintenance_agent.infrastructure.anthropic_conversation import AnthropicConversationHandler
+from maintenance_agent.infrastructure.anthropic_injection_classifier import (
+    AnthropicInjectionClassifier,
+)
 from maintenance_agent.infrastructure.anthropic_language_recognizer import (
     AnthropicLanguageRecognizer,
 )
@@ -31,6 +35,8 @@ def _effective_snapshot(settings: Settings, run_context: RunContext) -> dict[str
         "slot_daily_start_hour": str(settings.slot_daily_start_hour),
         "slot_daily_end_hour": str(settings.slot_daily_end_hour),
         "slot_hours": str(settings.slot_hours),
+        "injection_guard": "disabled" if settings.anthropic_api_key is None else "enabled",
+        "injection_threshold": str(settings.injection_threshold),
         "anthropic_adapter": "static" if settings.anthropic_api_key is None else "anthropic",
         "anthropic_language_model": settings.anthropic_language_model,
         "anthropic_conversation_model": settings.anthropic_conversation_model,
@@ -82,7 +88,17 @@ def build_container(
         client = AsyncAnthropic(api_key=settings.anthropic_api_key.get_secret_value())
         recognizer = AnthropicLanguageRecognizer(client, model=settings.anthropic_language_model)
         conversation_handler = AnthropicConversationHandler(
-            client, model=settings.anthropic_conversation_model
+            client,
+            model=settings.anthropic_conversation_model,
+            start_hour=settings.slot_daily_start_hour,
+            end_hour=settings.slot_daily_end_hour,
+            horizon_days=settings.visit_horizon_days,
+        )
+        container.injection_guard.override(
+            InjectionGuard(
+                AnthropicInjectionClassifier(client, model=settings.anthropic_conversation_model),
+                settings.injection_threshold,
+            )
         )
     container.language_recognizer.override(recognizer)
     container.conversation_handler.override(conversation_handler)

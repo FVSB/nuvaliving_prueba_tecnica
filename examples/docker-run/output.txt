@@ -1,0 +1,22 @@
+WOID:WO-001|ROLE:tenant
+Dear Tenant,
+
+We are writing about the maintenance request for 24 Oak Street, reported on Wednesday 2026-10-07 at 09:15, regarding a strong smell of gas in the kitchen. Your work order is "Gas leak - 24 Oak Street."
+
+To arrange a maintenance visit as soon as possible, please reply with all the times you are available, listing each interval with its date and start and end times.
+
+Thank you for your prompt attention to this matter.
+
+WOID:WO-002|ROLE:tenant
+Hola,
+
+Le escribimos en relación con la solicitud de mantenimiento "Fuga de agua - Calle Mayor 18", en la dirección Calle Mayor 18. Según lo que nos informó, hay una fuga de agua debajo del fregadero, reportada el miércoles 2026-10-07 a las 10:40.
+
+Para coordinar la visita de nuestro equipo de mantenimiento, ¿podría indicarnos todos los intervalos de disponibilidad que tenga? Por favor, indique para cada uno el día y la franja horaria en que podría recibirnos.
+
+Muchas gracias por su colaboración.
+
+WOID:WO-002|RESULT:requires_review
+REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question fab8545357f8464f97041df8f67a6ac2; tenant requested intervals unknown.
+WOID:WO-001|RESULT:requires_review
+REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question 7e645d18dce44195a017384b4dfc31eb; tenant requested intervals unknown.

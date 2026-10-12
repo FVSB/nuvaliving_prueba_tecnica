@@ -5,6 +5,7 @@ from langgraph.graph import END, START, StateGraph
 from maintenance_agent.agents.scheduling.nodes.initialize_coordination import (
     InitializeCoordinationNode,
 )
+from maintenance_agent.agents.scheduling.nodes.injection_guard import InjectionGuardNode
 from maintenance_agent.agents.scheduling.state import SchedulingState
 from maintenance_agent.application.language_recognition import LanguageRecognizer
 from maintenance_agent.application.messages import OutboundMessage
@@ -18,8 +19,12 @@ def build_scheduling_graph(
     initialize_node: InitializeCoordinationNode,
     trace_writer: TraceWriter,
     workflow: NegotiationWorkflow | None = None,
+    guard_node: InjectionGuardNode | None = None,
 ):
-    """Build a single-step graph; the coordinator owns per-order checkpoint state."""
+    """Build a single-step graph; the coordinator owns per-order checkpoint state.
+
+    When ``guard_node`` is given, every inbound participant message passes through it first.
+    """
 
     async def transition(state: SchedulingState) -> dict:
         work_order: WorkOrder = state["work_order"]
@@ -147,6 +152,23 @@ def build_scheduling_graph(
 
     graph = StateGraph(SchedulingState)
     graph.add_node("negotiation_transition", transition)
-    graph.add_edge(START, "negotiation_transition")
+    if guard_node is None:
+        graph.add_edge(START, "negotiation_transition")
+    else:
+        graph.add_node("injection_guard", guard_node)
+        graph.add_conditional_edges(
+            START,
+            lambda state: (
+                "injection_guard"
+                if state.get("inbound_message") is not None
+                else "negotiation_transition"
+            ),
+            ["injection_guard", "negotiation_transition"],
+        )
+        graph.add_conditional_edges(
+            "injection_guard",
+            lambda state: END if state.get("guard_blocked") else "negotiation_transition",
+            [END, "negotiation_transition"],
+        )
     graph.add_edge("negotiation_transition", END)
     return graph.compile()

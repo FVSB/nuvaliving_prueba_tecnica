@@ -1,7 +1,8 @@
-from maintenance_agent.prompts.interpret_availability import build_availability_prompt
-from maintenance_agent.domain.negotiation import ParticipantRole
-from maintenance_agent.skills import load_skills, read_skill, skill_index
 from datetime import datetime
+
+from maintenance_agent.domain.negotiation import ParticipantRole
+from maintenance_agent.prompts.interpret_availability import build_availability_prompt
+from maintenance_agent.skills import load_skills, read_skill, skill_index
 
 
 def test_index_lists_every_skill_without_bodies() -> None:

@@ -33,3 +33,23 @@ async def test_local_cli_loads_csv_then_receives_mocked_stdin(
     events = run_folders[0] / "events.jsonl"
     assert events.exists()
     assert "WO-001" in events.read_text(encoding="utf-8")
+
+
+async def test_local_cli_answers_unknown_work_order_with_fixed_notice(
+    capsys, tmp_path: Path, monkeypatch
+) -> None:
+    csv_path = Path(__file__).resolve().parents[1] / "fixtures" / "work_orders.csv"
+    monkeypatch.setenv("TRACES_DIR", str(tmp_path / "traces"))
+
+    await run(
+        csv_path=csv_path,
+        stdin_reader=FakeStdinReader(["WO-999|handyman hola"]),
+        conversation_handler=FakeConversationHandler(),
+        language_recognizer=StaticLanguageRecognizer(
+            LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
+        ),
+    )
+
+    assert "WOID:WO-999|ROLE:handyman\nLa orden de trabajo indicada no existe" in (
+        capsys.readouterr().out
+    )

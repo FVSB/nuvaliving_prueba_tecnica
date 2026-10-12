@@ -11,6 +11,8 @@ from maintenance_agent.domain.work_orders import Urgency, WorkOrder
 from maintenance_agent.infrastructure.in_memory_schedule import InMemoryScheduleAuthority
 from tests.integration.fakes import FakeConversationHandler
 
+_NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
+
 
 def _window(start_hour: int) -> TimeInterval:
     start = datetime(2026, 10, 20, start_hour, tzinfo=timezone.utc)
@@ -30,7 +32,7 @@ async def test_tenant_reversal_suspends_old_evidence_until_sender_confirms_new()
         }
     )
     agenda = InMemoryScheduleAuthority()
-    workflow = NegotiationWorkflow(handler, agenda)
+    workflow = NegotiationWorkflow(handler, agenda, clock=lambda: _NOW)
     order = WorkOrder(
         work_order_id="WO-REV",
         work_order="Leak",
@@ -44,6 +46,7 @@ async def test_tenant_reversal_suspends_old_evidence_until_sender_confirms_new()
     )
     state = await workflow.handle(state, InboundMessage("WO-REV", "tenant", "first interval"))
     state = await workflow.handle(state, InboundMessage("WO-REV", "handyman", "available"))
+    state = await workflow.handle(state, InboundMessage("WO-REV", "handyman", "yes"))
     state = await workflow.handle(state, InboundMessage("WO-REV", "tenant", "no"))
     state = await workflow.handle(state, InboundMessage("WO-REV", "tenant", "no"))
     state = await workflow.handle(state, InboundMessage("WO-REV", "tenant", "changed interval"))

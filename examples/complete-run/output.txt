@@ -1,0 +1,10 @@
+WOID:WO-001|ROLE:tenant
+We can help with Gas leak - 24 Oak Street: Tenant reports a strong smell of gas in the kitchen at 24 Oak Street. Please share all dates and times when you are available. / Podemos ayudarle con Gas leak - 24 Oak Street: Tenant reports a strong smell of gas in the kitchen en 24 Oak Street. Indique todas las fechas y horas en que está disponible.
+
+WOID:WO-002|ROLE:tenant
+We can help with Fuga de agua - Calle Mayor 18: El inquilino informa de una fuga de agua debajo del fregadero at Calle Mayor 18. Please share all dates and times when you are available. / Podemos ayudarle con Fuga de agua - Calle Mayor 18: El inquilino informa de una fuga de agua debajo del fregadero en Calle Mayor 18. Indique todas las fechas y horas en que está disponible.
+
+WOID:WO-002|RESULT:requires_review
+REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question 45eb141ef7694531a2513f605490b5e7; tenant requested intervals unknown.
+WOID:WO-001|RESULT:requires_review
+REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question ff192ede1d7a48d6b7ee908228dcbc86; tenant requested intervals unknown.

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from maintenance_agent.application.conversation import ConversationHandler
+from maintenance_agent.application.injection_guard import InjectionGuard
 from maintenance_agent.application.language_recognition import LanguageRecognizer
 from maintenance_agent.bootstrap import build_container
 
@@ -50,6 +51,7 @@ async def run(
     conversation_handler: ConversationHandler | None = None,
     language_recognizer: LanguageRecognizer | None = None,
     now: datetime | None = None,
+    injection_guard: InjectionGuard | None = None,
 ) -> None:
     """Load work orders and start asynchronous live message coordination."""
     container = build_container(csv_path=csv_path, now=now)
@@ -57,6 +59,10 @@ async def run(
         container.stdin_reader.override(stdin_reader)
     if conversation_handler is not None:
         container.conversation_handler.override(conversation_handler)
+        # An injected conversation handler means no real LLM: use the given guard or none.
+        container.injection_guard.override(injection_guard)
+    elif injection_guard is not None:
+        container.injection_guard.override(injection_guard)
     if language_recognizer is not None:
         container.language_recognizer.override(language_recognizer)
     container.runtime_writer().write(event_type="csv_read_start", detail={})

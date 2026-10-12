@@ -13,6 +13,7 @@ class FakeMessages:
 
     async def create(self, **kwargs: object) -> SimpleNamespace:
         self.calls += 1
+        self.last_kwargs = kwargs
         return SimpleNamespace(content=[SimpleNamespace(type="text", text=self._response_text)])
 
 
@@ -47,3 +48,10 @@ async def test_recognizer_skips_provider_for_blank_description() -> None:
 
     assert result.language_code is LanguageCode.UNDETERMINED
     assert client.messages.calls == 0
+
+
+async def test_recognizer_disables_thinking() -> None:
+    client = FakeClient("es")
+    await AnthropicLanguageRecognizer(client).recognize("Hay una fuga.")  # type: ignore[arg-type]
+
+    assert client.messages.last_kwargs["thinking"] == {"type": "disabled"}

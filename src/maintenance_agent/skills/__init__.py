@@ -20,9 +20,7 @@ def load_skills() -> dict[str, Skill]:
     skills: dict[str, Skill] = {}
     for path in sorted(_DIR.glob("*.md")):
         _, header, body = path.read_text(encoding="utf-8").split("---", 2)
-        meta = dict(
-            line.split(":", 1) for line in header.strip().splitlines() if ":" in line
-        )
+        meta = dict(line.split(":", 1) for line in header.strip().splitlines() if ":" in line)
         name = meta["name"].strip()
         skills[name] = Skill(name, meta["description"].strip(), body.strip())
     return skills
