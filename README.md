@@ -1,16 +1,10 @@
-# Nuva Living — Maintenance Scheduling Agent
+# Nuva Living — Maintenance Visit Scheduling Agent
 
-A CLI agent that coordinates maintenance visits between tenants and a single
-handyman. It reads work orders from CSV, communicates through stdin/stdout, and
-ends each negotiation with `scheduled` or `requires_review`. Visits last two
-hours, use `Europe/Madrid`, and require both participants to explicitly accept
-the same date and time.
+A CLI agent that coordinates maintenance visits between tenants and a single handyman. It reads work orders from a CSV, communicates over stdin/stdout, and ends each negotiation with `scheduled` or `requires_review`. Visits last 2 hours, use `Europe/Madrid`, and require both parties to explicitly accept the same date and time.
 
-## Running the agent
+## Running
 
-Docker is the evaluator's only prerequisite. Create `.env` with
-`ANTHROPIC_API_KEY` (see [.env.example](.env.example)); never commit credentials.
-Place `work_orders.csv` in the repository root and run:
+Requirement: **Docker**. Create a `.env` with `ANTHROPIC_API_KEY` (template in [.env.example](.env.example)) and do not commit it to the repository. The `Dockerfile` is in the root.
 
 ```bash
 mkdir -p traces
@@ -21,424 +15,141 @@ docker run --env-file .env -i \
   agent
 ```
 
-Dependencies and development tools are declared in [pyproject.toml](pyproject.toml).
-The container uses `uv.lock` to install reproducible versions. Settings are read
-at startup; changing them requires a restart. Language recognition and
-conversation models can be configured separately. Without credentials, the
-fallback requests clarification instead of interpreting availability through
-Anthropic.
+- To try the sample, mount `examples/work_orders.csv` instead of `work_orders.csv`.
+- On Linux, if the traces end up owned by `root`, add `--user "$(id -u):$(id -g)"`.
 
-## Communication protocol
+## Protocol
 
-The read-only CSV contains these columns. The repository's current sample has
-one Critical work order in English and one High work order in Spanish:
+CSV input (read-only): `work_order_id,work_order,address,description,reported_at,urgency`, with `urgency` as `Critical`, `High`, `Medium` or `Low`.
 
-```csv
-work_order_id,work_order,address,description,reported_at,urgency
-WO-001,Gas leak - 24 Oak Street,24 Oak Street,Tenant reports a strong smell of gas in the kitchen,2026-10-07T09:15:00+02:00,Critical
-WO-002,Fuga de agua - Calle Mayor 18,Calle Mayor 18,El inquilino informa de una fuga de agua debajo del fregadero,2026-10-07T10:40:00+02:00,High
-```
+**Startup:** on start, the agent sends the first message for every work order in the CSV without waiting for replies. It then accepts messages for any unfinished order, in any order.
 
-Incoming messages identify the work order and sender:
+Outgoing message (stdout), terminated by a blank line:
 
 ```text
-WO-001|tenant I am available on 14 October 2026 from 16:00 to 18:00, Madrid time.
-WO-002|tenant <NO RESPONSE>
-```
-
-Outgoing messages identify the recipient and end with a blank line:
-
-```text
-WOID:WO-001|ROLE:handyman
-¿Puedes realizar la visita el 14 de octubre de 2026 de 16:00 a 18:00, hora de Madrid?
+WOID:WO-002|ROLE:handyman
+Can you do the visit tomorrow, October 8, at 16:00?
 
 ```
 
-The terminal result formats are:
+Incoming message (stdin):
 
 ```text
-WOID:WO-001|RESULT:scheduled
-SCHEDULED_FOR:2026-10-14T16:00:00+02:00
+WO-002|tenant Tomorrow after 17:00 works for me.
+```
 
-WOID:WO-002|RESULT:requires_review
+Final results (illustrative examples of the format; actual output is in `examples/docker-run-scheduled/`):
+
+```text
+WOID:WO-002|RESULT:scheduled
+SCHEDULED_FOR:2026-10-08T18:00:00+02:00
+
+WOID:WO-003|RESULT:requires_review
 REASON:Unable to establish a mutually acceptable visit time.
 ```
 
-These protocol examples illustrate the format. The handyman receives Spanish
-messages; the tenant's language is inferred from the work-order description.
-The console is reserved for the protocol; technical logs go to files.
+The console only shows the protocol; traces and logs go to `/app/traces`.
 
-## Business decisions
+## Scheduling rules
 
-1. **A simplified planning horizon.** This take-home considers dates through
-   today plus seven days, inclusive, to keep planning simple. In a real
-   deployment, the planning window would be organized around complete calendar
-   weeks. The agent communicates its current limit instead of offering dates
-   beyond it.
+- One handyman. Each visit lasts 2 hours and visits do not overlap.
+- `scheduled` only if the tenant and the handyman both explicitly accept the same date and time. Both receive a confirmation before the result.
+- If they compete for the same availability, the higher urgency wins: `Critical > High > Medium > Low`.
+- The handyman is written to in Spanish; the tenant, in the language of their order.
+- Dates and times are in `Europe/Madrid`, without ambiguity.
+- `<NO RESPONSE>` is a timeout: the order ends as `requires_review`. No real-time waits are used.
+- If coordination cannot be done reliably, `requires_review` with a short reason.
 
-2. **Reject invalid intervals without trimming them.** An interval outside the
-   permitted hours or horizon is rejected as submitted. Automatically shortening
-   it would change what the participant actually said they could accept.
+## Decisions
 
-3. **Allow consecutive visits without a buffer.** We assume the handyman can
-   finish one slot and immediately start another: 14:00–16:00 and 16:00–18:00
-   are compatible. Travel time and preparation time are not included in this
-   scheduling model.
+Details and rationale in [decisions and extensions](docs/decisions-tradeoffs.md).
 
-4. **Ask the tenant first.** Establishing the household's availability before
-   consulting the handyman avoids negotiating visits the tenant cannot attend.
+### Business
 
-5. **Request all available intervals.** Collecting the full set gives the agent
-   alternatives if a slot is occupied or unsuitable for the handyman, reducing
-   repeated questions.
+1. **Horizon:** dates up to today plus 7 days, inclusive. In production, the window would be full calendar weeks.
+2. **Invalid intervals:** rejected as sent; never trimmed.
+3. **Back-to-back visits:** 14:00–16:00 and 16:00–18:00 are compatible. Travel time and preparation are not modeled.
+4. **Query order:** the tenant first, to confirm their availability; then the handyman.
+5. **Full intervals:** all available intervals are requested, to have alternatives if one slot does not work.
+6. **Interval merging:** overlapping or contiguous intervals are joined (10:00–11:00 + 11:00–12:00 allow a 2-hour visit).
+7. **2-hour candidates:** generated from the start the tenant gave (10:00–15:00 → 10:00–12:00 and 12:00–14:00).
+8. **Conflicts before the handyman:** candidates blocked by an appointment or a reservation of equal or higher urgency are discarded before asking the handyman.
+9. **Urgency during open negotiation:** a `Critical` order can take a tentative reservation from a `Low` order if its tenant accepts. The transfer is atomic.
+10. **Simultaneous offers:** two negotiations can offer the same slot; the competition is resolved at booking time. Confirmed appointments are not moved.
+11. **Displaced tenant:** they are notified and receive an alternative or a request for availability. Their time is never reassigned silently.
+12. **No options:** the tenant is asked whether they want human coordination. If they accept, `requires_review`; if they decline, they are asked for new availability.
+13. **Review reasons:** `no_response`, `no_common_availability` or `no_eligible_slot`, with the known facts. Unknown things are stated as unknown.
 
-6. **Merge overlapping and adjacent availability.** This removes duplicates and
-   preserves usable continuous windows. For example, 10:00–11:00 and 11:00–12:00
-   together allow a full two-hour visit, although neither interval does alone.
+### Technical
 
-7. **Generate two-hour candidates from the tenant's stated start.** Each candidate
-   must fit the visit duration required by the assignment. Availability from
-   10:00 to 15:00 produces 10:00–12:00 and 12:00–14:00; the final hour cannot
-   accommodate a visit. Starting from the tenant's own interval avoids inventing
-   a separate booking grid.
+1. **Yes/no in code:** replies are interpreted with a closed list of variants (ES/EN, with or without accents). Any other reply is asked again; the model does not decide.
+2. **Errors separated from silence:** an Anthropic failure is recorded as a technical incident; it never counts as a participant's silence.
+3. **Per-run traces:** messages, states and decisions are stored as JSONL. stdout and stderr are reserved for the protocol.
+4. **Configuration once:** configuration and dependencies are loaded at startup; changes require a restart.
+5. **Injection guard:** an LLM classifier flags suspicious messages; the code removes the fragment and, if nothing valid remains, blocks. On provider errors it fails open, and the later validation stays active.
+6. **Silence retries (disabled):** if enabled, they wait using real UTC time. This contradicts the brief, so the default is `false` and the order closes immediately.
 
-8. **Check conflicts before consulting the handyman.** Candidates blocked by a
-   confirmed appointment or an equal- or higher-urgency tentative reservation
-   are filtered out, avoiding questions about slots that cannot be assigned.
+## Evaluation criteria
 
-9. **Give higher urgency priority during an unfinished negotiation.** If a Low
-   order has a tentative reservation and a Critical order needs the same time,
-   the Critical order can take that reservation after its tenant explicitly
-   accepts the proposed visit. The transfer is atomic and only succeeds if no
-   equal- or higher-urgency reservation or confirmed appointment blocks it.
-   This enforces the assignment's urgency rule while protecting visits already
-   agreed with both parties.
+| Criterion | Covered in |
+|---|---|
+| Correct result per order | [Architecture](docs/architecture-negotiation.md#negotiation-flow) |
+| Clear communication and dates | [Protocol](#protocol) |
+| Explicit agreement, no overlaps | [Rules](#scheduling-rules) |
+| Robustness (silence, contradictions, injection) | [Architecture](docs/architecture-negotiation.md#participant-silence-no-response) |
+| Use of `requires_review` | [Business decisions](#business) |
+| Code, state and errors | [Architecture](docs/architecture-negotiation.md) |
+| Traces to reconstruct the coordination | [Traces and tests](docs/traces-and-tests.md#traces) |
 
-10. **Allow simultaneous offers before reservation.** Two negotiations may offer
-    the same currently free slot. Competition is resolved when acquiring the
-    reservation. A lower-urgency order can keep it if it becomes a confirmed
-    appointment first; confirmed visits are not displaced.
+## Traces and tests
 
-11. **Notify the tenant whose reservation was displaced.** The affected order
-    continues with an explanation in the tenant's language and an eligible
-    alternative, or a request for new availability. Its proposed time is never
-    silently reassigned.
+Each run creates `traces/runs/<timestamp>-<run_id>/` with `manifest.jsonl`, `events.jsonl` and `runtime.jsonl`. Each event includes `timestamp`, `work_order_id`, `event_type` and `detail`.
 
-12. **Offer human coordination when options are exhausted.** Once complete
-    evidence establishes that there is no common eligible visit, or known
-    agenda conflicts exhaust the tenant's complete request, the agent asks
-    whether the tenant wants human scheduling. Acceptance yields
-    `requires_review`; declining leads to a request for new availability.
+Versioned examples:
 
-13. **Explain review outcomes from recorded evidence.** Reasons use
-    `no_response`, `no_common_availability`, or `no_eligible_slot` and the known
-    facts. Unknown availability is explicitly described as unknown, so the
-    person taking over can understand what prevented scheduling.
-
-## Technical decisions
-
-1. **Interpret explicit confirmations with code.** Yes/no decisions are handled
-   deterministically. Ambiguous answers trigger clarification rather than
-   being converted into acceptance by the model.
-
-2. **Separate provider failures from participant silence.** An Anthropic error
-   is a technical incident recorded in the runtime trace. It does not mean a
-   tenant or handyman failed to answer and is never converted into a human
-   timeout.
-
-3. **Keep structured traces for each execution.** Messages, state changes,
-   decisions, and outcomes are correlated by run and work order. Separate
-   manifest, event, and runtime files make the coordination reconstructable
-   while keeping stdout and stderr reserved for the communication protocol.
-
-4. **Read configuration and assemble dependencies once at startup.** Every
-   conversation in a run uses consistent settings. Changes require restarting;
-   dependencies are injected instead of being recreated or reconfigured inside
-   graph nodes.
-
-## Architecture and actual graph
-
-The stack is Python 3.12, LangGraph, Anthropic, Pydantic, and
-`dependency-injector`. The domain holds business rules; the application manages
-negotiation and the shared agenda; infrastructure implements CSV, CLI, model
-calls, and traces. Dependencies are assembled once at startup.
-
-`AsyncCoordinator` starts all orders concurrently and retains a separate state
-for each. A FIFO queue serializes events within each conversation. Different
-orders progress concurrently against a single shared scheduling authority.
-
-The compiled graph in [graph.py](src/maintenance_agent/agents/scheduling/graph.py)
-executes **one transition per invocation**. With the security guard enabled, its
-actual nodes and routing are:
-
-```mermaid
-flowchart TD
-    S([START]) --> E{Incoming message?}
-    E -->|Yes| G[injection_guard]
-    E -->|No: startup or internal event| T[negotiation_transition]
-    G --> B{Blocked?}
-    B -->|Yes: security notice| F([END])
-    B -->|No: original or cleaned text| T
-    T --> F
-```
-
-`END` finishes that invocation. The coordinator delivers output, saves state,
-and invokes the graph again for the next event. Without the guard, `START`
-connects directly to `negotiation_transition`. The transition recognizes the
-language once and dispatches startup, incoming messages, displaced reservations,
-or continuation of final confirmations to the workflow.
-
-## Negotiation workflow
-
-The following phases run inside
-[NegotiationWorkflow](src/maintenance_agent/application/workflow.py); they are
-internal workflow steps rather than separate compiled graph nodes:
-
-```mermaid
-flowchart TD
-    A[Request tenant availability] --> B{Interpretation}
-    B -->|Vague| C[Open-slot table and validated reply]
-    C --> A
-    B -->|Invalid or incomplete| D[Rejection or clarification]
-    D --> A
-    B -->|Valid intervals| E[Build candidates and check agenda]
-    E --> H[Request handyman availability]
-    H --> P[Create a specific versioned proposal]
-    P --> T[Explicit tenant confirmation]
-    T --> R[Acquire tentative reservation]
-    R --> M[Explicit handyman confirmation]
-    M --> K[Commit appointment]
-    K --> N[Send confirmations to both parties]
-    N --> S([scheduled])
-    E -->|No eligible candidate| X[Alternatives or human coordination]
-    H -->|No common availability| X
-    R -->|Conflict| X
-    M -->|Rejection or change| X
-    X -->|New availability| A
-    X -->|Accept human intervention| V([requires_review])
-    O[NO RESPONSE during negotiation] --> V
-```
-
-Availability creates candidates. Explicit acceptances refer to a specific
-proposal ID and version. The tenant's acceptance triggers a reservation attempt;
-the handyman's acceptance commits the appointment. Both participants receive
-confirmation before the terminal result is emitted.
-
-Agenda operations are atomic. A tentative reservation may be displaced by a
-higher-urgency order (`Critical > High > Medium > Low`); confirmed appointments
-are never displaced. The affected order receives an event to negotiate an
-alternative. Priority is enforced when reservations are acquired: merely
-offering a free slot does not reserve it.
-
-Ambiguous replies prompt clarification. Availability changes are confirmed
-before replacing earlier evidence. The exact body `<NO RESPONSE>` ends the
-negotiation with `requires_review`, without real-time waiting. The workflow
-stops advancing orders that already have a terminal status.
-
-## Evaluators and validation
-
-| Component | What it checks | Effect |
-|---|---|---|
-| LLM language recognizer | Work-order description language | Sets the tenant language; undetermined language uses bilingual text. |
-| LLM availability interpreter | Intervals, mentioned dates, ambiguity, and vague requests | Returns typed evidence for validation. |
-| LLM prompt-injection classifier | Message, suspicious fragment, and remainder | Supplies evidence for deterministic pass, clean, or block decisions. |
-| LLM slot-reply validator | Language, clarity, invented dates, and technician availability claims | Accepts a draft or supplies regeneration feedback. |
-| Deterministic validators | Inputs, dates, intervals, conflicts, and consent | Control accepted evidence and reservations. |
-
-### Prompt-injection guard
-
-The guard runs before message interpretation and is connected when Anthropic
-credentials exist. The exact `<NO RESPONSE>` sentinel bypasses model screening.
-The classifier returns `answer` and `probability_yes`; code applies
-`probability_yes > INJECTION_THRESHOLD`, defaulting to `0.6`. This is a
-self-reported model estimate, not a calibrated probability.
-
-```mermaid
-flowchart TD
-    A[Assess full message] --> B{Probability above threshold?}
-    B -->|No| P[PASS: original text]
-    B -->|Yes| C[Extract suspicious fragment]
-    C --> D{Nonempty fragment assessed as suspicious?}
-    D -->|No| P
-    D -->|Yes| E[Remove fragment using code]
-    E --> F{Nonempty and clean remainder?}
-    F -->|Yes| Q[PASS_CLEANED: remainder only]
-    F -->|No or fragment not found| R[BLOCK: notice and previous question]
-```
-
-Screening uses up to three assessments plus one extraction call. Code removes
-the fragment so the model does not rewrite the participant's message. A blocked
-message does not advance negotiation or enter conversation history. Assessments
-are traced. Provider errors make the guard fail open: the message continues,
-the error is recorded, and downstream validation remains active.
-
-### Slot-reply composer and evaluator
-
-For vague requests, code builds an open-slot table from an agenda snapshot. The
-LLM produces only an introduction and closing request. Code inserts the table
-and the disclaimer that an open agenda slot does not establish handyman
-availability.
-
-Before delivery, deterministic checks require intact table content, both prose
-sections, no internal identifiers, and an agenda that still matches the table.
-A separate LLM call checks the language, the request for concrete dates, and
-whether the prose invents times or promises technician availability.
-
-Feedback is supplied to the next composition attempt, up to three attempts.
-Malformed verdicts and provider errors count as failures. After exhaustion,
-code sends a deterministic reply with the table and a clarification request.
-This evaluator applies to slot suggestions; ordinary messages do not all pass
-through an LLM evaluator.
-
-### Tools and deterministic rules
-
-The availability interpreter has tools for calendar calculations, visit end
-times, date ranges, ambiguous hours, date validation, and reading specialized
-instructions. Pydantic and domain code validate its output.
-
-Default visits are within 09:00–19:00 and the planning horizon ends at today plus
-seven days, inclusive. Validation rejects nonexistent dates, impossible times,
-past dates, dates outside the horizon, and weekday/date mismatches. Relative
-dates use the execution clock, not `reported_at`. Explicit yes/no decisions are
-interpreted by code.
-
-Empty messages, oversized bodies (default: more than 2000 characters), and
-unknown work orders receive fixed responses. The coordinator also replaces a
-primary outgoing message if it contains internal identifiers such as `SLOT-…`.
-
-## Traces and evaluation
-
-Each execution creates `/app/traces/runs/<timestamp>-<run_id>/`:
-
-- `manifest.jsonl`: execution start, finish, and context.
-- `events.jsonl`: messages, evidence, transitions, and decisions.
-- `runtime.jsonl`: technical incidents and provider errors.
-
-Events contain `timestamp`, `run_id`, `sequence`, `work_order_id`, `event_type`,
-and `detail`. Filter `events.jsonl` by order and follow its sequence to
-reconstruct a conversation. A complete live run using the current repository CSV
-and Anthropic is included in
-[`examples/complete-run/runs/20261012T233227+02:00-657314e2/`](examples/complete-run/runs/20261012T233227+02:00-657314e2/).
-It contains the CSV, JSONL traces, and a trace-derived `conversation.txt` with
-`IN`/`OUT` labels:
-
-| Work order | Outcome | Detail |
-|---|---|---|
-| WO-001 | `scheduled` | 2026-10-13, 16:00–18:00, Madrid time; both participants explicitly accepted. |
-| WO-002 | `requires_review` | The tenant sent the exact `<NO RESPONSE>` sentinel. |
-
-The run was started in the background with
-`uv run --no-sync maintenance-agent --csv ./work_orders.csv` and closed through
-stdin EOF after both results. The initial messages were emitted for both orders
-before any participant replied. A separate offline timeout example is in
-[`examples/complete-run/runs/20261012T233621+02:00-c72baec0/`](examples/complete-run/runs/20261012T233621+02:00-c72baec0/);
-both orders receive `<NO RESPONSE>` and end as `requires_review`.
-
-The verified Docker smoke run, including input, output, and JSONL traces, is in
-[`examples/docker-run/`](examples/docker-run/). On 2026-10-12,
-`docker build -t agent .` succeeded and the container run exited successfully
-with empty stderr. With Anthropic configured, it recognized the English and
-Spanish order descriptions; both inputs then timed out and produced exactly one
-`requires_review` result each. This confirms startup, protocol, and trace
-behavior, but does not exercise a scheduled negotiation in Docker.
-
-## Tests and verification strategy
-
-The test suite is split by how much of the application each test exercises.
-This makes business rules quick to check in isolation, then checks that real
-components work together, and finally verifies the CLI contract seen by an
-evaluator.
-
-**Unit tests** (`tests/unit`) exercise focused rules and components with no live
-Anthropic calls. They cover interval and date validation, schedule conflicts and
-urgency, consent interpretation, input parsing, language settings, trace
-formatting, prompt-injection decisions, and deterministic slot tables. For
-example, schedule-authority tests check that overlapping concurrent reservations
-have one winner; injection-guard tests check pass, clean, and block outcomes;
-date tests check invalid dates, hours, and horizon edges. These tests help
-pinpoint failures without the variability or cost of a live model call.
-
-**Application integration tests** (`tests/integration`) connect the workflow,
-graph, coordinator, schedule authority, and transport using controlled fakes
-where external model calls would otherwise be needed. They cover complete
-negotiation turns, concurrent orders, preemption and displaced-tenant notices,
-reversals, cancellation, input rejection, guard routing, and trace events.
-These tests check wiring and state transitions across components while keeping
-results repeatable.
-
-**Acceptance tests** (`tests/acceptance`) exercise the CLI-facing behavior:
-startup messages, protocol framing, terminal results, and vague-date replies.
-They verify what a user or evaluator can observe at the boundary.
-
-Run the local suite with:
+- [`examples/docker-run-scheduled/`](examples/docker-run-scheduled/): run with the Docker image and the sample CSV. WO-001 (`Critical`) ends `scheduled` at 16:00; WO-002 (`High`) ends `requires_review` because the slot is taken by the more urgent order. Includes input, output and traces.
+- [`examples/complete-run/`](examples/complete-run/runs/20261012T170800+02:00-657314e2/): earlier live run with the same CSV.
 
 ```bash
 uv run pytest
 ```
 
-The [live conversation evaluator](integration_test/README.md) goes a step
-further: it runs the real CLI against Anthropic, sends scripted tenant and
-handyman messages through stdin, and checks both the replies and JSONL traces.
-It covers realistic date and ambiguity handling, agreement, prompt injection,
-priority, rejections, and availability changes. Because it uses live API calls,
-it costs more and takes longer than the local suite; use it to validate how the
-model behaves in an end-to-end conversation.
+More detail in [traces and tests](docs/traces-and-tests.md), including the live evaluator ([tests/live](tests/live/README.md)).
 
-List scenarios or run a focused example with:
+## Validation
 
-```bash
-uv run python integration_test/run.py --list
-uv run python integration_test/run.py dates_calendar
-uv run python integration_test/run.py --all -j 4
-```
+The runs in this section use the model `claude-haiku-5-5` and the Docker image `agent`, rebuilt from the working tree.
 
-Scenarios use a frozen business clock so date outcomes are reproducible. Their
-runner timeouts only detect a stuck test process; they do not simulate a
-participant's `<NO RESPONSE>` message.
+![Validation results: pytest, live scenarios, Docker priority validation and the Docker battery from the brief](docs/graphs/validation-results.svg)
 
-Development dependencies and test configuration are defined in
-[pyproject.toml](pyproject.toml).
+| Layer | What it checks | Result |
+|---|---|---|
+| Automated tests (`uv run pytest`) | Domain rules, negotiation flows, settings, retry queue, CLI protocol | **472 of 472 pass** |
+| Live scenarios ([tests/live](tests/live/README.md)) | 36 conversations with fixed inputs against the real API: dates, ambiguity, confirmations, injection, priority, cancellations | **223 PASS, 0 FAIL** |
+| Docker priority validation ([validation/priority-renegotiation](validation/priority-renegotiation/README.md)) | 8 mixed orders with urgency preemption, run as an evaluator would (`docker run -i`) | **10 of 10 automated checks** |
+| Docker battery based on the brief | 15 cases derived from `docs/take-home-test.pdf` | 9 PASS, 4 partial, 2 fixed (see below) |
 
-## Possible extensions
+### Key results
 
-These are possible additions for a real deployment, subject to business policy
-and richer operational data.
+- **Startup:** 6 mixed orders get their first message in 6–14 s, without waiting for replies.
+- **Scheduled visits:** full negotiation in English and Spanish to `scheduled`, confirmed to both sides, one final result per order.
+- **Six orders at once:** 5 finished in 62 s with no overlapping visits; 1 `requires_review` (`<NO RESPONSE>`). The sixth was still renegotiating when the script ended, so that run is inconclusive.
+- **Priority:** 8 orders, 2 preemptions from higher to lower urgency, **no overlapping visits**.
+- **Handyman always in Spanish:** 23 of 23 messages.
+- **`<NO RESPONSE>`:** closes as `requires_review` in 6–45 ms, with no real wait. Retries are opt-in.
+- **Security:** prompt injections are blocked or cleaned without booking anything; malformed input gets fixed replies.
+- **Traces:** a scheduled order can be reconstructed end to end; no API keys in the reviewed traces.
 
-1. **An agenda optimizer.** A scheduling manager could offer discrete booking
-   slots and coordinate competing orders globally, prioritizing the completion
-   of Critical and High negotiations before assigning capacity to lower urgency.
-   This could reduce the current dependence on which conversation confirms
-   first. Business rules would define how long tentative slots can be held and
-   how to avoid indefinitely postponing less urgent work.
+Full detail (invariant checks, priority metrics, battery findings, how to reproduce, known limitations): [priority validation](validation/priority-renegotiation/README.md) and [traces and tests](docs/traces-and-tests.md).
 
-2. **Planning by building.** If the business assigns particular days or slots
-   to each building, those constraints could shape the offered availability.
-   Grouping visits by location and including travel buffers could reduce travel
-   and improve capacity use. The current model does not account for building
-   schedules or travel between addresses.
+## Stack
 
-3. **Planning by maintenance type and difficulty.** Grouping similar reports
-   could reduce repeated preparation and equipment changes. Difficulty could
-   inform duration, required skills, and technician assignment, while keeping
-   urgency as an explicit business priority. This would require additional
-   work-order data beyond the current CSV and an extension of the fixed
-   two-hour, single-handyman model.
+Python 3.12, LangGraph, Anthropic, Pydantic, `dependency-injector` and `uv`. Dependencies in [pyproject.toml](pyproject.toml) and `uv.lock`.
 
-4. **Materials and external dependencies.** Scheduling could account for parts,
-   supplies, access permissions, or external contractors. A visit could be
-   offered once its prerequisites are ready, with the reason for any delay
-   visible to the tenant and operations team.
+## Documentation
 
-5. **Visual slot selection.** A calendar interface, such as a Calendly-style or
-   Cal.com-style booking flow, could let tenants select eligible slots directly
-   when availability is already known. This would reduce conversational
-   back-and-forth for straightforward cases, while the agent handles ambiguity,
-   exceptions, and changes. Selection would still need to respect shared agenda
-   conflicts and the handyman's availability and acceptance.
-
-Further details: [architecture](docs/TECHNICAL_ARCHITECTURE.md),
-[business rules](docs/BUSINESS_RULES.md), [implementation](docs/IMPLEMENTATION.md),
-[configuration](docs/configuration.md), [development](docs/development.md), and
-[the documentation index](docs/README.md).
-
-The original assignment brief is [available here](docs/take-home-test.pdf).
+- [Architecture and negotiation](docs/architecture-negotiation.md)
+- [Decisions and extensions](docs/decisions-tradeoffs.md)
+- [Traces and tests](docs/traces-and-tests.md)
+- [Configuration](docs/configuration.md) and [development](docs/development.md)
+- [Original brief](docs/take-home-test.pdf)
