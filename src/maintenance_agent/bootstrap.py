@@ -1,5 +1,6 @@
 """The sole composition root for the process."""
 
+import logging
 from pathlib import Path
 
 from anthropic import AsyncAnthropic
@@ -13,8 +14,17 @@ from maintenance_agent.infrastructure.anthropic_language_recognizer import (
 )
 
 
+def _configure_logging() -> None:
+    """Emit startup language codes to stderr without touching the protocol stream."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
+
+
 def build_container(csv_path: Path = Path("/app/work_orders.csv")) -> Container:
     """Read settings once and return fully wired dependencies."""
+    _configure_logging()
     settings = Settings()
     container = Container()
     container.settings.override(settings)

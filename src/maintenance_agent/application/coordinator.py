@@ -1,12 +1,15 @@
 """Per-work-order sequential queues with concurrent work-order processing."""
 
 import asyncio
+import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from typing import Any, Protocol
 
 from maintenance_agent.application.messages import InboundMessage, OutboundMessage
 from maintenance_agent.domain.work_orders import WorkOrder
 from maintenance_agent.infrastructure.cli_transport import AsyncStdoutWriter
+
+logger = logging.getLogger("maintenance_agent.coordinator")
 
 InboundNode = Callable[[InboundMessage], Awaitable[OutboundMessage]]
 
@@ -52,6 +55,11 @@ class AsyncCoordinator:
 
     async def _start(self, work_order: WorkOrder) -> None:
         state = await self._startup_graph.ainvoke({"work_order": work_order})
+        logger.info(
+            "language_recognition work_order_id=%s language=%s",
+            work_order.work_order_id,
+            state["language_recognition"].language_code.value,
+        )
         await self._writer.write(state["outbound_message"])
 
     def _dispatch(self, message: InboundMessage) -> None:
