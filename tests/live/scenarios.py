@@ -47,6 +47,10 @@ WO3_ROW = (
 )
 
 
+# Seconds to let a NO RESPONSE run its (shortened) retries; see RETRY_ENV in runner.py.
+RETRY_WAIT = 8
+
+
 def tenant(text: str, *checks: Check, wo: str = "WO-001", wait: str | float = "delivered") -> Step:
     return Step(f"{wo}|tenant {text}", checks, wait)
 
@@ -244,9 +248,23 @@ _SCENARIOS = [
             *to_proposal(),
             tenant("Acepto", decision("tenant"), not_scheduled(), wo="WO-002"),
             handyman("sí", decision("handyman"), scheduled(), no_overlapping_appointments()),
-            tenant("yes", not_scheduled(), wo="WO-002"),
-            tenant("yes", not_scheduled(), wo="WO-002"),
+            tenant("yes", not_scheduled(), wo="WO-002", wait=2),
+            tenant("yes", not_scheduled(), wo="WO-002", wait=2),
         ),
+    ),
+    Scenario(
+        "confirm_single_offer_natural_ok",
+        "One proposal on the table: 'ok me gusta' / 'me parece bien' count as yes for both",
+        (
+            *to_proposal(),
+            tenant("ok me gusta", decision("tenant"), not_scheduled(), wo="WO-002"),
+            handyman("me parece bien", decision("handyman"), scheduled()),
+        ),
+    ),
+    Scenario(
+        "confirm_single_offer_conditional_ok",
+        "'ok pero a las 5' on a single proposal is not a yes: nothing is booked",
+        (*to_proposal(), tenant("ok pero a las 5", no_decision(), not_scheduled(), wo="WO-002")),
     ),
     Scenario(
         "confirm_yes_to_changed_proposal",
@@ -430,14 +448,16 @@ _SCENARIOS = [
     ),
     Scenario(
         "format_no_response_sentinel",
-        "Only the exact <NO RESPONSE> closes an order",
+        "Only the exact <NO RESPONSE> starts the retries that end in requires_review",
         (
             tenant("<NO RESPONSE> ", no_decision(), wo="WO-001"),
             tenant(
                 "<NO RESPONSE>",
+                reply_has("Recordatorio", "Reminder"),
                 terminal("requires_review"),
                 terminal_reason_has("tenant"),
                 wo="WO-002",
+                wait=RETRY_WAIT,
             ),
         ),
     ),
@@ -510,12 +530,14 @@ _SCENARIOS = [
             ),
             tenant(
                 "<NO RESPONSE>",
+                reply_has("Recordatorio", "Reminder"),
                 terminal("requires_review"),
                 terminal_reason_has("handyman"),
                 wo="WO-002",
+                wait=RETRY_WAIT,
             ),
-            tenant("<NO RESPONSE>", silent(), wo="WO-002"),
-            tenant("Gracias, ¿hay algo más que necesite hacer?", silent(), wo="WO-002"),
+            tenant("<NO RESPONSE>", silent(), wo="WO-002", wait=2),
+            tenant("Gracias, ¿hay algo más que necesite hacer?", silent(), wo="WO-002", wait=2),
         ),
     ),
     # ------------------------------------------------------------ 8. round 2
@@ -531,6 +553,22 @@ _SCENARIOS = [
                 evidence(
                     "tenant", known_issue="tenant_alternatives does not record new availability"
                 ),
+                wo="WO-002",
+            ),
+        ),
+    ),
+    Scenario(
+        "alternatives_vague_weekday_gets_an_answer",
+        "In the alternatives state, 'puede ser el sábado?' is answered from the agenda",
+        (
+            *to_proposal(),
+            tenant("Acepto", decision("tenant"), wo="WO-002"),
+            tenant("No, cancelo, ya no me sirve", not_scheduled(), wo="WO-002"),
+            tenant(
+                "puede ser el sábado?",
+                no_evidence(),
+                reply_has("2026-10-17", "No hay espacios", "No open slots"),
+                reply_lacks_regex(r"otras fechas|other dates"),
                 wo="WO-002",
             ),
         ),

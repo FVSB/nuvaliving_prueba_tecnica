@@ -165,50 +165,47 @@ def terminal_reason_has(*needles: str, known_issue: str | None = None) -> Check:
     )
 
 
+_TABLE_ROW = re.compile(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|", re.MULTILINE)
+
+
+def _table_dates(view: StepView) -> list[str]:
+    """Dates of the slot-table rows the participant saw (the outbound guard strips SLOT- ids)."""
+    return _TABLE_ROW.findall("\n".join(m.body for m in view.messages))
+
+
 def slot_table(known_issue: str | None = None) -> Check:
     return Check(
-        "a slot table (SLOT- rows) is shown",
-        lambda v: any("SLOT-" in m.body for m in v.messages),
+        "a slot table (dated rows) is shown",
+        lambda v: bool(_table_dates(v)),
         known_issue,
     )
 
 
 def no_slot_table(known_issue: str | None = None) -> Check:
+    return Check("no slot table is shown", lambda v: not _table_dates(v), known_issue)
+
+
+def slots_not_after(last_date: str, known_issue: str | None = None) -> Check:
+    """A table must be shown and none of its rows may be later than last_date."""
     return Check(
-        "no slot table is shown",
-        lambda v: not any("SLOT-" in m.body for m in v.messages),
+        f"no slot after {last_date}",
+        lambda v: bool(_table_dates(v)) and all(day <= last_date for day in _table_dates(v)),
         known_issue,
     )
 
 
-def slots_not_after(last_date: str, known_issue: str | None = None) -> Check:
-    """Slot ids look like SLOT-20261018T1500Z01 (UTC); compare the date part."""
-    limit = last_date.replace("-", "")
-
-    def test(view: StepView) -> bool:
-        found = re.findall(r"SLOT-(\d{8})T", " ".join(m.body for m in view.messages))
-        return all(day <= limit for day in found)
-
-    return Check(f"no slot after {last_date}", test, known_issue)
-
-
 def slot_on(date: str, known_issue: str | None = None) -> Check:
-    day = date.replace("-", "")
     return Check(
         f"the slot table lists at least one slot on {date}",
-        lambda v: any(
-            d == day for d in re.findall(r"SLOT-(\d{8})T", " ".join(m.body for m in v.messages))
-        ),
+        lambda v: date in _table_dates(v),
         known_issue,
     )
 
 
 def only_slots_on(date: str, known_issue: str | None = None) -> Check:
-    day = date.replace("-", "")
-
     def test(view: StepView) -> bool:
-        found = re.findall(r"SLOT-(\d{8})T", " ".join(m.body for m in view.messages))
-        return bool(found) and all(d == day for d in found)
+        found = _table_dates(view)
+        return bool(found) and all(d == date for d in found)
 
     return Check(f"only slots of {date} are listed", test, known_issue)
 

@@ -1,21 +1,24 @@
 # Live conversation tests
 
-Scenarios that drive the real app (stdin/stdout protocol) against the real Claude API and grade
+Not unit tests and not isolated: they are end-to-end checks that run the whole app. Scenarios that drive the real app (stdin/stdout protocol) against the real Claude API and grade
 what the participants saw plus the trace events. They cost API calls and take minutes, so they are
 not part of `uv run pytest`. They need `ANTHROPIC_API_KEY` (environment or `.env`).
 
 ## Run
 
 ```bash
-uv run python integration_test/run.py --list                  # names and descriptions
-uv run python integration_test/run.py dates_calendar          # one scenario
-uv run python integration_test/run.py 'dates_*' -j 3          # glob, 3 in parallel
-uv run python integration_test/run.py --all -j 4              # everything
-uv run python integration_test/run.py --now 2026-10-12T12:00:00+02:00 ...   # clock (default)
+uv run python tests/live/run.py --list                  # names and descriptions
+uv run python tests/live/run.py dates_calendar          # one scenario
+uv run python tests/live/run.py 'dates_*' -j 3          # glob, 3 in parallel
+uv run python tests/live/run.py --all -j 4              # everything
+uv run python tests/live/run.py --now 2026-10-12T12:00:00+02:00 ...   # clock (default)
 ```
 
 The clock is frozen with `--now` (default Monday 2026-10-12 12:00 Europe/Madrid), so the known
 agenda ends on Monday 2026-10-19 (`VISIT_HORIZON_DAYS=7`) and visits are 09:00-19:00.
+The runner shortens the `<NO RESPONSE>` retries through the `NO_RESPONSE_*` environment variables
+(`NO_RESPONSE_RETRY_WAIT_SECONDS`, `NO_RESPONSE_MAX_RETRIES`, `NO_RESPONSE_POLL_SECONDS`), so the
+retry scenarios finish quickly; the retry timer still uses the real UTC clock, not `--now`.
 Run each scenario at most twice per verification round; keep `-j` at 3 or 4.
 
 ## Results
@@ -30,9 +33,18 @@ Run each scenario at most twice per verification round; keep `-j` at 3 or 4.
 
 ## Files of each run
 
-`integration_test/runs/<YYYYMMDD-HHMMSS>/<scenario>/` contains `out.txt` (what participants saw),
+`tests/live/runs/<YYYYMMDD-HHMMSS>/<scenario>/` contains `out.txt` (what participants saw),
 `traces/events.jsonl` and `traces/runtime.jsonl`, the copy of `work_orders.csv` used and the
 stderr of the process. `runs/` is local output.
+
+## Report and bottleneck analysis
+
+```bash
+uv run python tests/live/report.py runs/<timestamp>   # default: newest run
+```
+
+Writes `report/<scenario>.md` (the conversation with the system's decisions interleaved) and
+`report/SUMMARY.md` (friction signals per scenario). See the `live-conversation-analysis` skill.
 
 ## Add a scenario
 

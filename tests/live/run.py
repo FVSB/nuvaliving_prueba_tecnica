@@ -1,12 +1,12 @@
 """Run the live conversation scenarios against the real app and the real Claude API.
 
-    uv run python integration_test/run.py --list
-    uv run python integration_test/run.py dates_calendar injection_attacks
-    uv run python integration_test/run.py 'dates_*' -j 4
-    uv run python integration_test/run.py --all -j 6
+    uv run python tests/live/run.py --list
+    uv run python tests/live/run.py dates_calendar injection_attacks
+    uv run python tests/live/run.py 'dates_*' -j 4
+    uv run python tests/live/run.py --all -j 6
 
 Each scenario writes out.txt (what participants saw), traces/ (events.jsonl, runtime.jsonl) and
-work_orders.csv under integration_test/runs/<timestamp>/<scenario>/. They cost API calls and take
+work_orders.csv under tests/live/runs/<timestamp>/<scenario>/. They cost API calls and take
 minutes: the app is given the time it needs per message, not a fixed sleep.
 """
 

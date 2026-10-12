@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 DEFAULT_NOW = "2026-10-12T12:00:00+02:00"
 STARTUP_TIMEOUT = 90
 STEP_TIMEOUT = 150
@@ -157,7 +157,14 @@ class LiveRun:
         self.traces = folder / "traces"
         self.out_path = folder / "out.txt"
         self.err_path = folder / "err.txt"
-        env = {**os.environ, "TRACES_DIR": str(self.traces)}
+        env = {
+            **os.environ,
+            "TRACES_DIR": str(self.traces),
+            # Shorten the NO RESPONSE retries so a scenario sees the whole cycle in seconds.
+            "NO_RESPONSE_RETRY_WAIT_SECONDS": "1",
+            "NO_RESPONSE_MAX_RETRIES": "1",
+            "NO_RESPONSE_POLL_SECONDS": "0.5",
+        }
         self._out = self.out_path.open("w", encoding="utf-8")
         self._err = self.err_path.open("w", encoding="utf-8")
         self.proc = subprocess.Popen(
