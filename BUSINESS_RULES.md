@@ -12,7 +12,9 @@ This document is the binding functional source for the scheduling solution.
 - Emit `scheduled` only after tenant and handyman explicitly accept the same identifiable visit.
   Send confirmations to both before the terminal result. A terminal order never reopens.
 - One handyman serves every order. Visits last exactly two hours, never overlap, use
-  `Europe/Madrid`, and competing known availability favors `Critical > High > Medium > Low`.
+  `Europe/Madrid`, and competing known availability favors `Critical > High > Medium > Low`. Local
+  time defaults to `Europe/Madrid` and is set once at startup through the approved `LOCAL_TIMEZONE`
+  setting.
 - The handyman is always addressed in Spanish. The tenant is addressed in the language of the
   order, Spanish or English.
 - Start all CSV orders on container startup without awaiting any previous conversation. Receive

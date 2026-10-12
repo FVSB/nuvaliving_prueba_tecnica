@@ -26,7 +26,7 @@ Las rutas anteriores son propuestas para la aplicación, no una afirmación de a
 
 | Parámetro | Categoría | Entorno / estado | Restricción |
 |---|---|---|---|
-| Zona horaria | Regla de negocio vinculante | Constante `Europe/Madrid` | No alterar por entorno |
+| Zona horaria | Configuración startup-only aprobada | `LOCAL_TIMEZONE=Europe/Madrid` | IANA válida; aplica solo a nuevas corridas |
 | Duración visita | Regla de negocio vinculante | Constante de dos horas | Semántica DST pendiente; no cambiar duración |
 | Número de handyman | Regla de negocio vinculante | Constante: uno | No parametrizar para cambiar contrato |
 | CSV | Regla de negocio vinculante | `/app/work_orders.csv`, solo lectura | Mantener ruta de evaluación |
@@ -72,3 +72,42 @@ El comando de evaluación documentado en `BUSINESS_RULES.md` monta `./traces` de
 8. Guardar resultado verificado y rutas en Engram con claves separadas por tema, sin secretos.
 
 No detener una evaluación o corrida con órdenes pendientes automáticamente para aplicar configuración. Registrar qué quedó propuesto, aprobado, implementado y verificado.
+
+## Implemented async CLI bootstrap (task 002)
+
+The initial runnable slice reads `ANTHROPIC_API_KEY` once through startup settings. It is optional
+until an Anthropic-backed node is enabled; values are never written to standard output or standard
+error. `.env` is optional and `.env.example` intentionally contains no credential.
+
+The composition root is `src/maintenance_agent/bootstrap.py`. It builds the dependency-injector
+container and injects a non-blocking stdin reader, serialized stdout writer, and the first
+coordination node. No node reads environment variables directly.
+
+During this slice, each valid live input has the binding shape:
+
+```text
+<work_order_id>|<role> <message body>
+```
+
+where role is `tenant` or `handyman`. The body can contain further `|` characters unchanged. The
+initial node echoes the body in one flushed, non-interleaved output block addressed to the stated
+WO and role. A queue serializes events per WO while different WOs progress asynchronously.
+
+Malformed input, unknown IDs, EOF outcomes, and terminal-output policy remain explicitly pending
+and must not be assigned behavior until `BUSINESS_RULES.md` is approved accordingly.
+
+
+## Zona horaria local aprobada
+
+`LOCAL_TIMEZONE` se lee una sola vez al arrancar y usa `Europe/Madrid` por defecto. Debe ser un
+identificador IANA instalado (por ejemplo, `Europe/Madrid`). El lector CSV normaliza `reported_at`
+a esta zona conservando el instante original y rechaza marcas de tiempo sin offset. Cambiarla
+requiere reiniciar el proceso o contenedor; nunca modifica una corrida activa.
+
+## Local CSV selection
+
+For development run `uv run maintenance-agent --csv ./work_orders.csv`. The argument is passed
+to the composition root and injected into the CSV adapter once. Without it, local and Docker
+execution both retain `/app/work_orders.csv`. No extra environment variable is introduced.
+The root production Dockerfile uses the same `uv.lock` and receives secrets with `--env-file`
+at runtime, never during the build.

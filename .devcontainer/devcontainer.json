@@ -1,6 +1,5 @@
 {
   "name": "nuvaliving-test",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
@@ -14,23 +13,37 @@
   "containerEnv": {
     "CODEX_HOME": "/home/vscode/.codex",
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
-    "ENGRAM_DATA_DIR": "/home/vscode/.engram",
+    "ENGRAM_DATA_DIR": "${localWorkspaceFolder}/.engram-data",
     "ENGRAM_PROJECT": "nuvaliving_test",
     "GOPATH": "/home/vscode/go",
-    "PATH": "/home/vscode/go/bin:${containerEnv:PATH}"
+    "PATH": "/home/vscode/go/bin:${containerEnv:PATH}",
+    "UV_PROJECT_ENVIRONMENT": "/home/vscode/.venvs/maintenance-agent"
   },
   "mounts": [
     "source=nuvaliving-codex-${devcontainerId},target=/home/vscode/.codex,type=volume",
     "source=nuvaliving-claude-${devcontainerId},target=/home/vscode/.claude,type=volume",
     "source=nuvaliving-engram-${devcontainerId},target=/home/vscode/.engram,type=volume",
-    "source=nuvaliving-go-${devcontainerId},target=/home/vscode/go,type=volume"
+    "source=nuvaliving-go-${devcontainerId},target=/home/vscode/go,type=volume",
+    "source=${localWorkspaceFolder}/work_orders.csv,target=/app/work_orders.csv,type=bind,readonly",
+    "source=${localWorkspaceFolder}/traces,target=/app/traces,type=bind",
+    "source=nuvaliving-python-${devcontainerId},target=/home/vscode/.venvs,type=volume"
   ],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {
       "extensions": [
-        "anthropic.claude-code"
+        "anthropic.claude-code",
+        "ms-python.python",
+        "charliermarsh.ruff"
       ]
     }
-  }
+  },
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "initializeCommand": "mkdir -p traces",
+  "postStartCommand": "bash .devcontainer/post-start.sh"
 }

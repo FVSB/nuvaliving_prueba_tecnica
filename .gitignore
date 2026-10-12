@@ -1,5 +1,33 @@
+# Local development tools and generated workspace data
 .engram-data/
 .tools/
 .go-work/
 .codex-engram/
 .mcp.json
+.aegis/
+.codegraph/daemon.pid
+
+# Python virtual environments, bytecode, caches, and build artifacts
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local environment secrets and configuration
+.env
+.env.*
+!.env.example
+
+
+.env
+
+# Development tool install and generated traces
+.devcontainer/node_modules/
+traces/

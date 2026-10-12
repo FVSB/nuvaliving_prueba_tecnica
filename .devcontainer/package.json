@@ -1,0 +1,9 @@
+{
+  "name": "nuvaliving-development-tools",
+  "private": true,
+  "description": "Versioned tools installed on every dev-container creation",
+  "dependencies": {
+    "@openai/codex": "0.162.1",
+    "@colbymchenry/codegraph": "0.9.5"
+  }
+}
