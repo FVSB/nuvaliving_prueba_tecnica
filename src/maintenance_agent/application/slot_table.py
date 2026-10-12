@@ -417,7 +417,7 @@ def render_horizon_limit(language: str, last_known: date) -> str:
 
 
 def format_local_date(day: date, language: str) -> str:
-    """Date with its correct weekday, e.g. 'martes 2026-10-13' / 'Tuesday 2026-10-13'."""
+    """Date with its correct weekday, e.g. 'Lunes 2026-10-12' / 'Monday 2026-10-12'."""
     names = WEEKDAYS_ES if language == "es" else WEEKDAYS_EN
     return f"{names[day.weekday()]} {day.isoformat()}"
 

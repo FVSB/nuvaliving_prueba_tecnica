@@ -7,6 +7,7 @@ Last updated: 2026-10-12
 ## Sources scanned
 
 - .agents/skills
+- /home/fvsb/.claude/skills
 - /home/fvsb/.codex/skills
 
 ## Contract
@@ -20,6 +21,7 @@ Last updated: 2026-10-12
 | Skill | Trigger / description | Scope | Path |
 | --- | --- | --- | --- |
 | `gentle-review` | Run or continue a Gentle-AI evidence review when the user explicitly requests a Gentle review or a reliability, risk, resilience, or readability review. | project | `/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.agents/skills/gentle-review/SKILL.md` |
+| `live-conversation-analysis` | Run the live scripted conversation scenarios against the real Claude API, turn each run into markdown transcripts and find conversation bottlenecks (rejected drafts, fallbacks, invalid dates, misunderstood inconsistencies). Use when verifying scheduling behaviour end to end or hunting regressions in how the agent talks; not for unit tests. | project | `/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.agents/skills/live-conversation-analysis/SKILL.md` |
 | `maintain-runtime-configuration` | Maintain startup-only configuration, dependency-injector wiring and run-scoped JSONL logging for the NUVa scheduling agent, with approval, synchronized documentation and Engram records. Use when adding or changing application settings or logging; not for live reconfiguration. | project | `/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.agents/skills/maintain-runtime-configuration/SKILL.md` |
 | `prefer-inheritance` | Prefer inheritance for project models with a clear shared semantic contract; ask the user when the relationship is ambiguous. | project | `/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.agents/skills/prefer-inheritance/SKILL.md` |
 | `speckit-analyze` | Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation. | project | `/home/fvsb/projects/personal/pruebas_tecnicas/nuvaliving_test/.agents/skills/speckit-analyze/SKILL.md` |

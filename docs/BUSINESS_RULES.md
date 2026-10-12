@@ -21,9 +21,33 @@ This document is the binding functional source for the scheduling solution.
 - Start all CSV orders on container startup without awaiting any previous conversation. Receive
   messages for every unfinished order in arbitrary order.
 - Only a body exactly equal to `<NO RESPONSE>` from tenant or handyman on an unfinished order is a
-  human-timeout event: atomically close it as `requires_review` immediately, with no retry or
-  approval. Prefix/suffix/whitespace variants do not match. A delayed message cannot change a
-  terminal result. Do not use wall-clock timeouts or treat provider failure as human absence.
+  human-silence event. It does not count as approval. Prefix/suffix/whitespace variants do not match.
+  Retries are controlled by `no_response_retries_enabled` in `config/business_rules.json` (default
+  `false`). When `false`, the first sentinel closes the order at once as `requires_review` with the
+  REASON `No response from <role> while awaiting <action> after 0 retries.` and nothing below applies.
+  When `true`, the order enters state `RETRYING` and is placed in a min-heap keyed by the
+  UTC time at which it was placed. Every `NO_RESPONSE_POLL_SECONDS` (default 10) the coordinator checks
+  the heap. When `now_utc - placed_at >= NO_RESPONSE_RETRY_WAIT_SECONDS` (default 300), the silent role
+  (the role that owes the pending answer, not necessarily the sender of the sentinel) receives a fixed
+  reminder line followed by the original unanswered message: `Recordatorio: seguimos esperando su respuesta
+  a nuestro mensaje anterior.` for the handyman and for Spanish tenants, and `Reminder: we are still waiting
+  for your reply to our previous message.` otherwise. The order is then re-placed in the heap with a new
+  UTC time. At most `NO_RESPONSE_MAX_RETRIES` (default 3) reminders are sent. When all retries were sent
+  and one more wait elapses without an answer, the order closes as `requires_review` with the REASON
+  `No response from <role> while awaiting <action> after <n> retries.` Reminders do not change the
+  single-line REASON format.
+- Any normal message from the silent role cancels the retries, and that message is processed normally.
+  A repeated `<NO RESPONSE>` while retrying is ignored (traced). A terminal order cancels its retries; a
+  delayed sentinel on a terminal order still changes nothing. Messages from the other role do not cancel
+  the retries. When stdin ends (EOF), orders still in `RETRYING` close immediately as `requires_review`
+  without waiting, because no human can answer anymore.
+- The only timer is the retry timer started by the sentinel. It uses the real UTC clock, never the
+  business clock frozen by `--now`. Provider failures are still not human absence. `Date` and
+  relative-date meaning never depend on wall-clock time.
+- `no_response_retries_enabled` lives in the versioned business rules JSON, validated at startup.
+  The three retry settings (`NO_RESPONSE_RETRY_WAIT_SECONDS`, `NO_RESPONSE_MAX_RETRIES`,
+  `NO_RESPONSE_POLL_SECONDS`) are startup-only environment variables read once by Settings. Every
+  setting except `ANTHROPIC_API_KEY` has a default, so the app runs without a `.env`.
 - A malformed inbound CLI line (no `|` separator or an invalid role, so no sender can be
   identified) is ignored, logged to the current run's `runtime.jsonl` as `malformed_input` with its
   length, validation reason, and submitted line, and does not stop the process. A line with a
@@ -91,8 +115,14 @@ REASON:No mutually acceptable visit time: tenant requested 2026-10-08 09:00–11
 
 ```text
 WOID:WO-004|RESULT:requires_review
-REASON:No response from handyman while awaiting availability for tenant-requested 2026-10-08 09:00–11:00 Europe/Madrid.
+REASON:No response from handyman while awaiting availability for tenant-requested 2026-10-08 09:00–11:00 Europe/Madrid after 3 retries.
 ```
+
+The REASON line keeps this single-line format. Reminders sent during retries do not add lines to the frame.
+When the order is closed because stdin ended while retrying, the same REASON ends with
+`; input ended before the retries finished.` instead of a plain `after <n> retries.`
+(Before the 2026-10-12 retry rule, the sentinel closed the order immediately and this REASON omitted the
+retry count.)
 
 Normal stdout and stderr contain protocol data only. Traces and runtime logs go to
 `/app/traces` as JSONL; every functional event records timestamp, work-order ID, event type,
@@ -104,6 +134,12 @@ Availability is not acceptance. Both explicit acceptances must match the same im
 proposal ID/version; a changed visit invalidates old acceptance. A complete two-hour interval is
 required. Consecutive intervals that only meet at their boundary do not overlap. Revalidate the
 shared schedule immediately before mutation. Never invent availability, consent, or dates.
+
+Single-offer acceptance: when a question concerns exactly one offered slot or proposal, a short
+natural acceptance ("ok me gusta", "acepto", "me parece bien", "sounds good") is an explicit yes,
+because only one option exists. With several options, a loose acceptance is never a yes; ask which
+slot is accepted. A negation, condition ("ok pero…", "si pero no"), change request, question, date
+or time, or a long reply is never a natural acceptance.
 
 Negotiation begins by asking the tenant for all explicit availability intervals. Normalize them to
 absolute time and split from each stated start into consecutive two-hour candidates; ignore a

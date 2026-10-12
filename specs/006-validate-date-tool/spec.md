@@ -27,7 +27,7 @@ run 09:00-19:00 and asks for another time; `events.jsonl` has `availability_reje
 **Acceptance Scenarios**:
 
 1. **Given** the reference time 2026-10-12T12:00:00+02:00, **When** a participant offers 03:00-05:00
-   on 2026-10-13, **Then** the interval is rejected as `outside_visit_hours`, nothing is recorded as
+   on 2026-10-12, **Then** the interval is rejected as `outside_visit_hours`, nothing is recorded as
    availability, and the sender receives the reason and a re-ask.
 2. **Given** a date in 2062, **When** validated, **Then** it is rejected as `too_far_ahead`.
 3. **Given** "lunes 14 de octubre" where 14 October 2026 is a Wednesday, **When** validated, **Then**

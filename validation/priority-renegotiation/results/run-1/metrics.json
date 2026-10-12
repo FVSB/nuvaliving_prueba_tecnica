@@ -1,0 +1,194 @@
+{
+  "summary": {
+    "work_orders": 8,
+    "scheduled": 7,
+    "requires_review": 1,
+    "preemptions": 2,
+    "displaced_work_orders": [
+      "WO-003",
+      "WO-004"
+    ],
+    "holds_released": 2,
+    "handyman_declines": 0,
+    "slot_suggestion_tables": 4,
+    "outgoing_messages": 66,
+    "inbound_messages": 53,
+    "wall_clock_seconds": 161.6,
+    "checks_passed": 10,
+    "checks_total": 10
+  },
+  "per_work_order": {
+    "WO-001": {
+      "urgency": "Critical",
+      "language": "en",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-14T10:00:00+02:00",
+      "seconds_to_terminal": 49.2,
+      "messages_to_tenant": 3,
+      "messages_to_handyman": 3,
+      "inbound_messages": 5,
+      "availability_revisions": 2,
+      "holds_released": 0,
+      "times_displaced": 0,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 0
+    },
+    "WO-002": {
+      "urgency": "High",
+      "language": "es",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-16T09:00:00+02:00",
+      "seconds_to_terminal": 39.3,
+      "messages_to_tenant": 4,
+      "messages_to_handyman": 3,
+      "inbound_messages": 5,
+      "availability_revisions": 2,
+      "holds_released": 0,
+      "times_displaced": 0,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 1
+    },
+    "WO-003": {
+      "urgency": "Low",
+      "language": "en",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-15T16:00:00+02:00",
+      "seconds_to_terminal": 123.5,
+      "messages_to_tenant": 8,
+      "messages_to_handyman": 8,
+      "inbound_messages": 14,
+      "availability_revisions": 9,
+      "holds_released": 1,
+      "times_displaced": 1,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 0
+    },
+    "WO-004": {
+      "urgency": "Medium",
+      "language": "es",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-16T11:00:00+02:00",
+      "seconds_to_terminal": 161.6,
+      "messages_to_tenant": 9,
+      "messages_to_handyman": 8,
+      "inbound_messages": 14,
+      "availability_revisions": 8,
+      "holds_released": 1,
+      "times_displaced": 1,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 2
+    },
+    "WO-005": {
+      "urgency": "High",
+      "language": "en",
+      "result": "requires_review",
+      "detail": "REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question dc1ef272daf4437888ad7073da59aaf5; tenant requested intervals unknown.",
+      "seconds_to_terminal": 5.1,
+      "messages_to_tenant": 1,
+      "messages_to_handyman": 0,
+      "inbound_messages": 1,
+      "availability_revisions": 0,
+      "holds_released": 0,
+      "times_displaced": 0,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 0
+    },
+    "WO-006": {
+      "urgency": "Low",
+      "language": "es",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-15T09:00:00+02:00",
+      "seconds_to_terminal": 88.4,
+      "messages_to_tenant": 4,
+      "messages_to_handyman": 3,
+      "inbound_messages": 5,
+      "availability_revisions": 2,
+      "holds_released": 0,
+      "times_displaced": 0,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 1
+    },
+    "WO-007": {
+      "urgency": "Critical",
+      "language": "es",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-14T12:00:00+02:00",
+      "seconds_to_terminal": 85.7,
+      "messages_to_tenant": 3,
+      "messages_to_handyman": 3,
+      "inbound_messages": 4,
+      "availability_revisions": 2,
+      "holds_released": 0,
+      "times_displaced": 0,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 0
+    },
+    "WO-008": {
+      "urgency": "Medium",
+      "language": "en",
+      "result": "scheduled",
+      "detail": "SCHEDULED_FOR:2026-10-16T14:00:00+02:00",
+      "seconds_to_terminal": 26.1,
+      "messages_to_tenant": 3,
+      "messages_to_handyman": 3,
+      "inbound_messages": 5,
+      "availability_revisions": 2,
+      "holds_released": 0,
+      "times_displaced": 0,
+      "handyman_declines": 0,
+      "slot_suggestion_tables": 0
+    }
+  },
+  "checks": [
+    {
+      "name": "every work order ends with exactly one terminal result",
+      "ok": true,
+      "note": "{'WO-001': 1, 'WO-002': 1, 'WO-003': 1, 'WO-004': 1, 'WO-005': 1, 'WO-006': 1, 'WO-007': 1, 'WO-008': 1}"
+    },
+    {
+      "name": "stdout carries exactly one RESULT frame per work order",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "name": "stderr is empty",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "name": "no two scheduled visits overlap",
+      "ok": true,
+      "note": "[]"
+    },
+    {
+      "name": "scheduled visits are inside 09:00-19:00",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "name": "at least one higher-urgency order displaced a tentative hold",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "name": "every displacement goes from a strictly higher to a lower urgency",
+      "ok": true,
+      "note": "[]"
+    },
+    {
+      "name": "each displaced tenant receives a displacement notice",
+      "ok": true,
+      "note": "['WO-003', 'WO-004']"
+    },
+    {
+      "name": "displaced orders end with a different, non-overlapping slot",
+      "ok": true,
+      "note": "['WO-003', 'WO-004']"
+    },
+    {
+      "name": "silent tenant produces requires_review with a no-response reason",
+      "ok": true,
+      "note": "['WO-005']"
+    }
+  ]
+}

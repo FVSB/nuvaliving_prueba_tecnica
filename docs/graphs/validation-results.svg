@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="348" viewBox="0 0 1000 348" role="img" aria-labelledby="t d">
+<title id="t">Validation results</title>
+<desc id="d">Bars with results: pytest, live scenarios, Docker priority validation and the Docker battery built from the take-home brief.</desc>
+<rect width="1000" height="348" fill="#ffffff"/>
+<text x="20" y="34" font-family="sans-serif" font-size="20" font-weight="bold" fill="#111">Validation results</text>
+<text x="20" y="56" font-family="sans-serif" font-size="12" fill="#444">Green = pass · Yellow = partial / no observed close · Blue (2) = failed and fixed in code</text>
+<text x="20" y="103" font-family="sans-serif" font-size="14" fill="#111">Automated tests (pytest)</text>
+<rect x="340.0" y="84" width="500.0" height="30" rx="3" fill="#2e7d32"/>
+<text x="348.0" y="104" font-family="sans-serif" font-size="13" fill="#fff" font-weight="bold">472 of 472 pass</text>
+<text x="20" y="165" font-family="sans-serif" font-size="14" fill="#111">Live scenarios, real API (36)</text>
+<rect x="340.0" y="146" width="500.0" height="30" rx="3" fill="#2e7d32"/>
+<text x="348.0" y="166" font-family="sans-serif" font-size="13" fill="#fff" font-weight="bold">223 PASS</text>
+<text x="852.0" y="166" font-family="sans-serif" font-size="13" fill="#c62828" font-weight="bold">0 FAIL</text>
+<text x="20" y="227" font-family="sans-serif" font-size="14" fill="#111">Docker priority validation</text>
+<rect x="340.0" y="208" width="500.0" height="30" rx="3" fill="#2e7d32"/>
+<text x="348.0" y="228" font-family="sans-serif" font-size="13" fill="#fff" font-weight="bold">10 of 10 checks</text>
+<text x="20" y="289" font-family="sans-serif" font-size="14" fill="#111">Docker battery from the brief (15)</text>
+<rect x="340.0" y="270" width="300.0" height="30" rx="3" fill="#2e7d32"/>
+<text x="348.0" y="290" font-family="sans-serif" font-size="13" fill="#fff" font-weight="bold">9 PASS</text>
+<rect x="640.0" y="270" width="133.3" height="30" rx="3" fill="#f9a825"/>
+<text x="648.0" y="290" font-family="sans-serif" font-size="13" fill="#111" font-weight="bold">4 partial</text>
+<rect x="773.3" y="270" width="66.7" height="30" rx="3" fill="#1565c0"/>
+<text x="781.3" y="290" font-family="sans-serif" font-size="13" fill="#fff" font-weight="bold">2</text>
+</svg>

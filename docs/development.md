@@ -6,7 +6,7 @@ Python 3.12+ and uv are required. From the repository root:
 
 ```bash
 uv sync --frozen --all-groups
-uv run maintenance-agent --csv ./work_orders.csv
+uv run maintenance-agent --csv ./examples/work_orders.csv
 ```
 
 No environment activation or development container is required. The two CSV work orders emit
@@ -30,7 +30,7 @@ Malformed CLI lines are ignored and recorded with their submitted text in the cu
 dates ("tomorrow", "next week") and past-date checks give the same result on every run:
 
 ```bash
-uv run maintenance-agent --csv ./work_orders.csv --now 2026-10-12T12:00:00+02:00
+uv run maintenance-agent --csv ./examples/work_orders.csv --now 2026-10-12T12:00:00+02:00
 ```
 
 The offset is mandatory; a naive or invalid timestamp is rejected by argparse. The clock does not
@@ -46,14 +46,14 @@ the same Python lockfile, without development tools, workspace agents, indexes o
 mkdir -p traces
 docker build -t agent .
 docker run --rm --env-file .env -i \
-  -v "$(pwd)/work_orders.csv:/app/work_orders.csv:ro" \
+  -v "$(pwd)/examples/work_orders.csv:/app/work_orders.csv:ro" \
   -v "$(pwd)/traces:/app/traces" \
   agent
 ```
 
 The evaluator run was verified on 2026-10-12: the image built, and the container exited
 successfully with empty stderr. With Anthropic configured, startup recognized both English and
-Spanish work orders; exact `<NO RESPONSE>` inputs produced one `requires_review` result per order.
+Spanish work orders; exact `<NO RESPONSE>` inputs produced one `requires_review` result per order. (Before the 2026-10-12 retry rule, these closed immediately; the current rule enters `RETRYING` first.)
 Captured input, output, and traces are in [`examples/docker-run/`](../examples/docker-run/).
 This smoke run checks Docker startup, protocol, and timeout behavior. It does not cover a
 successful scheduled negotiation inside Docker. The local suite passed 357 tests on this date.
@@ -75,11 +75,15 @@ the standalone application Dockerfile builds.
    `WO-001|tenant Hola | necesito ayuda`, followed by Enter.
 5. Run `uv run pytest` and `uv run ruff check src tests` for checks.
 
-The root `work_orders.csv` is the supplied development example. It is mounted read-only at
+`examples/work_orders.csv` is the supplied development example. It is mounted read-only at
 `/app/work_orders.csv`. Edit it from the workspace and restart the CLI to reload it. Host `traces/`
 is mounted at `/app/traces`. Every process run writes JSONL files below
 `/app/traces/runs/<Madrid_start_with_offset>-<run_id>/`.
+The container runs as root, so those folders are root-owned on the host. Add
+`--user "$(id -u):$(id -g)"` to `docker run` to create them with your own user.
 An optional workspace `.env` is read by the application at startup, not copied into the image.
+The business rules file `config/business_rules.json` is copied into the image and read from
+`BUSINESS_RULES_PATH` (`/app/config/business_rules.json` in Docker). Rebuild the image after changing it.
 Use `.env.example` with `LOCAL_TIMEZONE=Europe/Madrid` and keep real credentials out of Git.
 
 ## Shared files versus persistent tools
@@ -183,8 +187,8 @@ Exact texts: `specs/006-validate-date-tool/spec.md`.
 
 ## Live conversation tests
 
-Scenarios against the real API (not part of `pytest`) live in `integration_test/`; see
-[`integration_test/README.md`](../integration_test/README.md) for how to run them, what
+Scenarios against the real API (not part of `pytest`) live in `tests/live/`; see
+[`tests/live/README.md`](../tests/live/README.md) for how to run them, what
 PASS/FAIL/XFAIL/XPASS mean and how to add one.
 
 ## Run traces

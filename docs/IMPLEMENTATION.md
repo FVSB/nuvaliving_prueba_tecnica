@@ -15,7 +15,7 @@ Un agente CLI (Docker) coordina, por cada orden de trabajo del CSV, a un **inqui
 
 Restricciones del enunciado: visitas de 2 h sin solapes, prioridad `Critical > High > Medium > Low`,
 handyman siempre en español, inquilino en el idioma de la orden, zona `Europe/Madrid`, varias
-órdenes simultáneas con respuestas en cualquier orden, `<NO RESPONSE>` como timeout (sin relojes),
+órdenes simultáneas con respuestas en cualquier orden, `<NO RESPONSE>` como silencio humano con reintentos (el único temporizador es el de reintento, con reloj UTC real),
 stdout/stderr **solo** para el protocolo y trazas JSONL en `/app/traces`.
 
 ## 2. Qué implementamos
@@ -161,8 +161,14 @@ propuesta pendiente equivale a rechazarla.
    las confirmaciones a ambos se envían de forma secuencial e idempotente **antes** del marco
    terminal. Si falla un envío, la cita se conserva y no se emite un terminal prematuro. Un mensaje
    tardío nunca cambia un resultado terminal.
-6. **`<NO RESPONSE>` exacto.** Solo el cuerpo idéntico cierra la orden como `requires_review`, sin
-   reintentos y sin relojes; variantes con espacios/prefijos no coinciden.
+6. **`<NO RESPONSE>` exacto.** Solo el cuerpo idéntico pone la orden en `RETRYING`: una cola de
+   mínimos por hora UTC de colocación, sondeada cada `NO_RESPONSE_POLL_SECONDS` (10 s por defecto). Tras
+   `NO_RESPONSE_RETRY_WAIT_SECONDS` (300 s) se envía al rol en silencio un recordatorio fijo seguido del
+   mensaje original, como máximo `NO_RESPONSE_MAX_RETRIES` (3) veces. Tras una espera más sin respuesta,
+   la orden se cierra como `requires_review`. Un mensaje normal del rol en silencio cancela los reintentos;
+   un `<NO RESPONSE>` repetido se ignora (traza). Al llegar EOF, las órdenes en `RETRYING` se cierran
+   de inmediato. Las variantes con espacios/prefijos no coinciden. Los ajustes son variables de entorno
+   de arranque leídas una vez por Settings. Ver `docs/BUSINESS_RULES.md`.
 7. **Razones de revisión deterministas.** `REASON` sale de un código (`no_response`,
    `no_common_availability`, `no_eligible_slot`) más evidencia registrada; si algo se desconoce, se
    dice, nunca se inventa. Si la evidencia completa demuestra que no hay hueco común, primero se
@@ -220,10 +226,10 @@ petición vaga). Los tests con Anthropic real están separados de los que usan f
 ```bash
 docker build -t agent .
 docker run --env-file .env -i \
-  -v "$(pwd)/work_orders.csv:/app/work_orders.csv:ro" \
+  -v "$(pwd)/examples/work_orders.csv:/app/work_orders.csv:ro" \
   -v "$(pwd)/traces:/app/traces" \
   agent
 ```
 
-Desarrollo local: `uv run maintenance-agent --csv ./work_orders.csv`. `.env` contiene
+Desarrollo local: `uv run maintenance-agent --csv ./examples/work_orders.csv`. `.env` contiene
 `ANTHROPIC_API_KEY` (no se versiona; ver `.env.example`).
