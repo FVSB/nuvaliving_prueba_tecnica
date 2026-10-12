@@ -4,8 +4,12 @@ import argparse
 import asyncio
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from maintenance_agent.bootstrap import build_container
+
+if TYPE_CHECKING:
+    from maintenance_agent.application.coordinator import InboundReader
 
 
 def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -20,9 +24,14 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-async def run(csv_path: Path = Path("/app/work_orders.csv")) -> None:
+async def run(
+    csv_path: Path = Path("/app/work_orders.csv"),
+    stdin_reader: "InboundReader | None" = None,
+) -> None:
     """Load work orders and start asynchronous live message coordination."""
     container = build_container(csv_path=csv_path)
+    if stdin_reader is not None:
+        container.stdin_reader.override(stdin_reader)
     work_orders = await container.csv_work_order_reader().read()
     await container.coordinator().run(work_orders)
 

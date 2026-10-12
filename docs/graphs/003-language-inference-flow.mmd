@@ -1,0 +1,5 @@
+flowchart LR
+    START([START]) --> RECOGNIZE[recognize_language]
+    RECOGNIZE --> INITIALIZE[initialize_coordination]
+    INITIALIZE --> CONTINUE([existing coordination flow])
+    RECOGNIZE --> STATE[(SchedulingState.language_recognition)]

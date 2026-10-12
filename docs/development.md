@@ -123,3 +123,10 @@ npx --yes @devcontainers/cli@0.80.0 up --workspace-folder "$PWD"
 
 The lifecycle setup consumes the versioned manifests above. This CLI is only a host bootstrap tool;
 VS Code supplies its own Dev Containers CLI.
+
+## Language-recognition dependencies
+
+`langgraph` compiles the scheduling pipeline and `anthropic` supplies the optional, injected
+language-recognition adapter. Install or update them only with `uv add langgraph anthropic`, which
+updates both `pyproject.toml` and `uv.lock`. Focused tests use a static recognizer and do not
+require `ANTHROPIC_API_KEY`; a configured key selects the Anthropic adapter at startup.
