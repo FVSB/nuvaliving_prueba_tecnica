@@ -1,0 +1,36 @@
+{
+  "name": "nuvaliving-test",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.24"
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "CODEX_HOME": "/home/vscode/.codex",
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "ENGRAM_DATA_DIR": "/home/vscode/.engram",
+    "ENGRAM_PROJECT": "nuvaliving_test",
+    "GOPATH": "/home/vscode/go",
+    "PATH": "/home/vscode/go/bin:${containerEnv:PATH}"
+  },
+  "mounts": [
+    "source=nuvaliving-codex-${devcontainerId},target=/home/vscode/.codex,type=volume",
+    "source=nuvaliving-claude-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    "source=nuvaliving-engram-${devcontainerId},target=/home/vscode/.engram,type=volume",
+    "source=nuvaliving-go-${devcontainerId},target=/home/vscode/go,type=volume"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+    }
+  }
+}
