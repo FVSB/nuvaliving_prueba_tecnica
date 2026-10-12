@@ -13,19 +13,25 @@ from maintenance_agent.infrastructure.anthropic_language_recognizer import (
     AnthropicLanguageRecognizer,
 )
 
+_QUIET_THIRD_PARTY_LOGGERS = ("httpx", "httpcore", "anthropic")
 
-def _configure_logging() -> None:
-    """Emit one structured log line per node transition without touching the protocol stream."""
+
+def _configure_logging(level_name: str) -> None:
+    """Keep stderr quiet by default; emit structured records only when the operator opts in."""
+    level = getattr(logging, level_name.upper(), logging.WARNING)
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format="%(asctime)s %(levelname)s %(message)s",
+        force=True,
     )
+    for logger_name in _QUIET_THIRD_PARTY_LOGGERS:
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
 def build_container(csv_path: Path = Path("/app/work_orders.csv")) -> Container:
     """Read settings once and return fully wired dependencies."""
-    _configure_logging()
     settings = Settings()
+    _configure_logging(settings.log_level)
     container = Container()
     container.settings.override(settings)
     container.csv_path.override(csv_path)
