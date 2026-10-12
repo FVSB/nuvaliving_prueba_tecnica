@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Valid-message reflection is the sole functional behavior. Binding policies explicitly pending in `BUSINESS_RULES.md` are intentionally not implemented.
+- Valid-message reflection is the sole functional behavior. Binding policies explicitly pending in `docs/BUSINESS_RULES.md` are intentionally not implemented.

@@ -136,10 +136,10 @@ If the exact incoming body `<NO RESPONSE>` arrives from either participant on an
 
 ## Assumptions
 
-- The current read-only CSV and CLI framing remain as documented in `BUSINESS_RULES.md`.
+- The current read-only CSV and CLI framing remain as documented in `docs/BUSINESS_RULES.md`.
 - `Europe/Madrid` is the default presentation zone. UTC is the normalized comparison/storage form.
 - Overlapping/adjacent tenant intervals are merged before initial slicing into consecutive two-hour candidates; shorter remainders are ignored. A handyman counterproposal is permitted only when fully contained in that original tenant interval union. No external calendar is available.
 - A pending hold is mechanical agenda ownership; it does not itself ask a participant for approval. Participant decisions happen only at consent questions.
 - A yes/no interpretation decision is valid only for a unique currently outstanding question. Since stdin messages carry no correlation version, the system cannot perfectly distinguish every delayed duplicate; ambiguous cases require full-slot reconfirmation.
 - Existing runtime dependency injection and JSONL trace facilities are reused; this feature introduces no setting, dependency, service, or external channel.
-- Policy changes described here are approved for synchronization to `BUSINESS_RULES.md`; implementation remains proposed until separately executed and verified.
+- Policy changes described here are approved for synchronization to `docs/BUSINESS_RULES.md`; implementation remains proposed until separately executed and verified.

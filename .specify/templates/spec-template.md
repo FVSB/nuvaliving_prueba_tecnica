@@ -90,7 +90,7 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
-*For scheduling workflow features, requirements MUST reference `BUSINESS_RULES.md`; they must not
+*For scheduling workflow features, requirements MUST reference `docs/BUSINESS_RULES.md`; they must not
 invent policy for agreement, priority, timeouts, CSV/CLI contracts, or terminal results.*
 
 *Example of marking unclear requirements:*

@@ -41,7 +41,7 @@ An operator supplies startup configuration, including an Anthropic credential wh
 - A valid message body contains one or more `|` characters after the role separator.
 - Input for separate work orders arrives rapidly or concurrently.
 - The configured Anthropic credential is absent while no AI workflow step is enabled.
-- Invalid framing, unknown work-order identifiers, end-of-input behavior, and terminal-result separators remain excluded pending explicit policy approval in `BUSINESS_RULES.md`.
+- Invalid framing, unknown work-order identifiers, end-of-input behavior, and terminal-result separators remain excluded pending explicit policy approval in `docs/BUSINESS_RULES.md`.
 
 ## Requirements *(mandatory)*
 
@@ -56,7 +56,7 @@ An operator supplies startup configuration, including an Anthropic credential wh
 - **FR-007**: The system MUST recognize `ANTHROPIC_API_KEY` as a startup credential, never include its value in protocol output, and not require it while no Anthropic workflow step is enabled.
 - **FR-008**: The system MUST read the binding CSV once at startup, validate each work order, normalize reported timestamps to the startup local timezone, and start each valid WO with a Spanish handyman message.
 - **FR-009**: The system MUST use `LOCAL_TIMEZONE`, defaulting to `Europe/Madrid`, as a validated startup-only IANA timezone.
-- **FR-010**: The system MUST not assign behavior to malformed messages, unknown work-order IDs, EOF, or terminal separators until their pending policies are approved in `BUSINESS_RULES.md`.
+- **FR-010**: The system MUST not assign behavior to malformed messages, unknown work-order IDs, EOF, or terminal separators until their pending policies are approved in `docs/BUSINESS_RULES.md`.
 
 ### Key Entities *(include if feature involves data)*
 

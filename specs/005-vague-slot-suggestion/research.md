@@ -23,7 +23,7 @@ starting at the reference day (approved `LOCAL_TIMEZONE`), that overlaps no conf
 or tentative hold in the shared agenda snapshot. Fixed daily start/end hours bound the grid. The
 table carries a fixed disclaimer that agenda-open slots do not guarantee handyman availability.
 
-**Rationale**: User-approved (FR-012 option A, FR-013: 7 days). `BUSINESS_RULES.md` forbids
+**Rationale**: User-approved (FR-012 option A, FR-013: 7 days). `docs/BUSINESS_RULES.md` forbids
 inventing handyman availability, so the table only asserts shared-agenda occupancy; the
 disclaimer keeps the claim honest. The grid is presentation-only: it is never sliced into
 candidates nor treated as tenant consent, preserving the 004 invariant "do not invent a fixed
@@ -61,7 +61,7 @@ appended to the composer prompt; attempt counter caps at 3; on the 3rd failure t
 fallback reply (no LLM) is emitted. Retry and outcome are traced as JSONL events.
 
 **Rationale**: User requirement; matches Constitution Principle III (validated evidence) and the
-tracing rules of `BUSINESS_RULES.md` (timestamp, work-order ID, event type, detail). A
+tracing rules of `docs/BUSINESS_RULES.md` (timestamp, work-order ID, event type, detail). A
 deterministic pre-check (table bytes, slot openness recomputed from the snapshot) runs before the
 LLM validator so most failures are caught cheaply.
 

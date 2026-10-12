@@ -59,7 +59,7 @@ path; a tenant who answers "cancela" to a proposal triggers a rejection of that 
 2. **Given** a pending proposal, **When** the tenant says they cancel, **Then** it is treated as a
    rejection of the proposal and negotiation continues per the existing rejection rules.
 3. **Given** previously given availability, **When** a participant corrects it, **Then** the
-   reversal rule of `BUSINESS_RULES.md` (sender confirmation, previous value preserved) applies.
+   reversal rule of `docs/BUSINESS_RULES.md` (sender confirmation, previous value preserved) applies.
 4. **Given** the handyman writes "Sí, me viene bien el 13 de octubre de 9:00 a 11:00" for the open
    proposal, **Then** it counts as acceptance of that proposal (still validated by code).
 5. **Given** `<NO RESPONSE>` from a role, **Then** the `requires_review` reason names that role.
@@ -114,7 +114,7 @@ time slot is not offered to two work orders before a hold exists.
    clarification is asked.
 2. **Given** two work orders receiving suggestions concurrently, **Then** a deterministic test shows
    whether the same free slot can be offered to both (investigation first; fix only if confirmed).
-   Outcome: allowed by `BUSINESS_RULES.md`; no code change (see Known Risks).
+   Outcome: allowed by `docs/BUSINESS_RULES.md`; no code change (see Known Risks).
 
 ---
 
@@ -174,7 +174,7 @@ time slot is not offered to two work orders before a hold exists.
   already exists; behavior before a hold exists is first established by a deterministic test.
 - **FR-016** (already implemented): The prompt-injection guard runs 3 passes, blocks above
   `INJECTION_THRESHOLD` (0.6), and fails open on provider errors; urgency comes only from the CSV.
-  See `BUSINESS_RULES.md`; no new work.
+  See `docs/BUSINESS_RULES.md`; no new work.
 - **FR-017** (already implemented): `--now <ISO with offset>` freezes the clock through the injected
   `clock` provider; structured LLM output failures are diagnosed with `LlmOutputError` and thinking
   is disabled for guard and structured calls.
@@ -244,7 +244,7 @@ Each has a live scenario; resolved or pending status is recorded in `tasks.md`.
   provider errors; downstream deterministic validation remains authoritative.
 - Rejection replies exist only in Spanish and English templates; any other language gets the
   bilingual `<en> / <es>` form.
-- Offers to the handyman may coincide before any hold exists, because `BUSINESS_RULES.md` allows
+- Offers to the handyman may coincide before any hold exists, because `docs/BUSINESS_RULES.md` allows
   it ("A free or strict-higher-urgency-preemptible candidate may be asked of the handyman").
   Arbitration happens when the hold is created and confirmed appointments are never preempted
   (`tests/integration/test_competing_offers.py`). No two appointments overlap, but a Low order can

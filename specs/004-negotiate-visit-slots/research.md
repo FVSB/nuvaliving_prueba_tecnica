@@ -49,8 +49,8 @@
 
 ## Repository Evidence
 
-- `BUSINESS_RULES.md` defines CSV/CLI framing, two terminal values, exact no-response token, urgency order, two-hour visits, and timezone baseline. Decision 005 records the specifically approved policy changes and implementation boundary.
-- `TECHNICAL_ARCHITECTURE.md` defines injected dependencies, per-work-order sequential state, shared agenda locking, no lock across waits, startup-only composition, and JSONL observability.
+- `docs/BUSINESS_RULES.md` defines CSV/CLI framing, two terminal values, exact no-response token, urgency order, two-hour visits, and timezone baseline. Decision 005 records the specifically approved policy changes and implementation boundary.
+- `docs/TECHNICAL_ARCHITECTURE.md` defines injected dependencies, per-work-order sequential state, shared agenda locking, no lock across waits, startup-only composition, and JSONL observability.
 - The 003 plan establishes the existing LangGraph and language recognition integration path.
 - CodeGraph inspection supplied to this planning task found that `AsyncCoordinator._start` invokes the current graph then discards returned state; inbound `_consume` invokes a separate `inbound_node`. The current graph is `START -> recognize_language -> initialize_coordination -> END`; initialization is fixed Spanish. `AsyncStdoutWriter` serializes message blocks, and `TraceWriter` serializes event writes. These are baseline facts, not claims about this feature's implementation.
 

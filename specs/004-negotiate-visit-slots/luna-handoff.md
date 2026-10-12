@@ -9,8 +9,8 @@
 
 - [spec.md](spec.md) and [Decision 005](../../docs/decisions/005-visit-negotiation.md) define business behavior.
 - [plan.md](plan.md), [research.md](research.md), [data-model.md](data-model.md), [contracts/negotiation.md](contracts/negotiation.md), and [quickstart.md](quickstart.md) define the proposed design.
-- `BUSINESS_RULES.md` is the binding functional source, synchronized for the approved policies.
-- `TECHNICAL_ARCHITECTURE.md` and the project constitution remain authoritative for architecture and workflow.
+- `docs/BUSINESS_RULES.md` is the binding functional source, synchronized for the approved policies.
+- `docs/TECHNICAL_ARCHITECTURE.md` and the project constitution remain authoritative for architecture and workflow.
 
 ## Handoff invariants
 

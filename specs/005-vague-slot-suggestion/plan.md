@@ -27,7 +27,7 @@ open slot. Retry outcomes are traced to the run's JSONL.
 **Project Type**: CLI agent application
 **Performance Goals**: bounded LLM usage — at most 1 classification + 3 compositions + 3
 validations per inbound tenant message
-**Constraints**: no invented availability (BUSINESS_RULES.md); deterministic table rendering;
+**Constraints**: no invented availability (`docs/BUSINESS_RULES.md`); deterministic table rendering;
 retry loop never blocks the event loop or exceeds the 3-attempt budget
 **Scale/Scope**: 1 new graph node, 1 fallback state, ~4 new prompts/tools additions, plus tests
 
@@ -35,7 +35,7 @@ retry loop never blocks the event loop or exceeds the 3-attempt budget
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [x] `BUSINESS_RULES.md` and `TECHNICAL_ARCHITECTURE.md` were read and no authority conflict
+- [x] `docs/BUSINESS_RULES.md` and `docs/TECHNICAL_ARCHITECTURE.md` were read and no authority conflict
   exists. ("Open slot" = not occupied in the shared agenda only; disclaimer that this does not
   imply handyman availability; no invented grid semantics beyond the approved 7-day window —
   flagged as a policy decision for developer sign-off in `research.md`.)

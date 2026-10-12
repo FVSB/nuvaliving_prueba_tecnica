@@ -28,7 +28,7 @@ narrow port; tests use fakes and never need a real credential.
 
 *GATE: Passed before Phase 0 research; re-checked after Phase 1 design.*
 
-- [x] `BUSINESS_RULES.md` and `TECHNICAL_ARCHITECTURE.md` were read and no authority conflict exists.
+- [x] `docs/BUSINESS_RULES.md` and `docs/TECHNICAL_ARCHITECTURE.md` were read and no authority conflict exists.
 - [x] Developer approval, affected files, preview, risks, alternatives, and validation are recorded in the feature specification, Decision 004, and this plan.
 - [x] The design remains a Docker CLI and adds no service or business policy beyond the user-approved language-inference decision.
 - [x] Node, typed state, injected dependencies, trace expectations, and graph topology are documented.

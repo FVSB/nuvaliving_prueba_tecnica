@@ -1,8 +1,8 @@
 # Implementation Plan: CLI Work-Order Coordination
 
 **Branch**: `develop` | **Date**: 2026-10-12 | **Spec**: [spec.md](spec.md)
-**Sources**: [BUSINESS_RULES.md](../../BUSINESS_RULES.md) and
-[TECHNICAL_ARCHITECTURE.md](../../TECHNICAL_ARCHITECTURE.md)
+**Sources**: [BUSINESS_RULES.md](../../docs/BUSINESS_RULES.md) and
+[TECHNICAL_ARCHITECTURE.md](../../docs/TECHNICAL_ARCHITECTURE.md)
 
 ## Summary
 
@@ -26,8 +26,8 @@ Anthropic SDK
 
 ## Constitution Check
 
-- [x] `BUSINESS_RULES.md` is the exclusive functional authority.
-- [x] `TECHNICAL_ARCHITECTURE.md` defines CLI/Docker, injection, typed state, and observability.
+- [x] `docs/BUSINESS_RULES.md` is the exclusive functional authority.
+- [x] `docs/TECHNICAL_ARCHITECTURE.md` defines CLI/Docker, injection, typed state, and observability.
 - [x] The plan has no unapproved external service or business-policy assumption.
 - [x] `ANTHROPIC_API_KEY` is startup-only, injected, redacted, and not scheduling authority.
 - [x] Every topology change will receive an approved Mermaid view and, when available, PNG.

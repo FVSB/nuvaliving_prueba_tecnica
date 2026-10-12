@@ -58,5 +58,5 @@ codes, and instruction to return `undetermined` when confidence is insufficient.
 ## Sources
 
 - [LangGraph workflow design guidance](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph): nodes return state updates; keep raw values in state and format prompts in nodes.
-- `BUSINESS_RULES.md`: tenant-language inference is approved only through an explicit documented decision and tenant messaging remains Spanish or English.
-- `TECHNICAL_ARCHITECTURE.md`: LangGraph nodes use typed state and injected dependencies; LLM output must be validated before use.
+- `docs/BUSINESS_RULES.md`: tenant-language inference is approved only through an explicit documented decision and tenant messaging remains Spanish or English.
+- `docs/TECHNICAL_ARCHITECTURE.md`: LangGraph nodes use typed state and injected dependencies; LLM output must be validated before use.

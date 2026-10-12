@@ -79,7 +79,7 @@ The fallback never names or hints at any open slot.
 
 ## 6. Trace events
 
-Per `BUSINESS_RULES.md` JSONL rules (`/app/traces`): `slot_suggestion_attempt`,
+Per `docs/BUSINESS_RULES.md` JSONL rules (`/app/traces`): `slot_suggestion_attempt`,
 `slot_suggestion_feedback`, `slot_fallback_emitted` — each with timestamp, work-order ID, event
 type, and detail (attempt number, row count, feedback text, or next slot).
 

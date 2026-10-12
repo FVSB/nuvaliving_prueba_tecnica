@@ -11,7 +11,7 @@
 
 When coordination starts for a work order, the coordinator identifies the language expressed in its description and records a standardized language code before any later tenant-facing step needs it.
 
-**Why this priority**: Tenant communications must be prepared in the language of the order, as required by `BUSINESS_RULES.md`.
+**Why this priority**: Tenant communications must be prepared in the language of the order, as required by `docs/BUSINESS_RULES.md`.
 
 **Independent Test**: Submit work orders with clearly Spanish and clearly English descriptions and verify that each is assigned the corresponding standardized language code before later workflow processing.
 
@@ -77,5 +77,5 @@ When the description does not contain enough reliable language evidence, the coo
 
 - ISO 639-1 two-letter codes are the standard representation for this feature.
 - The common-code catalogue is a reusable internal vocabulary, not a promise that every listed language will immediately receive tenant-facing messages.
-- Spanish and English remain the currently approved tenant-message languages under `BUSINESS_RULES.md`.
+- Spanish and English remain the currently approved tenant-message languages under `docs/BUSINESS_RULES.md`.
 - The user instruction authorizes tenant-language inference; the decision record captures the scope and rationale required by the binding business rules.

@@ -19,7 +19,7 @@ agenda + JSONL traces | **Testing**: `pytest` with deterministic fakes and `--no
 
 ## Constitution Check
 
-- [x] I. Normative sources separate: `BUSINESS_RULES.md` updated with only the essential new rules;
+- [x] I. Normative sources separate: `docs/BUSINESS_RULES.md` updated with only the essential new rules;
   this spec and plan carry mechanics and do not redefine business policy.
 - [x] II. Explicit developer approval: user decided visit hours 09-19; each package is delegated by
   the user. Open decision OD-001 (horizon vs slot table) is left to the user.

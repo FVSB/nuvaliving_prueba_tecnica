@@ -55,7 +55,7 @@ tenant msg ──▶ classify
 The fallback state is not a `TerminalStatus`; the order stays non-terminal and the pending
 question remains the tenant availability question.
 
-## Trace events (JSONL, per BUSINESS_RULES.md)
+## Trace events (JSONL, per `docs/BUSINESS_RULES.md`)
 
 - `slot_suggestion_attempt` — timestamp, work_order_id, attempt number, table row count,
   validation outcome.

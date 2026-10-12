@@ -137,7 +137,7 @@ resolved absolute interval, not the slot table and not the generic availability 
 - Language: the table and fallback reply are rendered in the tenant's recognized language for
   that work order, with the handyman always addressed in Spanish per existing binding rules.
 - Human-timeout policy is untouched: `<NO RESPONSE>` handling and terminal semantics remain
-  exactly as in `BUSINESS_RULES.md`; the retry loop is an internal composition loop within one
+  exactly as in `docs/BUSINESS_RULES.md`; the retry loop is an internal composition loop within one
   inbound message, not a message retry policy.
 
 ## Requirements *(mandatory)*
@@ -155,7 +155,7 @@ resolved absolute interval, not the slot table and not the generic availability 
   look-ahead window; the table generation must not depend on LLM free-form output.
 - **FR-004**: The table MUST only contain slots derived from real shared-agenda evidence and MUST
   NOT invent availability, consent, dates, or handyman availability, per the Agreement and
-  Scheduling Invariants of `BUSINESS_RULES.md`.
+  Scheduling Invariants of `docs/BUSINESS_RULES.md`.
 - **FR-005**: Every drafted slot-suggestion reply MUST pass a separate validation pass before
   being sent, checking: (1) each listed slot is open per the shared agenda, (2) the table matches
   the deterministic format, (3) no availability beyond known evidence is claimed, (4) the reply
@@ -172,11 +172,11 @@ resolved absolute interval, not the slot table and not the generic availability 
   on the next tenant message.
 - **FR-010**: The retry loop and its outcome MUST be recorded as functional events in the run's
   JSONL trace (timestamp, work-order ID, event type, attempt count, and outcome), per the tracing
-  rules of `BUSINESS_RULES.md`.
+  rules of `docs/BUSINESS_RULES.md`.
 - **FR-011**: A tenant message with a relative date resolvable via calendar tools into a single
   concrete interval with explicit time-of-day MUST route to the existing relative-date
   confirmation path rather than the slot table (per Pending Policy approval for the reference
-  clock in `BUSINESS_RULES.md`).
+  clock in `docs/BUSINESS_RULES.md`).
 - **FR-012**: An "open" slot in the table MUST mean only "not occupied in the shared agenda" —
   i.e. a two-hour interval within the look-ahead window that does not overlap any confirmed
   appointment or tentative hold in the shared agenda. The table MUST NOT claim or imply handyman

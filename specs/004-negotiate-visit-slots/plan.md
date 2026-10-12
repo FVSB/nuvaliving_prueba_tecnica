@@ -32,7 +32,7 @@ This is a proposed design for later implementation. The user's approval covers t
 
 *Gate: passed for the planning scope; rechecked after the design below.*
 
-- [x] `BUSINESS_RULES.md`, `TECHNICAL_ARCHITECTURE.md`, and the constitution were reviewed. Decision 005 is the approved exception/supersession record for the changes to language, initial candidate policy, hold transfer, and no-common-time handoff.
+- [x] `docs/BUSINESS_RULES.md`, `docs/TECHNICAL_ARCHITECTURE.md`, and the constitution were reviewed. Decision 005 is the approved exception/supersession record for the changes to language, initial candidate policy, hold transfer, and no-common-time handoff.
 - [x] User approval covers the described feature specification and planning artifacts. Implementation, code edits, and verification are separate follow-on work.
 - [x] The design remains a Docker CLI and adds no service or dependency.
 - [x] Graph nodes, typed state, injected handler, schedule authority, trace details, and lifecycle changes are described below and in the contracts.

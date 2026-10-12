@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [ ] `BUSINESS_RULES.md` and `TECHNICAL_ARCHITECTURE.md` were read and no authority conflict exists.
+- [ ] `docs/BUSINESS_RULES.md` and `docs/TECHNICAL_ARCHITECTURE.md` were read and no authority conflict exists.
 - [ ] Developer approval, files, preview, risks, alternatives, and validation are recorded.
 - [ ] The design is a Docker CLI and adds no unapproved service or business policy.
 - [ ] Nodes, typed state, injected dependencies, traces, and changed graph topology are documented.

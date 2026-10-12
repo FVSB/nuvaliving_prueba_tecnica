@@ -11,7 +11,7 @@ Sync Impact Report
 ## Core Principles
 
 ### I. Normative Sources Are Separate
-`BUSINESS_RULES.md` is the sole functional authority. `TECHNICAL_ARCHITECTURE.md` defines
+`docs/BUSINESS_RULES.md` is the sole functional authority. `docs/TECHNICAL_ARCHITECTURE.md` defines
 implementation architecture and agent workflow. This document
 governs development practice. No document may duplicate or silently override another's authority.
 
@@ -24,7 +24,7 @@ Engram is available.
 
 ### III. Deterministic Business Boundaries
 LangGraph coordinates work but does not define business policy. Deterministic code enforces
-agreement, priority, schedule, terminal, and external-contract rules from `BUSINESS_RULES.md`.
+agreement, priority, schedule, terminal, and external-contract rules from `docs/BUSINESS_RULES.md`.
 LLM output is validated evidence or proposed language, never scheduling authority.
 
 ### IV. Explicit, Typed, Injectable Runtime

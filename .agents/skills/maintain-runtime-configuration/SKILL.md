@@ -7,7 +7,7 @@ description: Maintain startup-only configuration, dependency-injector wiring and
 
 ## Scope and sources
 
-Use this skill for the NUVa scheduling application. Read its technical architecture, business rules and current configuration guide before changing settings or logging. In this deliverable those files are `../../TECHNICAL_ARCHITECTURE.md`, `../../BUSINESS_RULES.md` and `../../CONFIGURATION_GUIDE.md`, relative to this skill folder. When installed in the target repository, resolve the maintained documents from the repository root, normally `docs/configuration.md` plus the two constitutions. Update these pointers if the documents move.
+Use this skill for the NUVa scheduling application. Read its technical architecture, business rules and current configuration guide before changing settings or logging. From the repository root, those files are `docs/TECHNICAL_ARCHITECTURE.md`, `docs/BUSINESS_RULES.md` and `docs/configuration.md`.
 
 The PDF controls business behavior and external contracts. Engram is development memory, not a runtime prerequisite or a stronger authority than current files.
 

@@ -35,5 +35,5 @@
   that this does not guarantee handyman availability (user choice A, 2026-10-12).
 - FR-013 resolved: 7 local days from the reference day, fixed two-hour daily grid (user choice,
   2026-10-12).
-- BUSINESS_RULES.md tension (never invent availability) is addressed by restricting the table
+- `docs/BUSINESS_RULES.md` tension (never invent availability) is addressed by restricting the table
   to real agenda evidence plus the disclaimer.

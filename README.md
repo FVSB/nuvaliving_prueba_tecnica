@@ -354,6 +354,9 @@ reply requires clarification. The process reads stdin until EOF, even after all
 orders close. The slot table reports agenda occupancy without guaranteeing
 human availability or extending the planning horizon.
 
-Further details: [architecture](TECHNICAL_ARCHITECTURE.md),
-[business rules](BUSINESS_RULES.md), [implementation](docs/IMPLEMENTATION.md),
-[configuration](docs/configuration.md), and [development](docs/development.md).
+Further details: [architecture](docs/TECHNICAL_ARCHITECTURE.md),
+[business rules](docs/BUSINESS_RULES.md), [implementation](docs/IMPLEMENTATION.md),
+[configuration](docs/configuration.md), [development](docs/development.md), and
+[the documentation index](docs/README.md).
+
+The original assignment brief is [available here](docs/take-home-test.pdf).

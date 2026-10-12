@@ -34,14 +34,14 @@ Format: `[ID] [P?] [Story] Description`. Waves: 0 (done) -> 1 (A, B1, C in paral
 
 ## Package E: Documentation (wave 1)
 
-- [x] T017 Spec, plan, tasks, decision 006, `BUSINESS_RULES.md`, `docs/configuration.md`, `docs/development.md`
+- [x] T017 Spec, plan, tasks, decision 006, `docs/BUSINESS_RULES.md`, `docs/configuration.md`, `docs/development.md`
 - [x] T018 Fill TODO(E-final) markers once A, B1, C report exact texts and event names
 
 ## Package B2: Slots and validation in workflow (wave 2, after A and B1)
 
 - [x] T019 [US1] Apply `validate_interval` in `_record_tenant_intervals` and `_handyman_availability` (errors 3, 4)
 - [x] T020 [US4] Bind "el viernes" after the slot table to displayed slots in `_slot_suggestion` (error 15)
-- [x] T021 [US4] Deterministic test for the same slot offered to two orders before a hold; fix only if reproduced (error 16). Outcome: conforming behavior per `BUSINESS_RULES.md`; `tests/integration/test_competing_offers.py`, no code fix
+- [x] T021 [US4] Deterministic test for the same slot offered to two orders before a hold; fix only if reproduced (error 16). Outcome: conforming behavior per `docs/BUSINESS_RULES.md`; `tests/integration/test_competing_offers.py`, no code fix
 - [x] T022 Run deterministic checks before the LLM validator in slot suggestion (FR-008)
 
 ## Package V: Verification (wave 3)
