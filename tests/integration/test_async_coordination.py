@@ -2,6 +2,7 @@ from datetime import datetime
 from io import StringIO
 from zoneinfo import ZoneInfo
 
+from maintenance_agent.agents.scheduling.graph import build_scheduling_graph
 from maintenance_agent.agents.scheduling.nodes.initialize_coordination import (
     InitializeCoordinationNode,
 )
@@ -9,9 +10,13 @@ from maintenance_agent.agents.scheduling.nodes.reflect_inbound_message import (
     ReflectInboundMessageNode,
 )
 from maintenance_agent.application.coordinator import AsyncCoordinator
+from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
+from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
 from maintenance_agent.domain.work_orders import Urgency, WorkOrder
-from maintenance_agent.infrastructure.cli_transport import AsyncStdinReader, AsyncStdoutWriter
+from maintenance_agent.infrastructure.cli_transport import AsyncStdoutWriter
 from maintenance_agent.infrastructure.csv_work_orders import CsvWorkOrderReader
+
+from .fakes import FakeStdinReader
 
 
 def work_order() -> WorkOrder:
@@ -28,9 +33,14 @@ def work_order() -> WorkOrder:
 async def test_coordinator_starts_each_work_order_then_reflects_live_message() -> None:
     output = StringIO()
     coordinator = AsyncCoordinator(
-        reader=AsyncStdinReader(StringIO("WO-4|tenant Need help | urgent\n")),
+        reader=FakeStdinReader(["WO-4|tenant Need help | urgent"]),
         writer=AsyncStdoutWriter(output),
-        initialize_node=InitializeCoordinationNode(),
+        startup_graph=build_scheduling_graph(
+            StaticLanguageRecognizer(
+                LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
+            ),
+            InitializeCoordinationNode(),
+        ),
         inbound_node=ReflectInboundMessageNode(),
     )
 

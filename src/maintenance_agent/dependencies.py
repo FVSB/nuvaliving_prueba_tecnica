@@ -4,6 +4,7 @@ from pathlib import Path
 
 from dependency_injector import containers, providers
 
+from maintenance_agent.agents.scheduling.graph import build_scheduling_graph
 from maintenance_agent.agents.scheduling.nodes.initialize_coordination import (
     InitializeCoordinationNode,
 )
@@ -21,6 +22,7 @@ class Container(containers.DeclarativeContainer):
 
     settings = providers.Dependency(instance_of=Settings)
     csv_path = providers.Object(Path("/app/work_orders.csv"))
+    language_recognizer = providers.Dependency()
     stdin_reader = providers.Singleton(AsyncStdinReader)
     stdout_writer = providers.Singleton(AsyncStdoutWriter)
     csv_work_order_reader = providers.Factory(
@@ -30,10 +32,15 @@ class Container(containers.DeclarativeContainer):
     )
     initialize_coordination_node = providers.Factory(InitializeCoordinationNode)
     reflect_inbound_message_node = providers.Factory(ReflectInboundMessageNode)
+    scheduling_graph = providers.Factory(
+        build_scheduling_graph,
+        recognizer=language_recognizer,
+        initialize_node=initialize_coordination_node,
+    )
     coordinator = providers.Factory(
         AsyncCoordinator,
         reader=stdin_reader,
         writer=stdout_writer,
-        initialize_node=initialize_coordination_node,
+        startup_graph=scheduling_graph,
         inbound_node=reflect_inbound_message_node,
     )

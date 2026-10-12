@@ -33,7 +33,12 @@ class AsyncStdinReader:
         self._stream = stream or sys.stdin
 
     async def messages(self) -> AsyncIterator[InboundMessage]:
-        while line := await asyncio.to_thread(self._stream.readline):
+        while True:
+            line = await asyncio.to_thread(self._stream.readline)
+            # Let the worker mark itself idle before asyncio.run() shuts down its executor.
+            await asyncio.sleep(0)
+            if not line:
+                return
             yield parse_inbound_message(line.rstrip("\r\n"))
 
 

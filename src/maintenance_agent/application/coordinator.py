@@ -1,14 +1,28 @@
 """Per-work-order sequential queues with concurrent work-order processing."""
 
 import asyncio
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from typing import Any, Protocol
 
 from maintenance_agent.application.messages import InboundMessage, OutboundMessage
 from maintenance_agent.domain.work_orders import WorkOrder
-from maintenance_agent.infrastructure.cli_transport import AsyncStdinReader, AsyncStdoutWriter
+from maintenance_agent.infrastructure.cli_transport import AsyncStdoutWriter
 
 InboundNode = Callable[[InboundMessage], Awaitable[OutboundMessage]]
-StartupNode = Callable[[WorkOrder], Awaitable[OutboundMessage]]
+
+
+class InboundReader(Protocol):
+    """Yield validated inbound messages from an injected transport."""
+
+    def messages(self) -> AsyncIterator[InboundMessage]:
+        """Return the asynchronous message stream."""
+
+
+class SchedulingGraph(Protocol):
+    """The compiled graph boundary required by startup coordination."""
+
+    async def ainvoke(self, input: dict[str, Any]) -> dict[str, Any]:
+        """Run a work order through the scheduling graph."""
 
 
 class AsyncCoordinator:
@@ -16,14 +30,14 @@ class AsyncCoordinator:
 
     def __init__(
         self,
-        reader: AsyncStdinReader,
+        reader: InboundReader,
         writer: AsyncStdoutWriter,
-        initialize_node: StartupNode,
+        startup_graph: SchedulingGraph,
         inbound_node: InboundNode,
     ) -> None:
         self._reader = reader
         self._writer = writer
-        self._initialize_node = initialize_node
+        self._startup_graph = startup_graph
         self._inbound_node = inbound_node
         self._queues: dict[str, asyncio.Queue[InboundMessage]] = {}
         self._workers: dict[str, asyncio.Task[None]] = {}
@@ -37,8 +51,8 @@ class AsyncCoordinator:
             await asyncio.gather(*self._all_workers)
 
     async def _start(self, work_order: WorkOrder) -> None:
-        response = await self._initialize_node(work_order)
-        await self._writer.write(response)
+        state = await self._startup_graph.ainvoke({"work_order": work_order})
+        await self._writer.write(state["outbound_message"])
 
     def _dispatch(self, message: InboundMessage) -> None:
         queue = self._queues.setdefault(message.work_order_id, asyncio.Queue())
