@@ -68,68 +68,93 @@ These protocol examples illustrate the format. The handyman receives Spanish
 messages; the tenant's language is inferred from the work-order description.
 The console is reserved for the protocol; technical logs go to files.
 
-## Business rules and rationale
+## Business decisions
 
-The business objective is to produce a reliable, mutually agreed visit or a
-clear handoff for human coordination. An order describes the maintenance issue;
-`reported_at` records when it was reported and does not establish a visit date.
-Urgency comes exclusively from the CSV and cannot be changed by conversation text.
+1. **A simplified planning horizon.** This take-home considers dates through
+   today plus seven days, inclusive, to keep planning simple. In a real
+   deployment, the planning window would be organized around complete calendar
+   weeks. The agent communicates its current limit instead of offering dates
+   beyond it.
 
-| Rule | Business rationale |
-|---|---|
-| One handyman, two-hour visits | Every order competes for the same limited resource; a full visit must fit both participants' availability. |
-| No overlapping appointments | Prevents promising the handyman to two households at once. Adjacent visits, such as 14:00–16:00 and 16:00–18:00, are allowed. |
-| Explicit agreement on one proposal | Being available does not mean accepting a visit. Both confirmations must refer to the same proposal and version. |
-| Higher urgency wins competing tentative reservations | Gives urgent work priority while preserving appointments already confirmed with both parties. |
-| Separate conversations per order | A reply for one maintenance issue must not change another order's availability, language, or consent. |
-| Exactly one terminal result | Provides a stable outcome that downstream operators can act on. A completed order is not reopened. |
+2. **Reject invalid intervals without trimming them.** An interval outside the
+   permitted hours or horizon is rejected as submitted. Automatically shortening
+   it would change what the participant actually said they could accept.
 
-### Turning availability into a visit
+3. **Allow consecutive visits without a buffer.** We assume the handyman can
+   finish one slot and immediately start another: 14:00–16:00 and 16:00–18:00
+   are compatible. Travel time and preparation time are not included in this
+   scheduling model.
 
-The tenant is asked for all available intervals first, so the handyman is only
-consulted about relevant candidates. Overlapping or adjacent tenant intervals
-are merged, then split into consecutive two-hour candidates from their stated
-start. A remainder shorter than two hours is excluded. For example, availability
-from 10:00 to 15:00 yields 10:00–12:00 and 12:00–14:00.
+4. **Ask the tenant first.** Establishing the household's availability before
+   consulting the handyman avoids negotiating visits the tenant cannot attend.
 
-The handyman may counter-propose a different two-hour interval fully contained
-in the tenant's availability, such as 11:00–13:00 in that example. The tenant
-still has to accept the exact visit. Agenda conflicts are checked even when
-start times do not align with the initial candidates.
+5. **Request all available intervals.** Collecting the full set gives the agent
+   alternatives if a slot is occupied or unsuitable for the handyman, reducing
+   repeated questions.
 
-### Competition and changes
+6. **Merge overlapping and adjacent availability.** This removes duplicates and
+   preserves usable continuous windows. For example, 10:00–11:00 and 11:00–12:00
+   together allow a full two-hour visit, although neither interval does alone.
 
-Candidates blocked by an equal- or higher-urgency reservation, or a confirmed
-appointment, are filtered before asking the handyman. A High order can displace
-a Low tentative reservation, but cannot displace a confirmed Low appointment.
-The displaced tenant is notified and offered an eligible alternative or asked
-for new availability. Priority applies at reservation time; it does not globally
-reorder already confirmed visits.
+7. **Generate two-hour candidates from the tenant's stated start.** Each candidate
+   must fit the visit duration required by the assignment. Availability from
+   10:00 to 15:00 produces 10:00–12:00 and 12:00–14:00; the final hour cannot
+   accommodate a visit. Starting from the tenant's own interval avoids inventing
+   a separate booking grid.
 
-A rejection or cancellation of a pending proposal withdraws that proposal.
-Changes to previously stated availability require confirmation by the sender;
-the disputed interval is suspended meanwhile. A confirmed change invalidates
-affected proposals and earlier acceptances, preventing an old yes from
-authorizing a different visit.
+8. **Check conflicts before consulting the handyman.** Candidates blocked by a
+   confirmed appointment or an equal- or higher-urgency tentative reservation
+   are filtered out, avoiding questions about slots that cannot be assigned.
 
-### Human review and communication
+9. **Give higher urgency priority during an unfinished negotiation.** If a Low
+   order has a tentative reservation and a Critical order needs the same time,
+   the Critical order can take that reservation after its tenant explicitly
+   accepts the proposed visit. The transfer is atomic and only succeeds if no
+   equal- or higher-urgency reservation or confirmed appointment blocks it.
+   This enforces the assignment's urgency rule while protecting visits already
+   agreed with both parties.
 
-Incomplete evidence leads to clarification. When complete availability proves
-there is no common eligible visit, the tenant is offered human coordination:
-acceptance produces `requires_review`; declining requests new availability.
-The same handoff is offered when the tenant's complete request is exhausted by
-known agenda blockers. The exact `<NO RESPONSE>` sentinel closes the order
-immediately, without retries or real-time waiting. Provider errors are recorded
-as technical failures, never interpreted as a participant's silence.
+10. **Allow simultaneous offers before reservation.** Two negotiations may offer
+    the same currently free slot. Competition is resolved when acquiring the
+    reservation. A lower-urgency order can keep it if it becomes a confirmed
+    appointment first; confirmed visits are not displaced.
 
-Review reasons use structured codes (`no_response`, `no_common_availability`,
-`no_eligible_slot`) and known evidence. These explain the outcome without adding
-new terminal statuses. Unknown availability is stated as unknown.
+11. **Notify the tenant whose reservation was displaced.** The affected order
+    continues with an explanation in the tenant's language and an eligible
+    alternative, or a request for new availability. Its proposed time is never
+    silently reassigned.
 
-Visit dates and times are made explicit in Madrid time. The tenant receives the
-work-order language and the handyman receives Spanish. The 09:00–19:00 visit
-window and seven-day horizon are solution policies; the open-slot table helps
-the tenant choose an interval but does not reserve it or establish consent.
+12. **Offer human coordination when options are exhausted.** Once complete
+    evidence establishes that there is no common eligible visit, or known
+    agenda conflicts exhaust the tenant's complete request, the agent asks
+    whether the tenant wants human scheduling. Acceptance yields
+    `requires_review`; declining leads to a request for new availability.
+
+13. **Explain review outcomes from recorded evidence.** Reasons use
+    `no_response`, `no_common_availability`, or `no_eligible_slot` and the known
+    facts. Unknown availability is explicitly described as unknown, so the
+    person taking over can understand what prevented scheduling.
+
+## Technical decisions
+
+1. **Interpret explicit confirmations with code.** Yes/no decisions are handled
+   deterministically. Ambiguous answers trigger clarification rather than
+   being converted into acceptance by the model.
+
+2. **Separate provider failures from participant silence.** An Anthropic error
+   is a technical incident recorded in the runtime trace. It does not mean a
+   tenant or handyman failed to answer and is never converted into a human
+   timeout.
+
+3. **Keep structured traces for each execution.** Messages, state changes,
+   decisions, and outcomes are correlated by run and work order. Separate
+   manifest, event, and runtime files make the coordination reconstructable
+   while keeping stdout and stderr reserved for the communication protocol.
+
+4. **Read configuration and assemble dependencies once at startup.** Every
+   conversation in a run uses consistent settings. Changes require restarting;
+   dependencies are injected instead of being recreated or reconfigured inside
+   graph nodes.
 
 ## Architecture and actual graph
 
@@ -317,15 +342,49 @@ Spanish order descriptions; both inputs then timed out and produced exactly one
 `requires_review` result each. This confirms startup, protocol, and trace
 behavior, but does not exercise a scheduled negotiation in Docker.
 
-Development dependencies and test configuration are defined in
-[pyproject.toml](pyproject.toml). Run the local suite with:
+## Tests and verification strategy
+
+The test suite is split by how much of the application each test exercises.
+This makes business rules quick to check in isolation, then checks that real
+components work together, and finally verifies the CLI contract seen by an
+evaluator.
+
+**Unit tests** (`tests/unit`) exercise focused rules and components with no live
+Anthropic calls. They cover interval and date validation, schedule conflicts and
+urgency, consent interpretation, input parsing, language settings, trace
+formatting, prompt-injection decisions, and deterministic slot tables. For
+example, schedule-authority tests check that overlapping concurrent reservations
+have one winner; injection-guard tests check pass, clean, and block outcomes;
+date tests check invalid dates, hours, and horizon edges. These tests help
+pinpoint failures without the variability or cost of a live model call.
+
+**Application integration tests** (`tests/integration`) connect the workflow,
+graph, coordinator, schedule authority, and transport using controlled fakes
+where external model calls would otherwise be needed. They cover complete
+negotiation turns, concurrent orders, preemption and displaced-tenant notices,
+reversals, cancellation, input rejection, guard routing, and trace events.
+These tests check wiring and state transitions across components while keeping
+results repeatable.
+
+**Acceptance tests** (`tests/acceptance`) exercise the CLI-facing behavior:
+startup messages, protocol framing, terminal results, and vague-date replies.
+They verify what a user or evaluator can observe at the boundary.
+
+Run the local suite with:
 
 ```bash
 uv run pytest
 ```
 
-The [live evaluator](integration_test/README.md) runs scripted conversations
-against the real application and Anthropic:
+The [live conversation evaluator](integration_test/README.md) goes a step
+further: it runs the real CLI against Anthropic, sends scripted tenant and
+handyman messages through stdin, and checks both the replies and JSONL traces.
+It covers realistic date and ambiguity handling, agreement, prompt injection,
+priority, rejections, and availability changes. Because it uses live API calls,
+it costs more and takes longer than the local suite; use it to validate how the
+model behaves in an end-to-end conversation.
+
+List scenarios or run a focused example with:
 
 ```bash
 uv run python integration_test/run.py --list
@@ -333,26 +392,49 @@ uv run python integration_test/run.py dates_calendar
 uv run python integration_test/run.py --all -j 4
 ```
 
-Its checks are code predicates over messages and trace events, evaluated after
-each step and across the scenario. Coverage includes dates, ambiguity, consent,
-injection, priority, formats, roles, and availability changes. Results include
-`PASS`, `FAIL`, `XFAIL`, `XPASS`, and timeouts. A fixed business clock makes dates
-reproducible; runner timeouts supervise the test process rather than simulate
-participant silence. Live scenarios consume API calls and are separate from
-`uv run pytest`.
+Scenarios use a frozen business clock so date outcomes are reproducible. Their
+runner timeouts only detect a stuck test process; they do not simulate a
+participant's `<NO RESPONSE>` message.
 
-## Trade-offs and limitations
+Development dependencies and test configuration are defined in
+[pyproject.toml](pyproject.toml).
 
-Conversation state and the agenda are in memory: restarting loses them.
-LangGraph keeps each event transition small; the workflow holds the negotiation
-state machine. Deterministic rules constrain model decisions, while language
-interpretation and security classification can still be wrong. Extra evaluation
-calls increase latency and API usage.
+## Possible extensions
 
-The input protocol has no proposal correlation field, so an ambiguous delayed
-reply requires clarification. The process reads stdin until EOF, even after all
-orders close. The slot table reports agenda occupancy without guaranteeing
-human availability or extending the planning horizon.
+These are possible additions for a real deployment, subject to business policy
+and richer operational data.
+
+1. **An agenda optimizer.** A scheduling manager could offer discrete booking
+   slots and coordinate competing orders globally, prioritizing the completion
+   of Critical and High negotiations before assigning capacity to lower urgency.
+   This could reduce the current dependence on which conversation confirms
+   first. Business rules would define how long tentative slots can be held and
+   how to avoid indefinitely postponing less urgent work.
+
+2. **Planning by building.** If the business assigns particular days or slots
+   to each building, those constraints could shape the offered availability.
+   Grouping visits by location and including travel buffers could reduce travel
+   and improve capacity use. The current model does not account for building
+   schedules or travel between addresses.
+
+3. **Planning by maintenance type and difficulty.** Grouping similar reports
+   could reduce repeated preparation and equipment changes. Difficulty could
+   inform duration, required skills, and technician assignment, while keeping
+   urgency as an explicit business priority. This would require additional
+   work-order data beyond the current CSV and an extension of the fixed
+   two-hour, single-handyman model.
+
+4. **Materials and external dependencies.** Scheduling could account for parts,
+   supplies, access permissions, or external contractors. A visit could be
+   offered once its prerequisites are ready, with the reason for any delay
+   visible to the tenant and operations team.
+
+5. **Visual slot selection.** A calendar interface, such as a Calendly-style or
+   Cal.com-style booking flow, could let tenants select eligible slots directly
+   when availability is already known. This would reduce conversational
+   back-and-forth for straightforward cases, while the agent handles ambiguity,
+   exceptions, and changes. Selection would still need to respect shared agenda
+   conflicts and the handyman's availability and acceptance.
 
 Further details: [architecture](docs/TECHNICAL_ARCHITECTURE.md),
 [business rules](docs/BUSINESS_RULES.md), [implementation](docs/IMPLEMENTATION.md),
