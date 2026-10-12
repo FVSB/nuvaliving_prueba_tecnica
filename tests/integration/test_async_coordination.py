@@ -2,6 +2,8 @@ from datetime import datetime
 from io import StringIO
 from zoneinfo import ZoneInfo
 
+import pytest
+
 from maintenance_agent.agents.scheduling.graph import build_scheduling_graph
 from maintenance_agent.agents.scheduling.nodes.initialize_coordination import (
     InitializeCoordinationNode,
@@ -63,3 +65,35 @@ async def test_csv_reader_normalizes_all_rows_to_injected_timezone(tmp_path) -> 
     work_orders = await CsvWorkOrderReader("Europe/Madrid", source).read()
 
     assert work_orders[0].reported_at.isoformat() == "2026-10-07T09:15:00+02:00"
+
+
+async def test_coordinator_logs_recognized_language_per_work_order(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    output = StringIO()
+    coordinator = AsyncCoordinator(
+        reader=FakeStdinReader([]),
+        writer=AsyncStdoutWriter(output),
+        startup_graph=build_scheduling_graph(
+            StaticLanguageRecognizer(
+                LanguageRecognitionResult(language_code=LanguageCode.SPANISH)
+            ),
+            InitializeCoordinationNode(),
+        ),
+        inbound_node=ReflectInboundMessageNode(),
+    )
+
+    with caplog.at_level("INFO", logger="maintenance_agent.coordinator"):
+        await coordinator.run([work_order()])
+
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "maintenance_agent.coordinator"
+    ]
+    assert any(
+        "language_recognition" in record.getMessage()
+        and "WO-4" in record.getMessage()
+        and "es" in record.getMessage()
+        for record in records
+    )

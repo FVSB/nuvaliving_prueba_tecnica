@@ -28,7 +28,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run pytest \
   tests/integration/test_scheduling_graph.py -v
 ```
 
-Result: **11 passed in 2.13s**
+Result: **14 passed in 1.31s**
 
 | Test | Module | Status |
 |---|---|---|
@@ -43,6 +43,9 @@ Result: **11 passed in 2.13s**
 | test_graph_recognizes_language_before_initial_message | tests/integration/test_scheduling_graph.py | passed |
 | test_graph_retains_undetermined_result | tests/integration/test_scheduling_graph.py | passed |
 | test_graph_recognizes_english_before_initial_message | tests/integration/test_scheduling_graph.py | passed |
+| test_coordinator_starts_each_work_order_then_reflects_live_message | tests/integration/test_async_coordination.py | passed |
+| test_csv_reader_normalizes_all_rows_to_injected_timezone | tests/integration/test_async_coordination.py | passed |
+| test_coordinator_logs_recognized_language_per_work_order | tests/integration/test_async_coordination.py | passed |
 
 ## Graph topology vs. diagram
 
@@ -72,3 +75,16 @@ with `mmdc` driving the cached Playwright Chromium 1223.
 Not executed in this validation run. Per `quickstart.md`, a real-provider smoke run requires a
 developer-approved non-production `ANTHROPIC_API_KEY` and is reported separately from these
 fake-provider focused tests.
+
+## Language-recognition logging
+
+`AsyncCoordinator._start` emits one INFO record per work order through the
+`maintenance_agent.coordinator` logger:
+
+```
+2026-10-12 14:45:01,123 INFO maintenance_agent.coordinator language_recognition work_order_id=WO-4 language=es
+```
+
+Logging is configured by `bootstrap._configure_logging` to stderr at INFO level and never touches
+the stdout protocol stream emitted by `AsyncStdoutWriter`. No prompt, description, or credential is
+included in the record.
