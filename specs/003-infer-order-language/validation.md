@@ -28,11 +28,11 @@ UV_CACHE_DIR=/tmp/uv-cache uv run pytest \
   tests/integration/test_scheduling_graph.py -v
 ```
 
-Result: **31 passed in 1.82s**
+Result: **11 passed in 1.98s**
 
-Coverage includes domain validation, prompts, Anthropic adapter validation, graph integration,
-asynchronous coordination, JSONL validity, ordered sequences, Madrid run-folder naming, startup
-manifest, lifecycle close, and empty console stderr.
+Coverage includes domain validation, prompt construction, Anthropic adapter validation, and graph
+integration for Spanish, English, and undetermined results. This is the focused suite listed in
+`quickstart.md`.
 
 ## Graph topology vs. diagram
 
