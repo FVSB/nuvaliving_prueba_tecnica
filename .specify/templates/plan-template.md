@@ -31,7 +31,23 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Tenant identifiers are validated and carried through every data access and graph state.
+- [ ] The design prevents atomic overlap bookings for the capacity-one shared handyman.
+- [ ] LangGraph nodes, typed state, transitions, persistence/checkpointing, and failure paths
+      are documented.
+- [ ] The feature is an independently verifiable vertical slice and has the required tests.
+- [ ] Any Anthropic node uses `ANTHROPIC_API_KEY` only at runtime, protects secrets, and cannot
+      authorize access or decide availability/conflicts.
+- [ ] The work starts from `develop` in a new `feature/<feature-name>` branch.
+
+## Branch Workflow
+
+**Working Branch**: [feature branch or approved bootstrap branch]
+**Integration Branch**: `develop`
+**Merge Gate**: [tests and acceptance criteria required before merging into `develop`]
+
+For a later change to merged work, ask whether it is a correction (`fix/<issue-name>`) or new
+behavior (`feature/<feature-name>`). Start the selected branch from the latest `develop`.
 
 ## Project Structure
 
