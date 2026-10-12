@@ -83,17 +83,66 @@ async def test_coordinator_logs_recognized_language_per_work_order(
         inbound_node=ReflectInboundMessageNode(),
     )
 
-    with caplog.at_level("INFO", logger="maintenance_agent.coordinator"):
+    with caplog.at_level("INFO"):
         await coordinator.run([work_order()])
 
-    records = [
-        record
-        for record in caplog.records
-        if record.name == "maintenance_agent.coordinator"
-    ]
+    messages = [record.getMessage() for record in caplog.records]
     assert any(
-        "language_recognition" in record.getMessage()
-        and "WO-4" in record.getMessage()
-        and "es" in record.getMessage()
-        for record in records
+        "[recognize_language]" in message
+        and "wo=WO-4" in message
+        and "language=es" in message
+        and "Leak under sink" in message
+        and "language 'es' recognized for the supplied description" in message
+        for message in messages
+    )
+    assert any(
+        "[initialize_coordination]" in message
+        and "wo=WO-4" in message
+        and "direction=in" in message
+        for message in messages
+    )
+    assert any(
+        "[initialize_coordination]" in message
+        and "wo=WO-4" in message
+        and "direction=out" in message
+        and "role=tenant" in message
+        and "Nueva orden de trabajo iniciada." in message
+        for message in messages
+    )
+
+
+async def test_coordinator_logs_inbound_dispatch_and_reflection(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    output = StringIO()
+    coordinator = AsyncCoordinator(
+        reader=FakeStdinReader(["WO-4|tenant Need help | urgent"]),
+        writer=AsyncStdoutWriter(output),
+        startup_graph=build_scheduling_graph(
+            StaticLanguageRecognizer(
+                LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
+            ),
+            InitializeCoordinationNode(),
+        ),
+        inbound_node=ReflectInboundMessageNode(),
+    )
+
+    with caplog.at_level("INFO"):
+        await coordinator.run([work_order()])
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(
+        "[coordinator]" in message
+        and "wo=WO-4" in message
+        and "node=reflect_inbound_message" in message
+        and "direction=in" in message
+        and "Need help | urgent" in message
+        for message in messages
+    )
+    assert any(
+        "[reflect_inbound_message]" in message
+        and "wo=WO-4" in message
+        and "direction=out" in message
+        and "Need help | urgent" in message
+        for message in messages
     )

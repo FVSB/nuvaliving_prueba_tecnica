@@ -15,10 +15,10 @@ from maintenance_agent.infrastructure.anthropic_language_recognizer import (
 
 
 def _configure_logging() -> None:
-    """Emit startup language codes to stderr without touching the protocol stream."""
+    """Emit one structured log line per node transition without touching the protocol stream."""
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        format="%(asctime)s %(levelname)s %(message)s",
     )
 
 
