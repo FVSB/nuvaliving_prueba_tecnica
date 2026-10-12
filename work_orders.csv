@@ -1,0 +1,3 @@
+work_order_id,work_order,address,description,reported_at,urgency
+WO-001,Gas leak - 24 Oak Street,24 Oak Street,Tenant reports a strong smell of gas in the kitchen,2026-10-07T09:15:00+02:00,Critical
+WO-002,Fuga de agua - Calle Mayor 18,Calle Mayor 18,El inquilino informa de una fuga de agua debajo del fregadero,2026-10-07T10:40:00+02:00,High

@@ -43,8 +43,9 @@ query a global container.
 
 Settings are read once through `pydantic-settings` from environment and optional `.env`; no
 `load_dotenv()`, `os.getenv()`, import-time I/O, hot reload, or mutable global state. The approved
-credential is `ANTHROPIC_API_KEY`; it is secret, omitted from logs, `.env.example` values, Git,
-and Docker build context. Its absence fails only when an Anthropic node is enabled.
+startup setting `LOCAL_TIMEZONE` is validated as an IANA zone and defaults to `Europe/Madrid`. The
+approved credential is `ANTHROPIC_API_KEY`; it is secret, omitted from logs, `.env.example` values,
+Git, and Docker build context. Its absence fails only when an Anthropic node is enabled.
 
 ## Concurrency, State, and Consistency
 
