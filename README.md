@@ -68,6 +68,69 @@ These protocol examples illustrate the format. The handyman receives Spanish
 messages; the tenant's language is inferred from the work-order description.
 The console is reserved for the protocol; technical logs go to files.
 
+## Business rules and rationale
+
+The business objective is to produce a reliable, mutually agreed visit or a
+clear handoff for human coordination. An order describes the maintenance issue;
+`reported_at` records when it was reported and does not establish a visit date.
+Urgency comes exclusively from the CSV and cannot be changed by conversation text.
+
+| Rule | Business rationale |
+|---|---|
+| One handyman, two-hour visits | Every order competes for the same limited resource; a full visit must fit both participants' availability. |
+| No overlapping appointments | Prevents promising the handyman to two households at once. Adjacent visits, such as 14:00–16:00 and 16:00–18:00, are allowed. |
+| Explicit agreement on one proposal | Being available does not mean accepting a visit. Both confirmations must refer to the same proposal and version. |
+| Higher urgency wins competing tentative reservations | Gives urgent work priority while preserving appointments already confirmed with both parties. |
+| Separate conversations per order | A reply for one maintenance issue must not change another order's availability, language, or consent. |
+| Exactly one terminal result | Provides a stable outcome that downstream operators can act on. A completed order is not reopened. |
+
+### Turning availability into a visit
+
+The tenant is asked for all available intervals first, so the handyman is only
+consulted about relevant candidates. Overlapping or adjacent tenant intervals
+are merged, then split into consecutive two-hour candidates from their stated
+start. A remainder shorter than two hours is excluded. For example, availability
+from 10:00 to 15:00 yields 10:00–12:00 and 12:00–14:00.
+
+The handyman may counter-propose a different two-hour interval fully contained
+in the tenant's availability, such as 11:00–13:00 in that example. The tenant
+still has to accept the exact visit. Agenda conflicts are checked even when
+start times do not align with the initial candidates.
+
+### Competition and changes
+
+Candidates blocked by an equal- or higher-urgency reservation, or a confirmed
+appointment, are filtered before asking the handyman. A High order can displace
+a Low tentative reservation, but cannot displace a confirmed Low appointment.
+The displaced tenant is notified and offered an eligible alternative or asked
+for new availability. Priority applies at reservation time; it does not globally
+reorder already confirmed visits.
+
+A rejection or cancellation of a pending proposal withdraws that proposal.
+Changes to previously stated availability require confirmation by the sender;
+the disputed interval is suspended meanwhile. A confirmed change invalidates
+affected proposals and earlier acceptances, preventing an old yes from
+authorizing a different visit.
+
+### Human review and communication
+
+Incomplete evidence leads to clarification. When complete availability proves
+there is no common eligible visit, the tenant is offered human coordination:
+acceptance produces `requires_review`; declining requests new availability.
+The same handoff is offered when the tenant's complete request is exhausted by
+known agenda blockers. The exact `<NO RESPONSE>` sentinel closes the order
+immediately, without retries or real-time waiting. Provider errors are recorded
+as technical failures, never interpreted as a participant's silence.
+
+Review reasons use structured codes (`no_response`, `no_common_availability`,
+`no_eligible_slot`) and known evidence. These explain the outcome without adding
+new terminal statuses. Unknown availability is stated as unknown.
+
+Visit dates and times are made explicit in Madrid time. The tenant receives the
+work-order language and the handyman receives Spanish. The 09:00–19:00 visit
+window and seven-day horizon are solution policies; the open-slot table helps
+the tenant choose an interval but does not reserve it or establish consent.
+
 ## Architecture and actual graph
 
 The stack is Python 3.12, LangGraph, Anthropic, Pydantic, and
