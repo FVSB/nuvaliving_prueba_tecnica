@@ -10,9 +10,9 @@ description: "Task list template for feature implementation"
 
 **Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
 
-**Constitution-required tests**: For scheduling workflows, include tests for tenant isolation,
-capacity-one overlap prevention, and every changed LangGraph branch. Anthropic calls MUST use
-deterministic test doubles.
+**Constitution-required tests**: Include only developer-approved tasks. Scheduling changes test
+the applicable business contract, typed graph branch, Docker CLI framing, trace output, and
+deterministic Anthropic fakes.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 

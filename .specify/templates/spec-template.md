@@ -90,9 +90,8 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
-*For scheduling workflow features, requirements MUST also state tenant scope, handyman capacity
-effect, affected LangGraph nodes and typed state, retry/failure behavior, and whether Anthropic
-is used. AI behavior MUST not be the authority for authorization or booking conflicts.*
+*For scheduling workflow features, requirements MUST reference `BUSINESS_RULES.md`; they must not
+invent policy for agreement, priority, timeouts, CSV/CLI contracts, or terminal results.*
 
 *Example of marking unclear requirements:*
 

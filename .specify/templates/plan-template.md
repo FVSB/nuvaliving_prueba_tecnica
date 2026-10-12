@@ -31,13 +31,10 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [ ] Tenant identifiers are validated and carried through every data access and graph state.
-- [ ] The design prevents atomic overlap bookings for the capacity-one shared handyman.
-- [ ] LangGraph nodes, typed state, transitions, persistence/checkpointing, and failure paths
-      are documented.
-- [ ] The feature is an independently verifiable vertical slice and has the required tests.
-- [ ] Any Anthropic node uses `ANTHROPIC_API_KEY` only at runtime, protects secrets, and cannot
-      authorize access or decide availability/conflicts.
+- [ ] `BUSINESS_RULES.md` and `TECHNICAL_ARCHITECTURE.md` were read and no authority conflict exists.
+- [ ] Developer approval, files, preview, risks, alternatives, and validation are recorded.
+- [ ] The design is a Docker CLI and adds no unapproved service or business policy.
+- [ ] Nodes, typed state, injected dependencies, traces, and changed graph topology are documented.
 - [ ] The work starts from `develop` in a new `feature/<feature-name>` branch.
 
 ## Branch Workflow

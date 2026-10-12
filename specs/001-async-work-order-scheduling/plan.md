@@ -1,151 +1,106 @@
-# Implementation Plan: Async Work-Order Scheduling
+# Implementation Plan: CLI Work-Order Coordination
 
 **Branch**: `develop` | **Date**: 2026-10-12 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `specs/001-async-work-order-scheduling/spec.md`
+**Sources**: [BUSINESS_RULES.md](../../BUSINESS_RULES.md) and
+[TECHNICAL_ARCHITECTURE.md](../../TECHNICAL_ARCHITECTURE.md)
 
 ## Summary
 
-Build the first durable asynchronous workflow for CSV work orders from multiple tenants. It
-imports and validates rows, persists tenant-scoped WOs, orders eligible WOs by priority and
-submission sequence, then atomically reserves a two-hour appointment for one handyman. The
-first graph contains only deterministic nodes; Anthropic is configured at the application edge
-for later nodes and has no authority over scheduling.
+Build a Docker CLI that reads the mounted CSV once, begins coordination for every valid work
+order, receives messages through stdin, and emits only the required terminal protocol on stdout.
+Each order has isolated LangGraph state and event ordering; a shared in-memory schedule authority
+prevents overlapping two-hour visits during one process run. JSONL traces are written under
+`/app/traces`.
 
 ## Technical Context
 
 **Language/Version**: Python 3.12
-**Primary Dependencies**: FastAPI, LangGraph, Pydantic, SQLAlchemy async, Anthropic SDK
-**Storage**: PostgreSQL for domain records, idempotency records, and LangGraph checkpoints
-**Testing**: pytest, pytest-asyncio, HTTP integration tests, PostgreSQL-backed concurrency tests
-**Target Platform**: Linux container service
-**Project Type**: Web service with asynchronous workers
-**Performance Goals**: Record a result for 1,000 CSV rows within five minutes; preserve the
-capacity-one invariant under concurrent scheduling attempts
-**Constraints**: UTC persistence; all services last exactly two hours; a missing
-`ANTHROPIC_API_KEY` only blocks nodes that use Anthropic; tenant scope and appointment conflicts
-are deterministic database-enforced rules
-**Scale/Scope**: One handyman, several tenants, one requested service window per WO in the first
-slice
+**Primary Dependencies**: LangGraph, Pydantic v2, pydantic-settings, dependency-injector,
+Anthropic SDK
+**Storage**: In-memory coordination and schedule state; JSONL files under `/app/traces`
+**Testing**: pytest, pytest-asyncio, strict type checking, Ruff, Docker protocol validation
+**Target Platform**: Docker CLI with stdin/stdout
+**Project Type**: Single-process asynchronous command-line application
+**Constraints**: No API, database, Redis, web service, real-time human timeout, or console logs
+**Scale/Scope**: Five to eight active work orders, one handyman, two-hour visits
 
 ## Constitution Check
 
-*GATE: Passed before Phase 0 research. Re-checked after Phase 1 design.*
-
-- [x] Tenant identifiers are authenticated at the boundary, propagated through job payload,
-      LangGraph state, tables, queries, and audit events.
-- [x] The reservation transaction locks the handyman's booking window and rejects every overlap
-      before a hold or appointment can be committed.
-- [x] Named LangGraph nodes use a typed, versioned state and durable checkpointing; their error
-      and retry paths are documented below.
-- [x] The first slice is independently verifiable through import, prioritization, and concurrent
-      overlap acceptance tests.
-- [x] Anthropic is runtime-configured through `ANTHROPIC_API_KEY`; no initial node calls it, and
-      future calls can propose text only after deterministic scheduling succeeds.
-- [x] New work starts in `feature/<feature-name>` from `develop` and merges back only after
-      tests pass.
-
-## Branch Workflow
-
-**Working Branch**: `develop`
-**Integration Branch**: `develop`
-**Merge Gate**: Tenant-isolation, two-hour no-overlap, idempotency, and changed graph-branch
-tests must pass before merge to `develop`.
-
-For a later change to this completed work, first ask whether it is a defect or intended behavior.
-A defect starts as `fix/<issue-name>` from current `develop`; intended behavior starts as
-`feature/<feature-name>` from current `develop`. Do not reopen this old branch by default.
+- [x] `BUSINESS_RULES.md` is the exclusive functional authority.
+- [x] `TECHNICAL_ARCHITECTURE.md` defines CLI/Docker, injection, typed state, and observability.
+- [x] The plan has no unapproved external service or business-policy assumption.
+- [x] `ANTHROPIC_API_KEY` is startup-only, injected, redacted, and not scheduling authority.
+- [x] Every topology change will receive an approved Mermaid view and, when available, PNG.
 
 ## Project Structure
 
-### Documentation (this feature)
-
 ```text
-specs/001-async-work-order-scheduling/
-├── plan.md
-├── research.md
-├── data-model.md
-├── quickstart.md
-├── contracts/
-│   └── http-api.md
-└── checklists/
-    └── requirements.md
+src/maintenance_agent/
+├── __main__.py
+├── bootstrap.py
+├── config.py
+├── dependencies.py
+├── domain/
+├── application/
+├── agents/scheduling/
+│   ├── graph.py
+│   ├── state.py
+│   ├── nodes/
+│   └── routers/
+├── prompts/
+└── infrastructure/
+
+tests/{unit,integration,acceptance}/
+docs/{decisions,graphs}/
 ```
 
-### Source Code (repository root)
-
-```text
-app/
-├── api/                 # HTTP boundary and authenticated tenant context
-├── domain/              # WOs, appointment rules, prioritization, domain errors
-├── persistence/         # SQLAlchemy models, repositories, transactions, migrations
-├── workflows/           # Typed state, LangGraph builder, individual nodes
-├── workers/             # Asynchronous job submission and execution
-├── integrations/        # CSV reader and later Anthropic adapter
-└── observability/       # Structured logging and workflow audit events
-
-tests/
-├── unit/
-├── integration/
-└── acceptance/
-```
-
-**Structure Decision**: A single Python service keeps the transaction that owns capacity and the
-workflow that requests it close together. The API submits durable jobs; workers invoke the graph
-asynchronously. A later scaling decision may separate workers, without changing the domain
-transaction or graph contract.
-
-## Architecture
+## Runtime Architecture
 
 ```mermaid
 flowchart LR
-    CSV[CSV upload] --> API[API: authenticate and create import job]
-    API --> Q[Durable job queue]
-    Q --> G[LangGraph workflow]
-    G --> P[parse_csv]
-    P --> V[validate_row]
-    V --> W[persist_work_order]
-    W --> R[rank_eligible_work_orders]
-    R --> A[check_availability]
-    A --> B[reserve_two_hour_slot]
-    B --> O[record_outcome]
-    O --> DB[(PostgreSQL)]
-    B --> DB
-    G --> CP[(LangGraph checkpoint)]
-    O -. later .-> AI[Anthropic: draft tenant message]
+    CSV[/app/work_orders.csv/] --> BOOT[bootstrap]
+    BOOT --> COORD[async coordinator]
+    STDIN[stdin reader] --> COORD
+    COORD --> STATE[per-work-order state and queue]
+    STATE --> GRAPH[LangGraph scheduling graph]
+    GRAPH --> SCHEDULE[shared schedule authority]
+    GRAPH --> OUT[serialized stdout writer]
+    GRAPH --> TRACE[JSONL trace writer]
 ```
 
-The graph is an orchestrator, not the source of scheduling truth. `reserve_two_hour_slot` calls
-one transactional domain operation. That operation obtains the authoritative lock and inserts a
-hold or appointment only when the full two-hour window is conflict-free. A graph retry therefore
-cannot create a second booking: it presents the same idempotency key to the transaction.
+`bootstrap.py` initializes settings and shared resources once. The coordinator processes events
+sequentially inside each order while allowing distinct orders to progress concurrently. The
+schedule authority owns the atomic overlap check and consolidation; no lock spans an LLM call or
+human wait. The graph and all infrastructure dependencies are injected explicitly.
 
-### Initial Graph State
+## Initial Graph Topology
 
-`WorkOrderSchedulingState` carries: `schema_version`, `run_id`, `import_job_id`, `row_number`,
-`tenant_id`, `work_order_id`, `source_work_order_id`, `priority`, `submitted_at`,
-`requested_start_utc`, `appointment_id`, `idempotency_key`, `current_status`, `error_code`, and
-`transition_events`. It contains raw values only; it never contains an API key or formatted AI
-prompt. Every node returns a typed partial update and appends one redacted transition event.
+| Node | Responsibility |
+|---|---|
+| `initialize_coordination` | Create initial state and issue the first required message. |
+| `interpret_message` | Validate and interpret an incoming participant message. |
+| `request_clarification` | Request a concrete, unambiguous fact when required. |
+| `propose_visit` | Build a candidate two-hour visit from validated facts. |
+| `record_acceptance` | Store evidence tied to the active proposal version. |
+| `resolve_conflict` | Revalidate known competition through the shared schedule authority. |
+| `confirm_visit` | Send both confirmations before a scheduled terminal result. |
+| `finalize_review` | Emit an idempotent `requires_review` terminal result. |
 
-### Initial Nodes and Transitions
+The detailed routes are added one approved topology change at a time. Nodes cannot invent
+availability or acceptance, nor emit output after their work order has closed.
 
-| Node | Responsibility | Success transition | Recoverable transition | Terminal transition |
-|---|---|---|---|---|
-| `parse_csv` | Stream rows and assign row metadata. | `validate_row` | retry import read | `record_outcome` for unreadable file |
-| `validate_row` | Validate required fields, UTC window, priority, and tenant context. | `persist_work_order` | none | `record_outcome` as rejected |
-| `persist_work_order` | Idempotently store WO and its import result. | `rank_eligible_work_orders` | retry database fault | `record_outcome` |
-| `rank_eligible_work_orders` | Choose next eligible WO by priority and submission sequence. | `check_availability` | none | `record_outcome` if no eligible WO |
-| `check_availability` | Ask deterministic domain rule if requested 2-hour slot is feasible. | `reserve_two_hour_slot` | retry database fault | `record_outcome` as needs review |
-| `reserve_two_hour_slot` | Execute atomic hold/appointment transaction. | `record_outcome` | retry transient transaction fault with same key | `record_outcome` as conflict/review |
-| `record_outcome` | Persist outcome and audit transition. | `END` | retry database fault | `END` with failure recorded |
+## Approved Constraints and Pending Policies
 
-Future nodes are added after `record_outcome` or through an explicit review branch: alternative
-slot selection, tenant notification drafting with Anthropic, human approval, and notification
-delivery. They cannot bypass validation or reservation.
+The implementation must enforce explicit matching acceptance, the two-hour non-overlap invariant,
+the prescribed CLI framing, clean terminal, and JSONL traces. The following require separate
+approval before code assigns behavior: tenant-language inference; relative-date reference;
+repeated `<NO RESPONSE>` and clarification budgets; priority tie-breaks and late competition;
+invalid or duplicate CSV data; malformed/unknown input; EOF; terminal separator; and DST
+semantics.
 
-## Complexity Tracking
+## Verification Strategy
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|---|---|---|
-| Durable queue plus graph checkpoints | Imports and bookings continue after a worker restart. | In-process background tasks lose work and cannot safely resume. |
-| PostgreSQL exclusion constraint and transaction | Capacity-one appointments must remain conflict-free under concurrency. | An application-only availability check races under concurrent requests. |
+Test pure domain rules, Pydantic contracts, dependency replacement, no import-time I/O, one state
+queue per order, concurrent receipt, serialized output blocks, acceptance-version matching,
+schedule races, idempotent closing, JSONL validity/redaction, and Docker execution. Report fake
+LLM tests, Docker tests, and real Anthropic calls separately.
