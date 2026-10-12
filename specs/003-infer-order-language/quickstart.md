@@ -30,6 +30,7 @@ Expected cases:
 ## Real-provider smoke check
 
 With an explicit developer-approved non-production credential, launch the CLI with a fixture CSV
-containing one clear Spanish and one clear English description. Inspect only the JSONL trace fields
-that record the validated language codes; do not print credentials, prompts, or model private
-reasoning to the terminal.
+containing one clear Spanish and one clear English description. Inspect
+`traces/runs/<run>/events.jsonl` locally, or `/app/traces/runs/<run>/events.jsonl` in Docker, for
+the `language_recognized` records and their validated `detail.language_code` fields. Do not print
+credentials, prompts, or model private reasoning to the terminal.

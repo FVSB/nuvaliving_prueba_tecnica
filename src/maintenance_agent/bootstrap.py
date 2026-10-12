@@ -1,7 +1,8 @@
 """The sole composition root for the process."""
 
-import logging
+from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from anthropic import AsyncAnthropic
 
@@ -12,29 +13,49 @@ from maintenance_agent.domain.languages import LanguageCode, LanguageRecognition
 from maintenance_agent.infrastructure.anthropic_language_recognizer import (
     AnthropicLanguageRecognizer,
 )
+from maintenance_agent.infrastructure.trace_writer import (
+    RunContext,
+    TraceWriter,
+    build_run_context,
+)
 
-_QUIET_THIRD_PARTY_LOGGERS = ("httpx", "httpcore", "anthropic")
 
-
-def _configure_logging(level_name: str) -> None:
-    """Keep stderr quiet by default; emit structured records only when the operator opts in."""
-    level = getattr(logging, level_name.upper(), logging.WARNING)
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s %(levelname)s %(message)s",
-        force=True,
-    )
-    for logger_name in _QUIET_THIRD_PARTY_LOGGERS:
-        logging.getLogger(logger_name).setLevel(logging.WARNING)
+def _effective_snapshot(settings: Settings, run_context: RunContext) -> dict[str, str]:
+    """Build the manifest snapshot without ever leaking the Anthropic credential."""
+    snapshot = {
+        "local_timezone": settings.local_timezone,
+        "traces_dir": str(settings.traces_dir),
+        "anthropic_adapter": "static" if settings.anthropic_api_key is None else "anthropic",
+    }
+    snapshot["run_id"] = run_context.run_id
+    return snapshot
 
 
 def build_container(csv_path: Path = Path("/app/work_orders.csv")) -> Container:
-    """Read settings once and return fully wired dependencies."""
+    """Read settings once, create one run folder, and return fully wired dependencies."""
     settings = Settings()
-    _configure_logging(settings.log_level)
+    madrid = ZoneInfo(settings.local_timezone)
+
+    run_context = build_run_context(
+        traces_dir=settings.traces_dir,
+        now=datetime.now(timezone.utc),
+        tz=madrid,
+    )
+    manifest_writer = TraceWriter(run_context.manifest_path, run_context.run_id, madrid)
+    events_writer = TraceWriter(run_context.events_path, run_context.run_id, madrid)
+    runtime_writer = TraceWriter(run_context.runtime_path, run_context.run_id, madrid)
+    manifest_writer.write(
+        event_type="run_started",
+        detail={"snapshot": _effective_snapshot(settings, run_context)},
+    )
+
     container = Container()
     container.settings.override(settings)
     container.csv_path.override(csv_path)
+    container.run_context.override(run_context)
+    container.manifest_writer.override(manifest_writer)
+    container.events_writer.override(events_writer)
+    container.runtime_writer.override(runtime_writer)
 
     if settings.anthropic_api_key is None:
         recognizer = StaticLanguageRecognizer(

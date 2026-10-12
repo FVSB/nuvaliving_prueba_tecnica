@@ -1,14 +1,14 @@
 """Temporary live-message node used before interpretation is implemented."""
 
-import logging
-
 from maintenance_agent.application.messages import InboundMessage, OutboundMessage
-
-logger = logging.getLogger(__name__)
+from maintenance_agent.infrastructure.trace_writer import TraceWriter
 
 
 class ReflectInboundMessageNode:
     """Reflect a validated message while later scheduling nodes are introduced."""
+
+    def __init__(self, trace_writer: TraceWriter) -> None:
+        self._trace_writer = trace_writer
 
     async def __call__(self, message: InboundMessage) -> OutboundMessage:
         outbound = OutboundMessage(
@@ -16,11 +16,14 @@ class ReflectInboundMessageNode:
             role=message.role,
             body=message.body,
         )
-        logger.info(
-            "[reflect_inbound_message] wo=%s node=reflect_inbound_message "
-            "direction=out role=%s body=%r",
-            message.work_order_id,
-            outbound.role,
-            outbound.body,
+        self._trace_writer.write(
+            event_type="inbound_reflected",
+            work_order_id=message.work_order_id,
+            detail={
+                "node": "reflect_inbound_message",
+                "direction": "out",
+                "role": outbound.role,
+                "body": outbound.body,
+            },
         )
         return outbound
