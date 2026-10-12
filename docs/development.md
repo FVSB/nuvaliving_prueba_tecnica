@@ -130,3 +130,18 @@ VS Code supplies its own Dev Containers CLI.
 language-recognition adapter. Install or update them only with `uv add langgraph anthropic`, which
 updates both `pyproject.toml` and `uv.lock`. Focused tests use a static recognizer and do not
 require `ANTHROPIC_API_KEY`; a configured key selects the Anthropic adapter at startup.
+
+## Logging
+
+The CLI keeps stderr silent by default. To opt into one structured INFO record per node transition
+(work-order id, direction in/out, node name, role and body, plus
+`language <code> recognized for the supplied description`), set `LOG_LEVEL`:
+
+```bash
+LOG_LEVEL=INFO uv run maintenance-agent --csv ./work_orders.csv
+```
+
+Accepted values follow stdlib `logging` (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`); case is
+ignored; unknown values fall back to `WARNING`. The third-party loggers `httpx`, `httpcore`, and
+`anthropic` are pinned to `WARNING` so provider transport traces never appear on the console. The
+stdout protocol stream emitted by `AsyncStdoutWriter` is never affected.

@@ -28,10 +28,15 @@ UV_CACHE_DIR=/tmp/uv-cache uv run pytest \
   tests/integration/test_scheduling_graph.py -v
 ```
 
-Result: **15 passed in 1.12s**
+Result: **20 passed in 2.18s**
 
 | Test | Module | Status |
 |---|---|---|
+| test_configure_logging_defaults_to_quiet_root | tests/unit/test_bootstrap.py | passed |
+| test_configure_logging_silences_third_party_loggers | tests/unit/test_bootstrap.py | passed |
+| test_configure_logging_elevates_root_when_requested | tests/unit/test_bootstrap.py | passed |
+| test_configure_logging_accepts_lowercase_level_names | tests/unit/test_bootstrap.py | passed |
+| test_configure_logging_falls_back_to_warning_for_unknown_levels | tests/unit/test_bootstrap.py | passed |
 | test_catalogue_contains_required_common_iso_codes | tests/unit/test_languages.py | passed |
 | test_unknown_provider_value_becomes_undetermined | tests/unit/test_languages.py | passed |
 | test_node_adds_validated_language_result_to_state | tests/unit/test_language_recognition_node.py | passed |
@@ -79,10 +84,15 @@ fake-provider focused tests.
 
 ## Language-recognition logging
 
-Each node transition emits one structured INFO record to stderr (configured by
-`bootstrap._configure_logging`). The stdout wire format emitted by `AsyncStdoutWriter` is
-untouched. The format is `%(asctime)s %(levelname)s %(message)s`, with each message prefixed by
-`[<node>]` so the operator sees which node produced it.
+Logging is **silent by default** to keep the console clean. Operators opt in by exporting
+`LOG_LEVEL=INFO` (or `DEBUG`). `bootstrap._configure_logging` configures the root logger from
+`Settings.log_level` and pins `httpx`, `httpcore`, and `anthropic` to `WARNING` so provider
+transport traces (e.g. `HTTP Request: POST https://api.anthropic.com/...`) never reach the
+console. The stdout wire format emitted by `AsyncStdoutWriter` is never affected.
+
+When `LOG_LEVEL=INFO`, every node transition emits one structured record to stderr using the
+format `%(asctime)s %(levelname)s %(message)s`, with each message prefixed by `[<node>]` so the
+operator sees which node produced it.
 
 Example run for one Spanish work order plus one inbound tenant message:
 
