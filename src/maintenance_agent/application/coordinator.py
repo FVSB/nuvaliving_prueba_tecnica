@@ -55,14 +55,16 @@ class AsyncCoordinator:
 
     async def _start(self, work_order: WorkOrder) -> None:
         state = await self._startup_graph.ainvoke({"work_order": work_order})
-        logger.info(
-            "language_recognition work_order_id=%s language=%s",
-            work_order.work_order_id,
-            state["language_recognition"].language_code.value,
-        )
         await self._writer.write(state["outbound_message"])
 
     def _dispatch(self, message: InboundMessage) -> None:
+        logger.info(
+            "[coordinator] wo=%s node=reflect_inbound_message "
+            "direction=in role=%s body=%r",
+            message.work_order_id,
+            message.role,
+            message.body,
+        )
         queue = self._queues.setdefault(message.work_order_id, asyncio.Queue())
         queue.put_nowait(message)
         if message.work_order_id not in self._workers:

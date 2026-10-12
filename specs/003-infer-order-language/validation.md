@@ -28,7 +28,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run pytest \
   tests/integration/test_scheduling_graph.py -v
 ```
 
-Result: **14 passed in 1.31s**
+Result: **15 passed in 1.12s**
 
 | Test | Module | Status |
 |---|---|---|
@@ -46,6 +46,7 @@ Result: **14 passed in 1.31s**
 | test_coordinator_starts_each_work_order_then_reflects_live_message | tests/integration/test_async_coordination.py | passed |
 | test_csv_reader_normalizes_all_rows_to_injected_timezone | tests/integration/test_async_coordination.py | passed |
 | test_coordinator_logs_recognized_language_per_work_order | tests/integration/test_async_coordination.py | passed |
+| test_coordinator_logs_inbound_dispatch_and_reflection | tests/integration/test_async_coordination.py | passed |
 
 ## Graph topology vs. diagram
 
@@ -78,13 +79,20 @@ fake-provider focused tests.
 
 ## Language-recognition logging
 
-`AsyncCoordinator._start` emits one INFO record per work order through the
-`maintenance_agent.coordinator` logger:
+Each node transition emits one structured INFO record to stderr (configured by
+`bootstrap._configure_logging`). The stdout wire format emitted by `AsyncStdoutWriter` is
+untouched. The format is `%(asctime)s %(levelname)s %(message)s`, with each message prefixed by
+`[<node>]` so the operator sees which node produced it.
+
+Example run for one Spanish work order plus one inbound tenant message:
 
 ```
-2026-10-12 14:45:01,123 INFO maintenance_agent.coordinator language_recognition work_order_id=WO-4 language=es
+2026-10-12 18:30:30,025 INFO [recognize_language] wo=WO-7 node=recognize_language language=es input_description='Hay una fuga de agua.' language 'es' recognized for the supplied description
+2026-10-12 18:30:30,026 INFO [initialize_coordination] wo=WO-7 node=initialize_coordination direction=in
+2026-10-12 18:30:30,026 INFO [initialize_coordination] wo=WO-7 node=initialize_coordination direction=out role=tenant body='Nueva orden de trabajo iniciada.'
+2026-10-12 18:30:30,026 INFO [coordinator] wo=WO-7 node=reflect_inbound_message direction=in role=tenant body='Need help | urgent'
+2026-10-12 18:30:30,027 INFO [reflect_inbound_message] wo=WO-7 node=reflect_inbound_message direction=out role=tenant body='Need help | urgent'
 ```
 
-Logging is configured by `bootstrap._configure_logging` to stderr at INFO level and never touches
-the stdout protocol stream emitted by `AsyncStdoutWriter`. No prompt, description, or credential is
-included in the record.
+Every record carries the work-order id, the node name, and (for protocol payloads) the direction
+(in/out) plus role and body. No prompt, credential, or model reasoning is included.
