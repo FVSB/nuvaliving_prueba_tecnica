@@ -1,0 +1,24 @@
+flowchart TB
+    CSV[Read-only work orders CSV] --> C[AsyncCoordinator]
+    C -->|start each order concurrently| G
+
+    subgraph G[Compiled scheduling graph]
+        S((START)) --> T[negotiation_transition]
+        T --> E((END))
+    end
+
+    E -->|retained per-order state and outbound message| C
+    CLI[Single CLI stdin receiver] -->|full inbound message body| Q[Per-work-order FIFO queue]
+    Q -->|resume state with inbound_message| C
+    C -->|one graph invocation per event| G
+
+    T -. state cursor .-> W[NegotiationWorkflow]
+    W -.-> D[Language, availability, agenda, consent, reversal, handoff transitions]
+    D -. update .-> T
+    T -->|scheduled confirmations complete| F[Two-line scheduled terminal frame]
+    T -->|review closure complete| R[Two-line requires_review terminal frame]
+    F --> C
+    R --> C
+
+    A[Shared InMemoryScheduleAuthority] <--> W
+    C -->|displaced hold event| Q

@@ -6,7 +6,8 @@ import sys
 from collections.abc import AsyncIterator
 from io import TextIOBase
 
-from maintenance_agent.application.messages import InboundMessage, OutboundMessage
+from maintenance_agent.application.messages import InboundMessage, OutboundMessage, TerminalFrame
+from maintenance_agent.infrastructure.trace_writer import TraceWriter
 
 # The body is deliberately captured as the complete remainder so embedded pipes survive intact.
 INBOUND_MESSAGE_PATTERN = re.compile(
@@ -29,8 +30,13 @@ def parse_inbound_message(line: str) -> InboundMessage:
 class AsyncStdinReader:
     """Read terminal lines without blocking the event loop."""
 
-    def __init__(self, stream: TextIOBase | None = None) -> None:
+    def __init__(
+        self,
+        stream: TextIOBase | None = None,
+        runtime_writer: TraceWriter | None = None,
+    ) -> None:
         self._stream = stream or sys.stdin
+        self._runtime_writer = runtime_writer
 
     async def messages(self) -> AsyncIterator[InboundMessage]:
         while True:
@@ -39,7 +45,21 @@ class AsyncStdinReader:
             await asyncio.sleep(0)
             if not line:
                 return
-            yield parse_inbound_message(line.rstrip("\r\n"))
+            message_line = line.rstrip("\r\n")
+            try:
+                message = parse_inbound_message(message_line)
+            except InputFormatError:
+                if self._runtime_writer is not None:
+                    self._runtime_writer.write(
+                        event_type="malformed_input",
+                        detail={
+                            "reason": "protocol_mismatch",
+                            "line_length": len(message_line),
+                            "input_line": message_line,
+                        },
+                    )
+                continue
+            yield message
 
 
 class AsyncStdoutWriter:
@@ -51,6 +71,13 @@ class AsyncStdoutWriter:
 
     async def write(self, message: OutboundMessage) -> None:
         block = f"WOID:{message.work_order_id}|ROLE:{message.role}\n{message.body}\n\n"
+        async with self._lock:
+            self._stream.write(block)
+            self._stream.flush()
+
+    async def write_terminal(self, frame: TerminalFrame) -> None:
+        """Write and flush the exact two-line terminal outcome without message framing."""
+        block = f"WOID:{frame.work_order_id}|RESULT:{frame.result}\n{frame.detail}\n"
         async with self._lock:
             self._stream.write(block)
             self._stream.flush()

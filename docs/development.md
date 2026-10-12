@@ -21,7 +21,21 @@ uv run ruff check src tests
 
 The CLI `--csv` argument is injected at bootstrap; without it the input is still the binding
 `/app/work_orders.csv`. Application nodes remain independent from paths and environment reads.
-Invalid-input and EOF business policies remain pending; this change does not define them.
+Malformed CLI lines are ignored and recorded with their submitted text in the current run's
+`runtime.jsonl`. EOF ends input normally.
+
+### Reproducible clock (`--now`)
+
+`--now <ISO timestamp with offset>` freezes the business clock for the whole process, so relative
+dates ("tomorrow", "next week") and past-date checks give the same result on every run:
+
+```bash
+uv run maintenance-agent --csv ./work_orders.csv --now 2026-10-12T12:00:00+02:00
+```
+
+The offset is mandatory; a naive or invalid timestamp is rejected by argparse. The clock does not
+advance during the run. The manifest records a `clock_frozen` event. Without the flag the real
+Madrid clock is used. Tests inject the clock directly through `NegotiationWorkflow(clock=...)`.
 
 ## Docker delivery
 
@@ -157,3 +171,8 @@ cat "$latest/events.jsonl"
 
 Set `TRACES_DIR` before startup to override the local path; changing it does not affect an active
 run.
+
+When the LLM slot-suggestion path fails, `slot_suggestion_attempt` events carry a `diagnostic`
+field with the failure reason (`truncated at max_tokens`, `schema mismatch [...]`, block types,
+and a 200-character excerpt of the reply). The diagnostic is for traces only and is never fed back
+into the next prompt; `slot_suggestion_feedback` still holds the sanitized one-line feedback.

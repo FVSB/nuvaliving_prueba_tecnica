@@ -26,12 +26,14 @@ Las rutas listadas reflejan la implementación vigente; crear módulos adicional
 | Parámetro | Categoría | Entorno / estado | Restricción |
 |---|---|---|---|
 | Zona horaria | Configuración startup-only aprobada | `LOCAL_TIMEZONE=Europe/Madrid` | IANA válida; aplica solo a nuevas corridas |
+| Rejilla de sugerencia de slots | Configuración startup-only aprobada | `SLOT_LOOKAHEAD_DAYS=7`, `SLOT_DAILY_START_HOUR=9`, `SLOT_DAILY_END_HOUR=19`, `SLOT_HOURS=2` | Solo presentación; nunca evidencia de disponibilidad; la ventana debe contener al menos un slot |
 | Duración visita | Regla de negocio vinculante | Constante de dos horas | Semántica DST pendiente; no cambiar duración |
 | Número de handyman | Regla de negocio vinculante | Constante: uno | No parametrizar para cambiar contrato |
 | CSV | Regla de negocio vinculante | `/app/work_orders.csv`, solo lectura | Mantener ruta de evaluación |
 | Logs/trazas | Regla de negocio vinculante | `TRACES_DIR=traces` local; `/app/traces` Docker, JSONL | Startup-only; una carpeta por corrida |
 | Credencial Anthropic | Credencial documentada | `ANTHROPIC_API_KEY`, si el cliente la necesita | Secreto; no registrar valor ni versionar .env |
-| Modelo LLM | Técnico | Preguntar antes de crear variable | Nombre/default/validación pendientes |
+| Modelo de reconocimiento de idioma | Configuración startup-only | `ANTHROPIC_LANGUAGE_MODEL=claude-haiku-5-5` | Nombre no vacío; aplica al siguiente arranque |
+| Modelo de conversación | Configuración startup-only | `ANTHROPIC_CONVERSATION_MODEL=claude-haiku-5-5` | Nombre no vacío; aplica al siguiente arranque |
 | Directorio de trazas | Configuración startup-only aprobada | `TRACES_DIR=traces` local; Docker fija `/app/traces` | No cambia una corrida activa; no registrar secretos |
 | Concurrencia LLM | Técnico | Preguntar antes de crear variable | No bloquear recepción de otras órdenes |
 | Referencia de fechas relativas | Política abierta | Aprobar política y después preguntar si entorno | `reported_at` no implica «hoy» |
@@ -56,6 +58,8 @@ El comando de evaluación documentado en `BUSINESS_RULES.md` monta `./traces` de
 - `manifest.jsonl`: inicio/cierre, run ID y snapshot efectivo sin secretos.
 - `events.jsonl`: mensajes, decisiones, cambios y terminales por orden.
 - `runtime.jsonl`: logs técnicos y errores sanitizados.
+- Las líneas CLI que no cumplen el protocolo se ignoran y generan un evento `malformed_input` en
+  `runtime.jsonl`, con motivo, longitud y línea recibida.
 - Buscar por `work_order_id` para reconstruir una orden y ordenar por `sequence` dentro de la corrida; timestamps conservan offset real de Madrid.
 - La hora del log no gobierna los timeouts humanos ni la referencia temporal de negocio.
 
@@ -102,6 +106,14 @@ and must not be assigned behavior until `BUSINESS_RULES.md` is approved accordin
 identificador IANA instalado (por ejemplo, `Europe/Madrid`). El lector CSV normaliza `reported_at`
 a esta zona conservando el instante original y rechaza marcas de tiempo sin offset. Cambiarla
 requiere reiniciar el proceso o contenedor; nunca modifica una corrida activa.
+
+## Modelos Anthropic
+
+`ANTHROPIC_LANGUAGE_MODEL` selecciona el modelo de reconocimiento de idioma y
+`ANTHROPIC_CONVERSATION_MODEL` selecciona el modelo de interpretación y composición de mensajes.
+Ambas variables usan `claude-haiku-5-5` por defecto y requieren un identificador no vacío. Se
+leen al inicio; cada manifiesto de corrida registra los dos modelos efectivos y nunca las
+credenciales.
 
 ## Local CSV selection
 

@@ -91,9 +91,7 @@ async def test_coordinator_writes_language_recognition_event_to_events_jsonl(
         reader=FakeStdinReader([]),
         writer=AsyncStdoutWriter(output),
         startup_graph=build_scheduling_graph(
-            StaticLanguageRecognizer(
-                LanguageRecognitionResult(language_code=LanguageCode.SPANISH)
-            ),
+            StaticLanguageRecognizer(LanguageRecognitionResult(language_code=LanguageCode.SPANISH)),
             InitializeCoordinationNode(),
             events,
         ),

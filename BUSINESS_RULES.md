@@ -24,6 +24,9 @@ This document is the binding functional source for the scheduling solution.
   human-timeout event: atomically close it as `requires_review` immediately, with no retry or
   approval. Prefix/suffix/whitespace variants do not match. A delayed message cannot change a
   terminal result. Do not use wall-clock timeouts or treat provider failure as human absence.
+- A malformed inbound CLI line is ignored, logged to the current run's `runtime.jsonl` as
+  `malformed_input` with its length, validation reason, and submitted line, and does not stop the
+  process.
 
 ## External Interfaces
 
@@ -102,8 +105,10 @@ shared schedule immediately before mutation. Never invent availability, consent,
 
 Negotiation begins by asking the tenant for all explicit availability intervals. Normalize them to
 absolute time and split from each stated start into consecutive two-hour candidates; ignore a
-residual shorter than two hours. Do not invent a fixed grid, calendar availability, relative dates,
-or handyman availability. Ask the handyman only about tenant-derived candidates that survive agenda
+residual shorter than two hours. Do not invent calendar availability, relative dates, or handyman
+availability. The only fixed grid allowed is the presentation-only slot table of Feature 005
+(7 local days, two-hour slots, 09:00-19:00, shown for vague date requests); it only reports
+shared-agenda occupancy and is never candidate, consent, or availability evidence. Ask the handyman only about tenant-derived candidates that survive agenda
 pre-filtering. A candidate occupied by an equal/higher-urgency tentative hold or confirmed visit is
 immediately returned to the tenant for alternatives. A free or strict-higher-urgency-preemptible
 candidate may be asked of the handyman. A selected tenant request transfers all overlapping lower-
@@ -149,7 +154,7 @@ without defining new DST policy.
 
 ## Pending Policies Requiring Approval
 
-- Invalid/duplicate CSV rows, malformed input, unknown IDs, EOF, and terminal-result separator.
+- Invalid/duplicate CSV rows, unknown IDs, EOF, and terminal-result separator.
 - Reference clock for interpreting relative dates such as “tomorrow”.
 - DST semantics for a two-hour visit.
 

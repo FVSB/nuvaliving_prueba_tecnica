@@ -19,7 +19,11 @@ Typed result: explicit absolute intervals and the participant's asserted availab
 
 Merge overlapping/adjacent explicit tenant intervals into their union before slicing initial consecutive two-hour candidates. The handyman may return a counterproposal for a different full two-hour interval only when that interval is fully contained in the original tenant interval union. This is availability evidence, never consent. Run the same occupancy/priority pre-filter for that interval, then ask the tenant to confirm that exact slot. The shared authority checks overlap across arbitrary UTC starts, even when they do not align with initial slices.
 
-## Confirmation Interpretation
+## Confirmation Decision
+
+The application does not ask the language model to decide consent. A deterministic domain function
+recognizes only short, explicit yes/no replies; availability statements, conditional replies, and
+ambiguous language remain unresolved and trigger clarification.
 
 ```text
 decision: yes | no | null

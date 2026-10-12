@@ -20,3 +20,12 @@ class InboundMessage(WorkOrderMessage):
 @dataclass(frozen=True, slots=True)
 class OutboundMessage(WorkOrderMessage):
     """A message ready to be framed by the CLI transport."""
+
+
+@dataclass(frozen=True, slots=True)
+class TerminalFrame:
+    """Exactly two terminal protocol lines for one completed work order."""
+
+    work_order_id: str
+    result: str
+    detail: str

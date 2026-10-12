@@ -6,10 +6,12 @@ from zoneinfo import ZoneInfo
 
 from anthropic import AsyncAnthropic
 
+from maintenance_agent.application.conversation import SafeFallbackConversationHandler
 from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
 from maintenance_agent.config import Settings
 from maintenance_agent.dependencies import Container
 from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
+from maintenance_agent.infrastructure.anthropic_conversation import AnthropicConversationHandler
 from maintenance_agent.infrastructure.anthropic_language_recognizer import (
     AnthropicLanguageRecognizer,
 )
@@ -25,14 +27,25 @@ def _effective_snapshot(settings: Settings, run_context: RunContext) -> dict[str
     snapshot = {
         "local_timezone": settings.local_timezone,
         "traces_dir": str(settings.traces_dir),
+        "slot_lookahead_days": str(settings.slot_lookahead_days),
+        "slot_daily_start_hour": str(settings.slot_daily_start_hour),
+        "slot_daily_end_hour": str(settings.slot_daily_end_hour),
+        "slot_hours": str(settings.slot_hours),
         "anthropic_adapter": "static" if settings.anthropic_api_key is None else "anthropic",
+        "anthropic_language_model": settings.anthropic_language_model,
+        "anthropic_conversation_model": settings.anthropic_conversation_model,
     }
     snapshot["run_id"] = run_context.run_id
     return snapshot
 
 
-def build_container(csv_path: Path = Path("/app/work_orders.csv")) -> Container:
-    """Read settings once, create one run folder, and return fully wired dependencies."""
+def build_container(
+    csv_path: Path = Path("/app/work_orders.csv"), now: datetime | None = None
+) -> Container:
+    """Read settings once, create one run folder, and return fully wired dependencies.
+
+    ``now`` freezes the business clock for reproducible runs; ``None`` keeps the real clock.
+    """
     settings = Settings()
     madrid = ZoneInfo(settings.local_timezone)
 
@@ -52,6 +65,9 @@ def build_container(csv_path: Path = Path("/app/work_orders.csv")) -> Container:
     container = Container()
     container.settings.override(settings)
     container.csv_path.override(csv_path)
+    if now is not None:
+        container.clock.override(lambda: now.astimezone(madrid))
+        manifest_writer.write(event_type="clock_frozen", detail={"now": now.isoformat()})
     container.run_context.override(run_context)
     container.manifest_writer.override(manifest_writer)
     container.events_writer.override(events_writer)
@@ -61,8 +77,13 @@ def build_container(csv_path: Path = Path("/app/work_orders.csv")) -> Container:
         recognizer = StaticLanguageRecognizer(
             LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
         )
+        conversation_handler = SafeFallbackConversationHandler()
     else:
         client = AsyncAnthropic(api_key=settings.anthropic_api_key.get_secret_value())
-        recognizer = AnthropicLanguageRecognizer(client)
+        recognizer = AnthropicLanguageRecognizer(client, model=settings.anthropic_language_model)
+        conversation_handler = AnthropicConversationHandler(
+            client, model=settings.anthropic_conversation_model
+        )
     container.language_recognizer.override(recognizer)
+    container.conversation_handler.override(conversation_handler)
     return container

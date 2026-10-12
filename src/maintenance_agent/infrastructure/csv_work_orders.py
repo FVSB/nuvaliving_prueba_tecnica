@@ -1,6 +1,5 @@
 """Asynchronous adapter for the binding work-order CSV."""
 
-import asyncio
 import csv
 from collections.abc import Sequence
 from pathlib import Path
@@ -16,8 +15,8 @@ class CsvWorkOrderReader:
         self._path = path
 
     async def read(self) -> Sequence[WorkOrder]:
-        """Read outside the event loop, then return normalized work orders."""
-        return await asyncio.to_thread(self._read_synchronously)
+        """Read the small, read-only startup CSV once and return validated orders."""
+        return self._read_synchronously()
 
     def _read_synchronously(self) -> list[WorkOrder]:
         with self._path.open(encoding="utf-8", newline="") as csv_file:

@@ -12,9 +12,12 @@ from maintenance_agent.agents.scheduling.nodes.reflect_inbound_message import (
     ReflectInboundMessageNode,
 )
 from maintenance_agent.application.coordinator import AsyncCoordinator
+from maintenance_agent.application.slot_table import SlotGridSpec
+from maintenance_agent.application.workflow import NegotiationWorkflow
 from maintenance_agent.config import Settings
 from maintenance_agent.infrastructure.cli_transport import AsyncStdinReader, AsyncStdoutWriter
 from maintenance_agent.infrastructure.csv_work_orders import CsvWorkOrderReader
+from maintenance_agent.infrastructure.in_memory_schedule import InMemoryScheduleAuthority
 from maintenance_agent.infrastructure.trace_writer import RunContext, TraceWriter
 
 
@@ -23,12 +26,15 @@ class Container(containers.DeclarativeContainer):
 
     settings = providers.Dependency(instance_of=Settings)
     csv_path = providers.Object(Path("/app/work_orders.csv"))
+    clock = providers.Object(None)
     run_context = providers.Dependency(instance_of=RunContext)
     manifest_writer = providers.Dependency(instance_of=TraceWriter)
     events_writer = providers.Dependency(instance_of=TraceWriter)
     runtime_writer = providers.Dependency(instance_of=TraceWriter)
     language_recognizer = providers.Dependency()
-    stdin_reader = providers.Singleton(AsyncStdinReader)
+    conversation_handler = providers.Dependency()
+    schedule_authority = providers.Singleton(InMemoryScheduleAuthority)
+    stdin_reader = providers.Singleton(AsyncStdinReader, runtime_writer=runtime_writer)
     stdout_writer = providers.Singleton(AsyncStdoutWriter)
     csv_work_order_reader = providers.Factory(
         CsvWorkOrderReader,
@@ -36,6 +42,21 @@ class Container(containers.DeclarativeContainer):
         path=csv_path,
     )
     initialize_coordination_node = providers.Factory(InitializeCoordinationNode)
+    slot_grid = providers.Factory(
+        SlotGridSpec,
+        lookahead_days=settings.provided.slot_lookahead_days,
+        daily_start_hour=settings.provided.slot_daily_start_hour,
+        daily_end_hour=settings.provided.slot_daily_end_hour,
+        slot_hours=settings.provided.slot_hours,
+    )
+    negotiation_workflow = providers.Factory(
+        NegotiationWorkflow,
+        conversation=conversation_handler,
+        agenda=schedule_authority,
+        local_timezone=settings.provided.local_timezone,
+        clock=clock,
+        slot_grid=slot_grid,
+    )
     reflect_inbound_message_node = providers.Factory(
         ReflectInboundMessageNode,
         trace_writer=events_writer,
@@ -45,6 +66,7 @@ class Container(containers.DeclarativeContainer):
         recognizer=language_recognizer,
         initialize_node=initialize_coordination_node,
         trace_writer=events_writer,
+        workflow=negotiation_workflow,
     )
     coordinator = providers.Factory(
         AsyncCoordinator,

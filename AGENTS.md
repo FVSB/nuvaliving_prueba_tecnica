@@ -1,22 +1,26 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/004-negotiate-visit-slots/plan.md`.
+`specs/005-vague-slot-suggestion/plan.md`.
 <!-- SPECKIT END -->
 
-<!-- GENTLE-AI / ENGRAM START -->
-## Gentle-AI, Engram, and Specify coexistence
+## Ruff rule
 
-Engram is the persistent-memory layer for this workspace. It may retain and
-retrieve project decisions, discoveries, and session context, but it does not
-replace the project's SDD source of truth.
+Before investing time in manual Ruff fixes, ALWAYS ask the user first
+whether to spend time on Ruff or not. Never proceed with manual (non
+auto-fixable) Ruff fixes without explicit user approval. `poe auto-fix`
+(`uv run poe auto-fix`) may be run freely — it only applies safe
+automatic fixes.
+
+<!-- GENTLE-AI  START -->
+## Gentle-AI, and Specify coexistence
 
 Specify/SpecKit remains authoritative for specification, planning, task
 generation, and implementation: use the existing `.specify/` workflows and
 the current `specs/` artifacts. Do not create or migrate work into Gentle-AI
 ODD planning artifacts, and do not overwrite `.specify/`, `specs/`, or this
 file when syncing Gentle-AI.
-<!-- GENTLE-AI / ENGRAM END -->
+<!-- GENTLE-AI  END -->
 
 <!-- CODEGRAPH START -->
 ## CodeGraph
@@ -44,6 +48,15 @@ When CodeGraph reports files pending index sync, read only those named files
 for current contents; the remaining graph data is authoritative. If the graph
 is uninitialized, ask before running `codegraph init -i`.
 <!-- CODEGRAPH END -->
+
+## Cost-efficient documentation work
+
+For work limited to reading, reviewing, creating, or editing Markdown documentation — including
+`*.md` skills, specifications, plans, checklists, decisions, and agent instructions — delegate to
+the lowest-cost capable Codex model available. Prefer `gpt-6-luna` when it is available; use a
+more capable model only when the requested documentation work requires reasoning or technical
+judgment that the lower-cost model cannot reliably provide. Do not apply this preference to code,
+tests, security-sensitive changes, or tasks that require repository-wide architectural analysis.
 
 ## Reproducible development installations
 

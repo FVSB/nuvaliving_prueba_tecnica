@@ -46,7 +46,7 @@ CodeGraph inspection reports the current `AsyncCoordinator._start` invokes the g
 
 The CLI coordinator retains graph state keyed by work-order ID and sends each inbound event through a per-order queue. `application/conversation.py` defines injected `ConversationHandler`, `MessageInterpreter`, and `MessageComposer` ports. `infrastructure/cli_conversation.py` adapts the existing CLI reader/writer; `infrastructure/anthropic_conversation.py` implements typed interpretation and composition using the same startup-injected Anthropic client. Inbound events route to coordinator queues. Graph nodes never read stdin, compete on `readline`, or block their order worker waiting for a future participant message: the graph emits an outbound intent and pending question, yields, and a later queued inbound event resumes retained state. A final `compose_message` node is the only path to outbound participant text and chooses the stored recipient language.
 
-The graph contains focused nodes for language recognition, incident introduction/tenant availability request, tenant evidence interpretation/candidate creation, handyman availability request and interpretation, proposal selection, role-bound confirmation interpretation, availability reversal resolution, no-common-time handoff, final proposal revalidation/commit, and terminal output. `interpret_confirmation` is a dedicated node with typed `decision: yes | no | null` and `clarification_required: bool`; ambiguous input cannot be coerced to yes or no. The exact `<NO RESPONSE>` terminal path bypasses that node because no consent is being requested or inferred.
+The graph contains focused nodes for language recognition, incident introduction/tenant availability request, tenant evidence interpretation/candidate creation, handyman availability request and interpretation, proposal selection, role-bound confirmation handling, availability reversal resolution, no-common-time handoff, final proposal revalidation/commit, and terminal output. Participant yes/no replies are interpreted by a pure deterministic domain function; the Anthropic adapter extracts availability only and may request local calendar context when resolving relative weekdays. Ambiguous input cannot be coerced to yes or no. The exact `<NO RESPONSE>` terminal path bypasses confirmation handling because no consent is being requested or inferred.
 
 Terminal outcomes use a closed `TerminalStatus(StrEnum)` domain type in `domain/negotiation.py`, with exactly `SCHEDULED = "scheduled"` and `REQUIRES_REVIEW = "requires_review"`. The per-order state keeps a nullable `terminal_status` until completion. Graph cursor and pending action are separate types, never extra terminal statuses. Output and trace serialize the exact enum values.
 
@@ -72,7 +72,7 @@ src/maintenance_agent/
 │   └── anthropic_conversation.py      # Typed interpretation/composition with startup client
 ├── prompts/
 │   ├── interpret_availability.py      # Typed evidence extraction prompt
-│   ├── interpret_confirmation.py      # Typed yes/no/clarification prompt
+│   ├── decisions.py                   # Deterministic explicit yes/no interpretation
 │   └── compose_message.py             # Language-aware complete message prompt
 └── agents/scheduling/
     ├── graph.py                       # Wiring and routes only

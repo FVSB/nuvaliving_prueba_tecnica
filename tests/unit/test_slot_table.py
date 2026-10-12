@@ -1,0 +1,99 @@
+from datetime import timezone
+
+from maintenance_agent.application.conversation import AmbiguityReason, PartOfDay
+from maintenance_agent.application.slot_table import (
+    SlotGridSpec,
+    SlotTable,
+    compose_slot_reply_text,
+    derive_open_slots,
+    describe_window,
+    filter_slots,
+    render_slot_fallback_reply,
+    reply_embeds_table,
+)
+from tests.unit.slot_helpers import NOW, appointment_at, snapshot_with
+
+GRID = SlotGridSpec()
+
+
+def test_grid_has_five_slots_per_day_for_seven_days() -> None:
+    slots = derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID)
+    assert len(slots) == 35
+    assert slots[0].start_local == "09:00" and slots[-1].end_local == "19:00"
+
+
+def test_occupied_slot_is_excluded() -> None:
+    slots = derive_open_slots(snapshot_with(appointment_at(11)), NOW, "Europe/Madrid", GRID)
+    assert len(slots) == 34
+    assert all(slot.start_local != "11:00" or slot.local_date != "2026-10-12" for slot in slots)
+
+
+def test_overlap_by_partial_slot_excludes_it() -> None:
+    slots = derive_open_slots(snapshot_with(appointment_at(10)), NOW, "Europe/Madrid", GRID)
+    day = [s.start_local for s in slots if s.local_date == "2026-10-12"]
+    assert day == ["13:00", "15:00", "17:00"]
+
+
+def test_render_is_byte_deterministic_and_ordered() -> None:
+    first = SlotTable(derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID), "en")
+    second = SlotTable(
+        tuple(reversed(derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID))), "en"
+    )
+    assert first.render_markdown() == second.render_markdown()
+    assert first.render_markdown().splitlines()[2].startswith("| SLOT-20261012T0700Z")
+
+
+def test_slot_id_uses_utc() -> None:
+    slot = derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID)[0]
+    assert slot.interval.start.astimezone(timezone.utc).strftime("%H%M") == "0700"
+    assert slot.slot_id == "SLOT-20261012T0700Z01"
+
+
+def test_zero_rows_render_fixed_line() -> None:
+    assert SlotTable((), "en").render_markdown() == "No open slots in the next 7 days."
+    assert SlotTable((), "es").render_markdown().startswith("No hay espacios libres")
+
+
+def test_reply_embeds_table_and_disclaimer_verbatim() -> None:
+    table = SlotTable(derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID), "es")
+    reply = compose_slot_reply_text("Hola", table, "Elija uno")
+    assert reply_embeds_table(reply, table)
+    assert not reply_embeds_table(reply.replace("open", "OPEN"), table)
+
+
+def test_past_slots_of_today_are_not_offered() -> None:
+    late = NOW.replace(hour=12)
+    slots = derive_open_slots(snapshot_with(), late, "Europe/Madrid", GRID)
+    assert [s.start_local for s in slots if s.local_date == "2026-10-12"] == [
+        "13:00",
+        "15:00",
+        "17:00",
+    ]
+
+
+def test_morning_ends_at_noon_and_afternoon_starts_at_noon() -> None:
+    slots = derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID)
+    morning = filter_slots(slots, "2026-10-13", "2026-10-13", PartOfDay.MORNING)
+    assert [s.start_local for s in morning] == ["09:00"]  # 11:00-13:00 crosses noon
+    afternoon = filter_slots(slots, "2026-10-13", "2026-10-13", PartOfDay.AFTERNOON)
+    assert [s.start_local for s in afternoon] == ["13:00", "15:00", "17:00"]
+    assert len(filter_slots(slots, None, None, PartOfDay.MORNING)) == 7
+    assert filter_slots(slots, None, None, PartOfDay.NONE) == slots
+
+
+def test_filtered_empty_window_has_its_own_line() -> None:
+    assert SlotTable((), "en", filtered=True).render_markdown().startswith("No open slots for")
+
+
+def test_window_description_is_deterministic() -> None:
+    assert describe_window("2026-10-13", "2026-10-13", PartOfDay.MORNING, "es") == (
+        "2026-10-13, mañana (hasta las 12:00)"
+    )
+    assert describe_window(None, None, PartOfDay.NONE) == ""
+
+
+def test_fallback_explains_ambiguity_and_names_no_slot() -> None:
+    for reason in AmbiguityReason:
+        reply = render_slot_fallback_reply("en", reason)
+        assert "SLOT-" not in reply and "Please share your complete availability" in reply
+    assert "exact time" in render_slot_fallback_reply("en", AmbiguityReason.UNSPECIFIED_TIME)

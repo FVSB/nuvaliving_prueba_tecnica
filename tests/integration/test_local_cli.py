@@ -1,8 +1,10 @@
 from pathlib import Path
 
 from maintenance_agent.__main__ import run
+from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
+from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
 
-from .fakes import FakeStdinReader
+from .fakes import FakeConversationHandler, FakeStdinReader
 
 
 async def test_local_cli_loads_csv_then_receives_mocked_stdin(
@@ -14,14 +16,18 @@ async def test_local_cli_loads_csv_then_receives_mocked_stdin(
     await run(
         csv_path=csv_path,
         stdin_reader=FakeStdinReader(["WO-001|tenant Hola | necesito ayuda"]),
+        conversation_handler=FakeConversationHandler(),
+        language_recognizer=StaticLanguageRecognizer(
+            LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
+        ),
     )
 
     captured = capsys.readouterr()
     output = captured.out
     assert captured.err == ""
-    assert "WOID:WO-001|ROLE:tenant\nNueva orden de trabajo iniciada.\n\n" in output
-    assert "WOID:WO-002|ROLE:tenant\nNueva orden de trabajo iniciada.\n\n" in output
-    assert output.endswith("WOID:WO-001|ROLE:tenant\nHola | necesito ayuda\n\n")
+    assert "WOID:WO-001|ROLE:tenant\n" in output
+    assert "WOID:WO-002|ROLE:tenant\n" in output
+    assert "Hola | necesito ayuda" not in output
     run_folders = list((tmp_path / "traces" / "runs").iterdir())
     assert len(run_folders) == 1
     events = run_folders[0] / "events.jsonl"

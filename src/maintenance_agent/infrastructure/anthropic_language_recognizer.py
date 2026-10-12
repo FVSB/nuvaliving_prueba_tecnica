@@ -12,7 +12,7 @@ class AnthropicLanguageRecognizer:
     def __init__(
         self,
         client: AsyncAnthropic,
-        model: str = "claude-haiku-4-5-20251001",
+        model: str = "claude-haiku-5-5",
     ) -> None:
         self._client = client
         self._model = model
