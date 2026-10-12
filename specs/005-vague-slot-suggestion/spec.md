@@ -136,8 +136,8 @@ resolved absolute interval, not the slot table and not the generic availability 
   as availability evidence per existing rules; the vague part does not discard it.
 - Language: the table and fallback reply are rendered in the tenant's recognized language for
   that work order, with the handyman always addressed in Spanish per existing binding rules.
-- Human-timeout policy is untouched: `<NO RESPONSE>` handling and terminal semantics remain
-  exactly as in `docs/BUSINESS_RULES.md`; the retry loop is an internal composition loop within one
+- Human-timeout policy is untouched: the `<NO RESPONSE>` policy is governed by 004's updated
+  RETRYING rule in `docs/BUSINESS_RULES.md`; the retry loop is an internal composition loop within one
   inbound message, not a message retry policy.
 
 ## Requirements *(mandatory)*
@@ -226,7 +226,7 @@ resolved absolute interval, not the slot table and not the generic availability 
 - LLM composition and validation use the already-approved external provider configuration;
   the validator is a separate invocation from the composer.
 - The retry budget of 3 composition attempts is per inbound tenant message and is internal to
-  reply production; it does not interact with the human-timeout (`<NO RESPONSE>`) policy.
+  reply production; it does not interact with the human-timeout (`<NO RESPONSE>`) policy, which is governed by 004's updated RETRYING rule.
 - The tenant's recognized language for the work order is already available from Feature 003.
 - Existing Feature 004 negotiation graph, states, and contracts remain in scope and are only
   extended, not replaced.

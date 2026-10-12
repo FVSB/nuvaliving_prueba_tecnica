@@ -1,0 +1,9 @@
+work_order_id,work_order,address,description,reported_at,urgency
+WO-001,Gas leak - 24 Oak Street,24 Oak Street,Tenant reports a strong smell of gas in the kitchen,2026-10-12T09:15:00+02:00,Critical
+WO-002,Fuga de agua - Calle Mayor 18,Calle Mayor 18,El inquilino informa de una fuga de agua debajo del fregadero,2026-10-12T10:40:00+02:00,High
+WO-003,Leaky tap - 5 South Street,5 South Street,Tenant reports a slowly dripping kitchen tap,2026-10-12T11:00:00+02:00,Low
+WO-004,Puerta rota - Calle Sol 7,Calle Sol 7,La puerta de entrada no cierra bien y la cerradura está atascada,2026-10-12T11:30:00+02:00,Medium
+WO-005,No heating - 9 Elm Road,9 Elm Road,Tenant says the heating has stopped working in the whole flat,2026-10-12T12:00:00+02:00,High
+WO-006,Bombilla fundida - Calle Luna 3,Calle Luna 3,Hay que cambiar una bombilla del pasillo,2026-10-12T12:30:00+02:00,Low
+WO-007,Cortocircuito - Avenida Norte 40,Avenida Norte 40,El inquilino dice que saltan los plomos y huele a quemado en el cuadro eléctrico,2026-10-12T13:00:00+02:00,Critical
+WO-008,Broken window - 12 River Lane,12 River Lane,Tenant reports a cracked bedroom window that does not close,2026-10-12T13:30:00+02:00,Medium

@@ -1,0 +1,11 @@
+WO-001|tenant Estoy disponible el 14 de octubre de 2026 de 16:00 a 18:00, hora de Madrid.
+WO-002|tenant Estoy disponible el 14 de octubre de 2026 de 16:00 a 18:00, hora de Madrid.
+WO-002|handyman sí
+WO-001|handyman sí
+WO-001|tenant sí
+WO-002|tenant sí
+WO-001|handyman sí
+WO-002|tenant sí
+WO-001|tenant sí
+WO-001|handyman sí
+WO-002|tenant sí

@@ -1,0 +1,617 @@
+03:10:49 None work_orders_loaded {"count": 8}
+03:10:49 None coordinator_ready {}
+03:10:49 None work_orders_starting {"count": 8}
+03:10:49 WO-001 work_order_start_entered {}
+03:10:49 WO-002 work_order_start_entered {}
+03:10:49 WO-003 work_order_start_entered {}
+03:10:49 WO-004 work_order_start_entered {}
+03:10:49 WO-005 work_order_start_entered {}
+03:10:49 WO-006 work_order_start_entered {}
+03:10:49 WO-007 work_order_start_entered {}
+03:10:49 WO-008 work_order_start_entered {}
+03:10:50 WO-007 language_recognized {"actor": "system", "language_code": "es", "input_description": "El inquilino dice que saltan los plomos y huele a quemado en el cuadro eléctrico"}
+03:10:50 WO-003 language_recognized {"actor": "system", "language_code": "en", "input_description": "Tenant reports a slowly dripping kitchen tap"}
+03:10:50 WO-002 language_recognized {"actor": "system", "language_code": "es", "input_description": "El inquilino informa de una fuga de agua debajo del fregadero"}
+03:10:50 WO-005 language_recognized {"actor": "system", "language_code": "en", "input_description": "Tenant says the heating has stopped working in the whole flat"}
+03:10:50 WO-004 language_recognized {"actor": "system", "language_code": "es", "input_description": "La puerta de entrada no cierra bien y la cerradura está atascada"}
+03:10:50 WO-008 language_recognized {"actor": "system", "language_code": "en", "input_description": "Tenant reports a cracked bedroom window that does not close"}
+03:10:50 WO-001 language_recognized {"actor": "system", "language_code": "en", "input_description": "Tenant reports a strong smell of gas in the kitchen"}
+03:10:50 WO-006 language_recognized {"actor": "system", "language_code": "es", "input_description": "Hay que cambiar una bombilla del pasillo"}
+03:10:51 WO-003 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-003 work_order_start_completed {}
+03:10:51 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe are writing about a maintenance request for your home at 5 South Street. The tenant reported a slowly drippin
+03:10:51 WO-005 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-005 work_order_start_completed {}
+03:10:51 WO-005 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe have received a maintenance request for your home at 9 Elm Road: the heating has stopped working in the whole
+03:10:51 WO-002 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-001 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-002 work_order_start_completed {}
+03:10:51 WO-002 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos en relación con el aviso de fuga de agua debajo del fregadero en Calle Mayor 18, regi
+03:10:51 WO-001 work_order_start_completed {}
+03:10:51 WO-001 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe are writing about a maintenance request for 24 Oak Street. The tenant reported a strong smell of gas in the k
+03:10:51 WO-008 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-008 work_order_start_completed {}
+03:10:51 WO-008 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe are writing about the maintenance request for 12 River Lane. You reported a cracked bedroom window that does 
+03:10:51 WO-004 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-004 work_order_start_completed {}
+03:10:51 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para informarle de que hemos registrado una solicitud de visita de mantenimiento para
+03:10:51 WO-007 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:51 WO-007 work_order_start_completed {}
+03:10:51 WO-007 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para informarle de que hemos registrado una solicitud de visita de mantenimiento para
+03:10:52 WO-006 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 0, "terminal_status": null}
+03:10:52 WO-006 work_order_start_completed {}
+03:10:52 WO-006 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para informarle de una solicitud de mantenimiento registrada en Calle Luna 3: hay que
+03:10:52 None work_orders_started {"count": 8}
+03:11:14 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "I'm available on 2026-10-14 from 10:00 to 12:00."}
+03:11:14 WO-003 order_worker_started {}
+03:11:14 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-14 de 12:00 a 14:00."}
+03:11:14 WO-004 order_worker_started {}
+03:11:15 WO-005 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "<NO RESPONSE>"}
+03:11:15 WO-005 order_worker_started {}
+03:11:15 WO-005 workflow_transition {"actor": "tenant", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 1, "terminal_status": "requires_review"}
+03:11:15 WO-005 terminal_result {"result": "requires_review", "detail": "REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability
+03:11:15 WO-005 order_transition_delivered {}
+03:11:15 WO-005 order_worker_finished {}
+03:11:15 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:11:15 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:11:19 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 2, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}]}
+03:11:19 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 2, "schedule_version": 3, "terminal_status": null}
+03:11:19 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la disponibilidad de su visita. ¿Puede realizar la visita completa de dos horas el mi
+03:11:19 WO-004 order_transition_delivered {}
+03:11:19 WO-004 order_worker_finished {}
+03:11:19 WO-003 availability_evidence_recorded {"actor": "tenant", "revision": 2, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}]}
+03:11:19 WO-003 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 2, "schedule_version": 3, "terminal_status": null}
+03:11:19 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, ¿puede usted hacer la visita completa de dos horas el miércoles 2026-10-14 de 10:00 a 12:00? Por favor, responda ú
+03:11:19 WO-003 order_transition_delivered {}
+03:11:19 WO-003 order_worker_finished {}
+03:11:43 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 14 de octubre de 2026 de 10:00 a 12:00"}
+03:11:43 WO-003 order_worker_started {}
+03:11:43 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 14 de octubre de 2026 de 12:00 a 14:00"}
+03:11:43 WO-004 order_worker_started {}
+03:11:44 WO-003 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:11:45 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:11:45 WO-003 availability_evidence_recorded {"actor": "handyman", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}]}
+03:11:45 WO-003 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 5, "terminal_status": null}
+03:11:45 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe would like to confirm a visit to the property on Wednesday 2026-10-14, from 10:00 to 12:00.\n\nPlease reply t
+03:11:45 WO-003 order_transition_delivered {}
+03:11:45 WO-003 order_worker_finished {}
+03:11:46 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}]}
+03:11:46 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 5, "terminal_status": null}
+03:11:46 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para solicitar su confirmación sobre la siguiente visita a su vivienda:\n\nFecha: mié
+03:11:46 WO-004 order_transition_delivered {}
+03:11:46 WO-004 order_worker_finished {}
+03:12:13 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Acepto la visita"}
+03:12:13 WO-003 order_worker_started {}
+03:12:14 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Sí, acepto"}
+03:12:14 WO-004 order_worker_started {}
+03:12:14 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:12:15 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:12:17 WO-003 workflow_transition {"actor": "tenant", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 5, "terminal_status": null}
+03:12:17 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nTo confirm your visit, please reply with a clear yes or no to the following proposed time: Wednesday 2026-10-14,
+03:12:17 WO-003 order_transition_delivered {}
+03:12:17 WO-003 order_worker_finished {}
+03:12:18 WO-004 workflow_transition {"actor": "tenant", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 5, "terminal_status": null}
+03:12:18 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Para confirmar, ¿le parece bien la visita propuesta para el miércoles 2026-10-14, de 12:00 a 14:00? Por favor, responda ún
+03:12:18 WO-004 order_transition_delivered {}
+03:12:18 WO-004 order_worker_finished {}
+03:12:50 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Yes"}
+03:12:50 WO-003 order_worker_started {}
+03:12:51 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Sí"}
+03:12:51 WO-004 order_worker_started {}
+03:12:52 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:12:53 WO-003 participant_decision_recorded {"actor": "tenant", "question_id": "a982b276558b463586fcb65e6e066190", "proposal_id": "5f77f59c3723461c9c05ac0917d48f68", "proposal_version": 1, "decision": "yes"}
+03:12:53 WO-003 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 6, "terminal_status": null}
+03:12:53 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos, con un sí o un no, si acepta esta visita e
+03:12:53 WO-003 order_transition_delivered {}
+03:12:53 WO-003 order_worker_finished {}
+03:13:01 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:13:02 WO-004 participant_decision_recorded {"actor": "tenant", "question_id": "b7671bc1c5a1485d8185cac46e84637c", "proposal_id": "54f4eb19b00e4a6698f0612e1423267b", "proposal_version": 1, "decision": "yes"}
+03:13:02 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 7, "terminal_status": null}
+03:13:02 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos, con un sí o un no, si acepta esta visita e
+03:13:02 WO-004 order_transition_delivered {}
+03:13:02 WO-004 order_worker_finished {}
+03:13:18 WO-001 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "I am available on 2026-10-14 from 10:00 to 12:00."}
+03:13:18 WO-001 order_worker_started {}
+03:13:19 WO-007 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-14 de 12:00 a 14:00."}
+03:13:19 WO-007 order_worker_started {}
+03:13:19 WO-001 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:13:20 WO-007 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:13:22 WO-001 availability_evidence_recorded {"actor": "tenant", "revision": 2, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}]}
+03:13:22 WO-001 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 2, "schedule_version": 8, "terminal_status": null}
+03:13:22 WO-001 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribo para consultarle si puede realizar la visita completa de dos horas el miércoles 2026-10-14, de 10:00 a 
+03:13:22 WO-001 order_transition_delivered {}
+03:13:22 WO-001 order_worker_finished {}
+03:13:23 WO-007 availability_evidence_recorded {"actor": "tenant", "revision": 2, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}]}
+03:13:23 WO-007 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 2, "schedule_version": 9, "terminal_status": null}
+03:13:23 WO-007 outgoing_message {"direction": "out", "role": "handyman", "body": "Buenas tardes:\n\nLe escribimos para confirmar su disponibilidad para la visita completa de dos horas el miércoles 2026-
+03:13:23 WO-007 order_transition_delivered {}
+03:13:23 WO-007 order_worker_finished {}
+03:13:44 WO-001 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 14 de octubre de 2026 de 10:00 a 12:00"}
+03:13:44 WO-001 order_worker_started {}
+03:13:45 WO-007 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 14 de octubre de 2026 de 12:00 a 14:00"}
+03:13:45 WO-007 order_worker_started {}
+03:13:45 WO-001 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:13:47 WO-001 availability_evidence_recorded {"actor": "handyman", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}]}
+03:13:47 WO-001 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 10, "terminal_status": null}
+03:13:47 WO-001 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe would like to confirm a visit to your property on Wednesday 2026-10-14, from 10:00 to 12:00.\n\nPlease reply 
+03:13:47 WO-001 order_transition_delivered {}
+03:13:47 WO-001 order_worker_finished {}
+03:13:47 WO-007 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:13:48 WO-007 availability_evidence_recorded {"actor": "handyman", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}]}
+03:13:48 WO-007 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 11, "terminal_status": null}
+03:13:48 WO-007 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para solicitar su confirmación sobre la siguiente visita: el miércoles 2026-10-14, de
+03:13:48 WO-007 order_transition_delivered {}
+03:13:48 WO-007 order_worker_finished {}
+03:14:17 WO-001 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Yes, I accept"}
+03:14:17 WO-001 order_worker_started {}
+03:14:17 WO-007 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Sí, acepto"}
+03:14:17 WO-007 order_worker_started {}
+03:14:18 WO-001 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.03}]}
+03:14:18 WO-007 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:14:20 WO-007 workflow_transition {"actor": "tenant", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 11, "terminal_status": null}
+03:14:20 WO-007 outgoing_message {"direction": "out", "role": "tenant", "body": "Para confirmar, ¿le viene bien la visita del miércoles 2026-10-14, de 12:00 a 14:00? Por favor, responda sí o no."}
+03:14:20 WO-007 order_transition_delivered {}
+03:14:20 WO-007 order_worker_finished {}
+03:14:21 WO-001 workflow_transition {"actor": "tenant", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 11, "terminal_status": null}
+03:14:21 WO-001 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello, we would like to confirm your visit. Could you please reply with a clear yes or no to the following proposed visit:
+03:14:21 WO-001 order_transition_delivered {}
+03:14:21 WO-001 order_worker_finished {}
+03:14:49 WO-001 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Yes"}
+03:14:49 WO-001 order_worker_started {}
+03:14:49 WO-007 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Sí"}
+03:14:49 WO-007 order_worker_started {}
+03:14:50 WO-001 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.01}]}
+03:14:50 WO-007 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:14:51 WO-001 participant_decision_recorded {"actor": "tenant", "question_id": "ea663eeed21e46dbb3a63970ffdfb210", "proposal_id": "e9380d0e4bc848968de6187d2130bd43", "proposal_version": 1, "decision": "yes"}
+03:14:51 WO-001 hold_transferred {"actor": "tenant", "proposal_id": "e9380d0e4bc848968de6187d2130bd43", "proposal_version": 1, "interval": {"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:
+03:14:51 WO-001 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 13, "terminal_status": null}
+03:14:51 WO-001 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos por separado si acepta exactamente esta vis
+03:14:51 WO-001 order_transition_delivered {}
+03:14:51 WO-001 order_worker_finished {}
+03:14:51 WO-003 order_worker_started {}
+03:14:51 WO-007 participant_decision_recorded {"actor": "tenant", "question_id": "0b4f58b9d35b42b48d2fafd102cffbba", "proposal_id": "e6e84923e1744f0f8482aaa1f5c3d0e0", "proposal_version": 1, "decision": "yes"}
+03:14:51 WO-007 hold_transferred {"actor": "tenant", "proposal_id": "e6e84923e1744f0f8482aaa1f5c3d0e0", "proposal_version": 1, "interval": {"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:
+03:14:51 WO-007 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 13, "terminal_status": null}
+03:14:51 WO-007 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos por separado si acepta exactamente esta vis
+03:14:51 WO-007 order_transition_delivered {}
+03:14:51 WO-007 order_worker_finished {}
+03:14:51 WO-004 order_worker_started {}
+03:14:52 WO-003 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 3, "schedule_version": 13, "terminal_status": null}
+03:14:52 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe're sorry to let you know that your tentative visit has been displaced by a higher-priority work order, so we 
+03:14:52 WO-003 order_transition_delivered {}
+03:14:52 WO-003 order_worker_finished {}
+03:14:52 WO-004 workflow_transition {"actor": "system", "node": "tenant_availability", "workflow_version": 3, "schedule_version": 13, "terminal_status": null}
+03:14:52 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Le informamos de que su visita provisional ha sido reasignada, ya que otra orden de trabajo de mayor prioridad ocupó ese e
+03:14:52 WO-004 order_transition_delivered {}
+03:14:52 WO-004 order_worker_finished {}
+03:15:22 WO-001 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:15:22 WO-001 order_worker_started {}
+03:15:23 WO-007 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:15:23 WO-007 order_worker_started {}
+03:15:23 WO-001 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:15:24 WO-007 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:15:24 WO-001 participant_decision_recorded {"actor": "handyman", "question_id": "55a117c533234ad6b4418dfd82e28803", "proposal_id": "e9380d0e4bc848968de6187d2130bd43", "proposal_version": 1, "decision": "yes"}
+03:15:24 WO-001 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 15, "terminal_status": "scheduled"}
+03:15:24 WO-001 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nThis is a reminder confirming your scheduled visit on Wednesday 2026-10-14, from 10:00 to 12:00.\n\nWe look forw
+03:15:24 WO-001 order_transition_delivered {}
+03:15:25 WO-007 participant_decision_recorded {"actor": "handyman", "question_id": "23451e34d1ce4e51a957efcdca8f0227", "proposal_id": "e6e84923e1744f0f8482aaa1f5c3d0e0", "proposal_version": 1, "decision": "yes"}
+03:15:25 WO-007 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 15, "terminal_status": "scheduled"}
+03:15:25 WO-007 outgoing_message {"direction": "out", "role": "tenant", "body": "Le confirmamos su visita programada para el miércoles 2026-10-14, de 12:00 a 14:00.\n\nSi necesita cambiar la hora o tiene
+03:15:25 WO-007 order_transition_delivered {}
+03:15:26 WO-001 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 15, "terminal_status": "scheduled"}
+03:15:26 WO-001 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el miércoles 2026-10-14, de 10:00 a 12:00.\n\nSi ti
+03:15:26 WO-001 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 15, "terminal_status": "scheduled"}
+03:15:26 WO-001 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-14T10:00:00+02:00"}
+03:15:26 WO-001 order_worker_finished {}
+03:15:26 WO-007 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 15, "terminal_status": "scheduled"}
+03:15:26 WO-007 outgoing_message {"direction": "out", "role": "handyman", "body": "Le confirmamos su visita programada para el miércoles 2026-10-14, de 12:00 a 14:00."}
+03:15:26 WO-007 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 15, "terminal_status": "scheduled"}
+03:15:26 WO-007 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-14T12:00:00+02:00"}
+03:15:26 WO-007 order_worker_finished {}
+03:15:51 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "I can do 2026-10-14 from 10:00 to 14:00, or 2026-10-15 from 16:00 to 18:00."}
+03:15:51 WO-003 order_worker_started {}
+03:15:52 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Puedo el 2026-10-15 de 10:00 a 12:00."}
+03:15:52 WO-004 order_worker_started {}
+03:15:53 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:15:56 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:15:59 WO-003 availability_evidence_recorded {"actor": "tenant", "revision": 3, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}]}
+03:15:59 WO-003 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 3, "schedule_version": 16, "terminal_status": null}
+03:15:59 WO-003 hold_released {"actor": "tenant", "reason": "availability_changed", "interval": {"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}}
+03:15:59 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe want to check something with you. The availability you shared now differs from what you told us earlier. Coul
+03:15:59 WO-003 order_transition_delivered {}
+03:15:59 WO-003 order_worker_finished {}
+03:16:02 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 3, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}]}
+03:16:02 WO-004 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 3, "schedule_version": 17, "terminal_status": null}
+03:16:02 WO-004 hold_released {"actor": "tenant", "reason": "availability_changed", "interval": {"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}}
+03:16:02 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Hemos recibido una disponibilidad distinta a la que nos indicó anteriormente. ¿Podría confirmarnos si el nuevo intervalo d
+03:16:02 WO-004 order_transition_delivered {}
+03:16:02 WO-004 order_worker_finished {}
+03:16:23 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Yes, that's correct"}
+03:16:23 WO-003 order_worker_started {}
+03:16:24 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Sí, es correcto"}
+03:16:24 WO-004 order_worker_started {}
+03:16:25 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:16:25 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:16:27 WO-003 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 3, "schedule_version": 17, "terminal_status": null}
+03:16:27 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe want to confirm a change in your availability. Please reply \"yes\" if the newly stated availability is corre
+03:16:27 WO-003 order_transition_delivered {}
+03:16:27 WO-003 order_worker_finished {}
+03:16:29 WO-004 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 3, "schedule_version": 17, "terminal_status": null}
+03:16:29 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Hemos registrado un cambio en su disponibilidad. ¿Es correcto este nuevo horario? Responda \"sí\" para mantener el nuevo i
+03:16:29 WO-004 order_transition_delivered {}
+03:16:29 WO-004 order_worker_finished {}
+03:17:01 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "yes"}
+03:17:01 WO-003 order_worker_started {}
+03:17:02 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:17:02 WO-004 order_worker_started {}
+03:17:04 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:17:06 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:17:07 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 5, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T08:00:00+00:00", "end": "2026-10-15T10:00:00+00:00"}]}
+03:17:07 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 5, "schedule_version": 21, "terminal_status": null}
+03:17:07 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Buenos días. Le escribo para confirmar la disponibilidad para una visita completa de dos horas: jueves 2026-10-15, de 10
+03:17:07 WO-004 order_transition_delivered {}
+03:17:07 WO-004 order_worker_finished {}
+03:17:08 WO-003 availability_evidence_recorded {"actor": "tenant", "revision": 5, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}, {"start"
+03:17:08 WO-003 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 5, "schedule_version": 21, "terminal_status": null}
+03:17:08 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Buenas tardes:\n\n¿Puede usted realizar la visita completa de dos horas el jueves 2026-10-15, de 16:00 a 18:00?\n\nPor f
+03:17:08 WO-003 order_transition_delivered {}
+03:17:08 WO-003 order_worker_finished {}
+03:17:30 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "no"}
+03:17:30 WO-004 order_worker_started {}
+03:17:31 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:17:31 WO-003 order_worker_started {}
+03:17:32 WO-003 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:17:33 WO-003 availability_evidence_recorded {"actor": "handyman", "revision": 4, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T10:00:00+00:00"}]}
+03:17:33 WO-003 workflow_transition {"actor": "handyman", "node": "availability_change", "workflow_version": 4, "schedule_version": 22, "terminal_status": null}
+03:17:33 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Hemos recibido una disponibilidad que es distinta a la que nos indicó anteriormente. ¿Podría confirmarnos si el nuevo in
+03:17:33 WO-003 order_transition_delivered {}
+03:17:33 WO-003 order_worker_finished {}
+03:17:34 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:17:37 WO-004 workflow_transition {"actor": "handyman", "node": "handyman_availability", "workflow_version": 5, "schedule_version": 22, "terminal_status": null}
+03:17:37 WO-004 handyman_slots_declined {"actor": "handyman", "intervals": [{"start": "2026-10-15T08:00:00+00:00", "end": "2026-10-15T10:00:00+00:00"}]}
+03:17:37 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado técnico:\n\nGracias por su respuesta. Lamentamos informarle que el horario indicado no le resulta conveniente, 
+03:17:37 WO-004 order_transition_delivered {}
+03:17:37 WO-004 order_worker_finished {}
+03:18:04 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Puedo el 2026-10-15 de 12:00 a 14:00 y el 2026-10-16 de 10:00 a 12:00."}
+03:18:04 WO-004 order_worker_started {}
+03:18:04 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:18:04 WO-003 order_worker_started {}
+03:18:05 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:18:05 WO-003 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:18:07 WO-003 availability_evidence_recorded {"actor": "handyman", "revision": 5, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T14:00:00+00:00", "end": "2026-10-15T16:00:00+00:00"}]}
+03:18:07 WO-003 workflow_transition {"actor": "handyman", "node": "tenant_availability", "workflow_version": 5, "schedule_version": 23, "terminal_status": null}
+03:18:07 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nOur handyman's availability has changed, so we need to double-check the times that work for you. Could you pleas
+03:18:07 WO-003 order_transition_delivered {}
+03:18:07 WO-003 order_worker_finished {}
+03:18:09 WO-004 workflow_transition {"actor": "handyman", "node": "relative_date_confirmation", "workflow_version": 5, "schedule_version": 23, "terminal_status": null}
+03:18:09 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para pedirle que confirme si estos son los horarios en los que tiene disponibilidad:\n\n- jueves 202
+03:18:09 WO-004 order_transition_delivered {}
+03:18:09 WO-004 order_worker_finished {}
+03:18:36 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:18:36 WO-004 order_worker_started {}
+03:18:36 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "I'm available 2026-10-15 from 16:00 to 18:00."}
+03:18:36 WO-003 order_worker_started {}
+03:18:37 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:18:37 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:18:39 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 4, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-14T10:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}]}
+03:18:39 WO-004 workflow_transition {"actor": "handyman", "node": "availability_change", "workflow_version": 4, "schedule_version": 24, "terminal_status": null}
+03:18:39 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hemos notado que la disponibilidad que nos indicó ahora es distinta a la que nos comentó antes. ¿Es correcto el nuevo in
+03:18:39 WO-004 order_transition_delivered {}
+03:18:39 WO-004 order_worker_finished {}
+03:18:41 WO-003 availability_evidence_recorded {"actor": "tenant", "revision": 6, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-14T08:00:00+00:00", "end": "2026-10-14T12:00:00+00:00"}, {"start":
+03:18:41 WO-003 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 6, "schedule_version": 25, "terminal_status": null}
+03:18:41 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello, we want to check something with you. The availability you shared now differs from what you told us earlier. Could y
+03:18:41 WO-003 order_transition_delivered {}
+03:18:41 WO-003 order_worker_finished {}
+03:19:08 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:19:08 WO-004 order_worker_started {}
+03:19:09 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "yes"}
+03:19:09 WO-003 order_worker_started {}
+03:19:10 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:19:12 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 5, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T10:00:00+00:00", "end": "2026-10-15T12:00:00+00:00"}, {"star
+03:19:12 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_availability", "workflow_version": 5, "schedule_version": 26, "terminal_status": null}
+03:19:12 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLa disponibilidad del técnico de mantenimiento ha cambiado. Le pedimos que nos confirme nuevamente 
+03:19:12 WO-004 order_transition_delivered {}
+03:19:12 WO-004 order_worker_finished {}
+03:19:13 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:19:14 WO-003 availability_evidence_recorded {"actor": "tenant", "revision": 8, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T14:00:00+00:00", "end": "2026-10-15T16:00:00+00:00"}]}
+03:19:14 WO-003 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 8, "schedule_version": 28, "terminal_status": null}
+03:19:14 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, ¿puede usted realizar la visita completa de dos horas el jueves 2026-10-15 de 16:00 a 18:00? Por favor, responda ú
+03:19:14 WO-003 order_transition_delivered {}
+03:19:14 WO-003 order_worker_finished {}
+03:19:41 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:19:41 WO-003 order_worker_started {}
+03:19:42 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Puedo el 2026-10-15 de 10:00 a 12:00 y el 2026-10-16 de 10:00 a 12:00."}
+03:19:42 WO-004 order_worker_started {}
+03:19:43 WO-003 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:19:43 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:19:44 WO-003 availability_evidence_recorded {"actor": "handyman", "revision": 9, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T14:00:00+00:00", "end": "2026-10-15T16:00:00+00:00"}]}
+03:19:44 WO-003 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 9, "schedule_version": 29, "terminal_status": null}
+03:19:44 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe would like to confirm a visit to your unit on Thursday 2026-10-15, from 16:00 to 18:00.\n\nPlease reply to le
+03:19:44 WO-003 order_transition_delivered {}
+03:19:44 WO-003 order_worker_finished {}
+03:19:48 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 6, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-15T08:00:00+00:00", "end": "2026-10-15T10:00:00+00:00"}]}
+03:19:48 WO-004 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 6, "schedule_version": 30, "terminal_status": null}
+03:19:48 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Hemos notado que la disponibilidad que nos indica ahora es distinta a la que nos comunicó anteriormente. ¿Podría confirmar
+03:19:48 WO-004 order_transition_delivered {}
+03:19:48 WO-004 order_worker_finished {}
+03:20:13 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "yes"}
+03:20:14 WO-003 order_worker_started {}
+03:20:14 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:20:14 WO-004 order_worker_started {}
+03:20:15 WO-003 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:20:16 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:20:16 WO-003 participant_decision_recorded {"actor": "tenant", "question_id": "8ac9124d7be24848bbe1046d870500e7", "proposal_id": "cdca8900289e43859eb21d86f0b61c10", "proposal_version": 1, "decision": "yes"}
+03:20:16 WO-003 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 9, "schedule_version": 33, "terminal_status": null}
+03:20:16 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico. ¿Podría responder con un sí o un no a esta visita concreta: ju
+03:20:16 WO-003 order_transition_delivered {}
+03:20:16 WO-003 order_worker_finished {}
+03:20:19 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 8, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T08:00:00+00:00", "end": "2026-10-15T10:00:00+00:00"}, {"start"
+03:20:19 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 8, "schedule_version": 33, "terminal_status": null}
+03:20:19 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la disponibilidad para un trabajo de dos horas. Por favor, indique cuál de estas fech
+03:20:19 WO-004 order_transition_delivered {}
+03:20:19 WO-004 order_worker_finished {}
+03:20:40 WO-003 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:20:40 WO-003 order_worker_started {}
+03:20:45 WO-003 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:20:46 WO-003 participant_decision_recorded {"actor": "handyman", "question_id": "a84a79cee1f64f77937e22f6c16664ff", "proposal_id": "cdca8900289e43859eb21d86f0b61c10", "proposal_version": 1, "decision": "yes"}
+03:20:46 WO-003 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 9, "schedule_version": 34, "terminal_status": "scheduled"}
+03:20:46 WO-003 outgoing_message {"direction": "out", "role": "tenant", "body": "Dear participant,\n\nThis is to confirm your scheduled visit on Thursday 2026-10-15, from 16:00 to 18:00.\n\nWe look forwa
+03:20:46 WO-003 order_transition_delivered {}
+03:20:47 WO-003 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 9, "schedule_version": 34, "terminal_status": "scheduled"}
+03:20:47 WO-003 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el jueves 2026-10-15, de 16:00 a 18:00.\n\nSi neces
+03:20:47 WO-003 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 9, "schedule_version": 34, "terminal_status": "scheduled"}
+03:20:47 WO-003 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-15T16:00:00+02:00"}
+03:20:47 WO-003 order_worker_finished {}
+03:21:16 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 16 de octubre de 2026 de 10:00 a 12:00"}
+03:21:16 WO-004 order_worker_started {}
+03:21:17 WO-002 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Puedo el viernes por la mañana"}
+03:21:17 WO-002 order_worker_started {}
+03:21:17 WO-008 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "I'm free on 2026-10-16 from 14:00 to 18:00."}
+03:21:17 WO-008 order_worker_started {}
+03:21:18 WO-006 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-14 de 10:00 a 12:00."}
+03:21:18 WO-006 order_worker_started {}
+03:21:18 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:20 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 6, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-15T10:00:00+00:00", "end": "2026-10-15T12:00:00+00:00"}, {"start
+03:21:20 WO-004 workflow_transition {"actor": "handyman", "node": "availability_change", "workflow_version": 6, "schedule_version": 35, "terminal_status": null}
+03:21:20 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hemos notado que la disponibilidad que nos indica ahora es distinta a la que nos comunicó anteriormente. ¿Podría confirm
+03:21:20 WO-004 order_transition_delivered {}
+03:21:20 WO-004 order_worker_finished {}
+03:21:20 WO-002 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:21 WO-008 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:21 WO-006 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:28 WO-008 availability_evidence_recorded {"actor": "tenant", "revision": 2, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T12:00:00+00:00", "end": "2026-10-16T16:00:00+00:00"}]}
+03:21:28 WO-008 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 2, "schedule_version": 37, "terminal_status": null}
+03:21:28 WO-008 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para consultarle qué franjas le vendrían bien. Las opciones disponibles de dos horas completas son: 
+03:21:28 WO-008 order_transition_delivered {}
+03:21:28 WO-008 order_worker_finished {}
+03:21:29 WO-002 workflow_transition {"actor": "tenant", "node": "tenant_availability", "workflow_version": 1, "schedule_version": 37, "terminal_status": null}
+03:21:29 WO-002 slot_suggestion_attempt {"actor": "system", "attempt": 1, "table_rows": 1, "valid": true}
+03:21:29 WO-002 outgoing_message {"direction": "out", "role": "tenant", "body": "Gracias por su mensaje; entendemos que necesita una visita de mantenimiento y le presentamos los horarios disponibles a co
+03:21:29 WO-002 order_transition_delivered {}
+03:21:29 WO-002 order_worker_finished {}
+03:21:31 WO-006 workflow_transition {"actor": "tenant", "node": "tenant_availability", "workflow_version": 2, "schedule_version": 37, "terminal_status": null}
+03:21:31 WO-006 slot_suggestion_attempt {"actor": "system", "attempt": 1, "table_rows": 35, "valid": true}
+03:21:31 WO-006 outgoing_message {"direction": "out", "role": "tenant", "body": "Ese horario ya no está disponible: está reservado para otra visita confirmada.\n\nGracias por su mensaje. Entendemos que n
+03:21:31 WO-006 order_transition_delivered {}
+03:21:31 WO-006 order_worker_finished {}
+03:21:51 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:21:51 WO-004 order_worker_started {}
+03:21:51 WO-002 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Me viene bien el 2026-10-16 de 09:00 a 11:00."}
+03:21:51 WO-002 order_worker_started {}
+03:21:52 WO-008 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 16 de octubre de 2026 de 14:00 a 16:00"}
+03:21:52 WO-008 order_worker_started {}
+03:21:52 WO-006 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-15 de 09:00 a 11:00."}
+03:21:52 WO-006 order_worker_started {}
+03:21:53 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:54 WO-002 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:54 WO-008 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:55 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 7, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T08:00:00+00:00", "end": "2026-10-16T10:00:00+00:00"}]}
+03:21:55 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_availability", "workflow_version": 7, "schedule_version": 39, "terminal_status": null}
+03:21:55 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLa disponibilidad del técnico de mantenimiento ha cambiado. Le pedimos amablemente que nos confirme
+03:21:55 WO-004 order_transition_delivered {}
+03:21:55 WO-004 order_worker_finished {}
+03:21:55 WO-006 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:21:56 WO-008 availability_evidence_recorded {"actor": "handyman", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T12:00:00+00:00", "end": "2026-10-16T14:00:00+00:00"}]}
+03:21:56 WO-008 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 39, "terminal_status": null}
+03:21:56 WO-008 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nWe would like to arrange a visit to your home on Friday 2026-10-16, from 14:00 to 16:00.\n\nPlease reply to let 
+03:21:56 WO-008 order_transition_delivered {}
+03:21:56 WO-008 order_worker_finished {}
+03:22:01 WO-002 availability_evidence_recorded {"actor": "tenant", "revision": 2, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T07:00:00+00:00", "end": "2026-10-16T09:00:00+00:00"}]}
+03:22:01 WO-002 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 2, "schedule_version": 41, "terminal_status": null}
+03:22:01 WO-002 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, buenos días. Le escribo para confirmar la disponibilidad de la visita de dos horas. ¿Podría realizarla completa el
+03:22:01 WO-002 order_transition_delivered {}
+03:22:01 WO-002 order_worker_finished {}
+03:22:01 WO-006 availability_evidence_recorded {"actor": "tenant", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T07:00:00+00:00", "end": "2026-10-15T09:00:00+00:00"}]}
+03:22:01 WO-006 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 3, "schedule_version": 41, "terminal_status": null}
+03:22:01 WO-006 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, ¿puede usted realizar la visita completa de dos horas el jueves 2026-10-15 de 09:00 a 11:00? Por favor, responda ú
+03:22:01 WO-006 order_transition_delivered {}
+03:22:01 WO-006 order_worker_finished {}
+03:22:25 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-16 de 10:00 a 12:00."}
+03:22:25 WO-004 order_worker_started {}
+03:22:26 WO-002 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:22:26 WO-002 order_worker_started {}
+03:22:26 WO-006 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:22:26 WO-006 order_worker_started {}
+03:22:27 WO-008 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "yes"}
+03:22:27 WO-008 order_worker_started {}
+03:22:27 WO-006 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:22:28 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:22:28 WO-006 availability_evidence_recorded {"actor": "handyman", "revision": 4, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-15T07:00:00+00:00", "end": "2026-10-15T09:00:00+00:00"}]}
+03:22:28 WO-006 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 4, "schedule_version": 42, "terminal_status": null}
+03:22:28 WO-006 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para solicitar su confirmación de la siguiente visita: el jueves 2026-10-15, de 09:00
+03:22:28 WO-006 order_transition_delivered {}
+03:22:28 WO-006 order_worker_finished {}
+03:22:29 WO-008 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.01}]}
+03:22:30 WO-002 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:22:30 WO-008 participant_decision_recorded {"actor": "tenant", "question_id": "a8003ea2c71941ffa9888959e06c1484", "proposal_id": "7d00d66acb1b4a80a613eee5099b2386", "proposal_version": 1, "decision": "yes"}
+03:22:30 WO-008 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 45, "terminal_status": null}
+03:22:30 WO-008 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos, con un sí o un no, si le viene bien esta v
+03:22:30 WO-008 order_transition_delivered {}
+03:22:30 WO-008 order_worker_finished {}
+03:22:32 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 9, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-15T08:00:00+00:00", "end": "2026-10-15T10:00:00+00:00"}, {"start":
+03:22:32 WO-004 workflow_transition {"actor": "tenant", "node": "availability_change", "workflow_version": 9, "schedule_version": 45, "terminal_status": null}
+03:22:32 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Hemos notado que la disponibilidad que nos indica ahora es distinta a la que nos comunicó anteriormente. ¿Puede confirmarn
+03:22:32 WO-004 order_transition_delivered {}
+03:22:32 WO-004 order_worker_finished {}
+03:22:32 WO-002 availability_evidence_recorded {"actor": "handyman", "revision": 3, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T07:00:00+00:00", "end": "2026-10-16T09:00:00+00:00"}]}
+03:22:32 WO-002 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 3, "schedule_version": 45, "terminal_status": null}
+03:22:32 WO-002 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe solicitamos que confirme explícitamente si acepta o rechaza la siguiente visita:\n\nFecha: viern
+03:22:32 WO-002 order_transition_delivered {}
+03:22:32 WO-002 order_worker_finished {}
+03:22:58 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:22:58 WO-004 order_worker_started {}
+03:22:59 WO-002 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "acepto"}
+03:22:59 WO-002 order_worker_started {}
+03:22:59 WO-006 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:22:59 WO-006 order_worker_started {}
+03:23:00 WO-008 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:23:00 WO-008 order_worker_started {}
+03:23:00 WO-002 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:23:01 WO-008 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:23:01 WO-006 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:23:02 WO-008 participant_decision_recorded {"actor": "handyman", "question_id": "8db58c6a359c49beade49d3973722dac", "proposal_id": "7d00d66acb1b4a80a613eee5099b2386", "proposal_version": 1, "decision": "yes"}
+03:23:02 WO-008 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 48, "terminal_status": "scheduled"}
+03:23:02 WO-008 outgoing_message {"direction": "out", "role": "tenant", "body": "Hello,\n\nThis is a confirmation of your scheduled visit on Friday 2026-10-16, from 14:00 to 16:00.\n\nWe look forward to 
+03:23:02 WO-008 order_transition_delivered {}
+03:23:02 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:23:02 WO-002 participant_decision_recorded {"actor": "tenant", "question_id": "6e2c6fe1efb449aebe9c7226d4a4610f", "proposal_id": "f39561f099a547bca4b52c9c615130f8", "proposal_version": 1, "decision": "yes"}
+03:23:02 WO-002 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 50, "terminal_status": null}
+03:23:02 WO-002 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado/a participante:\n\nLe escribimos para pedirle una confirmación específica sobre la visita del técnico de manten
+03:23:02 WO-002 order_transition_delivered {}
+03:23:02 WO-002 order_worker_finished {}
+03:23:03 WO-006 participant_decision_recorded {"actor": "tenant", "question_id": "4f47c35ad00c4069b900dcdf65d2303a", "proposal_id": "fc320e9c9261418388970091aeb6f1c1", "proposal_version": 1, "decision": "yes"}
+03:23:03 WO-006 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 4, "schedule_version": 50, "terminal_status": null}
+03:23:03 WO-006 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribimos para confirmar la visita del técnico de mantenimiento. Por favor, respóndanos de forma explícita con
+03:23:03 WO-006 order_transition_delivered {}
+03:23:03 WO-006 order_worker_finished {}
+03:23:04 WO-008 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 50, "terminal_status": "scheduled"}
+03:23:04 WO-008 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el viernes 2026-10-16, de 14:00 a 16:00.\n\nSi nece
+03:23:04 WO-008 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 50, "terminal_status": "scheduled"}
+03:23:04 WO-008 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-16T14:00:00+02:00"}
+03:23:04 WO-008 order_worker_finished {}
+03:23:07 WO-004 workflow_transition {"actor": "tenant", "node": "tenant_availability", "workflow_version": 11, "schedule_version": 50, "terminal_status": null}
+03:23:07 WO-004 slot_suggestion_attempt {"actor": "system", "attempt": 1, "table_rows": 31, "valid": true}
+03:23:07 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Ese horario no está disponible ahora: está retenido para otra visita de igual o mayor prioridad.\n\nGracias por su mensaje
+03:23:07 WO-004 order_transition_delivered {}
+03:23:07 WO-004 order_worker_finished {}
+03:23:28 WO-002 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:23:28 WO-002 order_worker_started {}
+03:23:29 WO-006 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:23:29 WO-006 order_worker_started {}
+03:23:30 WO-002 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:23:31 WO-002 participant_decision_recorded {"actor": "handyman", "question_id": "07fdf4440bc8471db3641e992c935b43", "proposal_id": "f39561f099a547bca4b52c9c615130f8", "proposal_version": 1, "decision": "yes"}
+03:23:31 WO-002 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 51, "terminal_status": "scheduled"}
+03:23:31 WO-002 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el viernes 2026-10-16, de 09:00 a 11:00.\n\nSi necesi
+03:23:31 WO-002 order_transition_delivered {}
+03:23:32 WO-002 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 51, "terminal_status": "scheduled"}
+03:23:32 WO-002 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado participante:\n\nLe confirmamos su visita programada para el viernes 2026-10-16, de 09:00 a 11:00.\n\nSi necesi
+03:23:32 WO-002 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 3, "schedule_version": 51, "terminal_status": "scheduled"}
+03:23:32 WO-002 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-16T09:00:00+02:00"}
+03:23:32 WO-002 order_worker_finished {}
+03:23:37 WO-006 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:23:38 WO-006 participant_decision_recorded {"actor": "handyman", "question_id": "fede034924084717bf1f79372ca98c57", "proposal_id": "fc320e9c9261418388970091aeb6f1c1", "proposal_version": 1, "decision": "yes"}
+03:23:38 WO-006 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 4, "schedule_version": 52, "terminal_status": "scheduled"}
+03:23:38 WO-006 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el jueves 2026-10-15, de 09:00 a 11:00.\n\nSi necesit
+03:23:38 WO-006 order_transition_delivered {}
+03:23:39 WO-006 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 4, "schedule_version": 52, "terminal_status": "scheduled"}
+03:23:39 WO-006 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el jueves 2026-10-15, de 09:00 a 11:00.\n\nSi neces
+03:23:39 WO-006 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 4, "schedule_version": 52, "terminal_status": "scheduled"}
+03:23:39 WO-006 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-15T09:00:00+02:00"}
+03:23:39 WO-006 order_worker_finished {}
+03:24:03 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-16 de 11:00 a 13:00."}
+03:24:03 WO-004 order_worker_started {}
+03:24:04 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:24:09 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 12, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T09:00:00+00:00", "end": "2026-10-16T11:00:00+00:00"}]}
+03:24:09 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 12, "schedule_version": 53, "terminal_status": null}
+03:24:09 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, le escribo para confirmar la disponibilidad de la visita. ¿Puede realizar la visita completa de dos horas el viern
+03:24:09 WO-004 order_transition_delivered {}
+03:24:09 WO-004 order_worker_finished {}
+03:24:29 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:24:29 WO-004 order_worker_started {}
+03:24:30 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:24:35 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 12, "schedule_version": 53, "terminal_status": null}
+03:24:35 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Hemos recibido su mensaje. Por el momento, la visita no puede avanzar hasta que la otra parte responda la pregunta pendien
+03:24:35 WO-004 order_transition_delivered {}
+03:24:35 WO-004 order_worker_finished {}
+03:24:57 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "Sí, me viene bien el 16 de octubre de 2026 de 11:00 a 13:00"}
+03:24:57 WO-004 order_worker_started {}
+03:24:59 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:25:01 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 8, "complete": true, "disputed": true, "intervals": [{"start": "2026-10-16T08:00:00+00:00", "end": "2026-10-16T10:00:00+00:00"}]}
+03:25:01 WO-004 workflow_transition {"actor": "handyman", "node": "availability_change", "workflow_version": 8, "schedule_version": 54, "terminal_status": null}
+03:25:01 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hemos notado que la disponibilidad que nos indicó ahora es diferente a la que mencionó anteriormente. ¿Podría confirmarn
+03:25:01 WO-004 order_transition_delivered {}
+03:25:01 WO-004 order_worker_finished {}
+03:25:29 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:25:29 WO-004 order_worker_started {}
+03:25:31 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:25:34 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 9, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T09:00:00+00:00", "end": "2026-10-16T11:00:00+00:00"}]}
+03:25:34 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_availability", "workflow_version": 9, "schedule_version": 55, "terminal_status": null}
+03:25:34 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLa disponibilidad del técnico de mantenimiento ha cambiado. Le pedimos que nos confirme nuevamente 
+03:25:34 WO-004 order_transition_delivered {}
+03:25:34 WO-004 order_worker_finished {}
+03:25:58 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:25:58 WO-004 order_worker_started {}
+03:26:02 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:26:03 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_availability", "workflow_version": 9, "schedule_version": 55, "terminal_status": null}
+03:26:03 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hemos recibido su mensaje, gracias. Por el momento la visita no puede avanzar hasta que la otra parte responda la pregun
+03:26:03 WO-004 order_transition_delivered {}
+03:26:03 WO-004 order_worker_finished {}
+03:26:26 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:26:26 WO-004 order_worker_started {}
+03:26:28 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:26:33 WO-004 workflow_transition {"actor": "tenant", "node": "tenant_availability", "workflow_version": 9, "schedule_version": 55, "terminal_status": null}
+03:26:33 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Para poder programar su participación, le pedimos que nos indique sus intervalos de disponibilidad completos, con fecha y 
+03:26:33 WO-004 order_transition_delivered {}
+03:26:33 WO-004 order_worker_finished {}
+03:26:55 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:26:55 WO-004 order_worker_started {}
+03:26:56 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:26:58 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_availability", "workflow_version": 9, "schedule_version": 55, "terminal_status": null}
+03:26:58 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hemos recibido su mensaje, gracias. Por el momento no es necesario que responda nada. La visita no puede avanzar hasta q
+03:26:58 WO-004 order_transition_delivered {}
+03:26:58 WO-004 order_worker_finished {}
+03:27:29 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "Estoy disponible el 2026-10-16 de 11:00 a 13:00."}
+03:27:29 WO-004 order_worker_started {}
+03:27:31 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:27:37 WO-004 availability_evidence_recorded {"actor": "tenant", "revision": 10, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T09:00:00+00:00", "end": "2026-10-16T11:00:00+00:00"}]}
+03:27:37 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 10, "schedule_version": 55, "terminal_status": null}
+03:27:37 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola, ¿puede usted realizar la visita completa de dos horas el viernes 2026-10-16 de 11:00 a 13:00? Por favor, responda 
+03:27:37 WO-004 order_transition_delivered {}
+03:27:37 WO-004 order_worker_finished {}
+03:27:57 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:27:57 WO-004 order_worker_started {}
+03:27:58 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:28:01 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_availability", "workflow_version": 10, "schedule_version": 55, "terminal_status": null}
+03:28:01 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Hemos recibido su mensaje. Por el momento, la visita no puede avanzar hasta que la otra parte responda la pregunta pendien
+03:28:01 WO-004 order_transition_delivered {}
+03:28:01 WO-004 order_worker_finished {}
+03:28:30 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:28:30 WO-004 order_worker_started {}
+03:28:31 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:28:33 WO-004 availability_evidence_recorded {"actor": "handyman", "revision": 11, "complete": true, "disputed": false, "intervals": [{"start": "2026-10-16T09:00:00+00:00", "end": "2026-10-16T11:00:00+00:00"}]}
+03:28:33 WO-004 workflow_transition {"actor": "handyman", "node": "tenant_confirmation", "workflow_version": 11, "schedule_version": 56, "terminal_status": null}
+03:28:33 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado inquilino:\n\nLe escribimos para solicitar su confirmación de la siguiente visita: el viernes 2026-10-16, de 11:0
+03:28:33 WO-004 order_transition_delivered {}
+03:28:33 WO-004 order_worker_finished {}
+03:28:58 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "tenant", "body": "sí"}
+03:28:58 WO-004 order_worker_started {}
+03:29:00 WO-004 injection_guard_screened {"actor": "tenant", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:29:01 WO-004 participant_decision_recorded {"actor": "tenant", "question_id": "5e3ca73d2b0449d385d46d9f198e3b99", "proposal_id": "819eb683f555466bb6cd3bbc547c30eb", "proposal_version": 1, "decision": "yes"}
+03:29:01 WO-004 workflow_transition {"actor": "tenant", "node": "handyman_confirmation", "workflow_version": 11, "schedule_version": 57, "terminal_status": null}
+03:29:01 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Hola. Para confirmar la visita del viernes 2026-10-16 de 11:00 a 13:00, ¿nos puede indicar por favor un sí o un no? Grac
+03:29:01 WO-004 order_transition_delivered {}
+03:29:01 WO-004 order_worker_finished {}
+03:29:23 WO-004 inbound_dispatched {"node": "negotiation_transition", "direction": "in", "role": "handyman", "body": "sí"}
+03:29:23 WO-004 order_worker_started {}
+03:29:25 WO-004 injection_guard_screened {"actor": "handyman", "action": "pass", "reason": "", "fragment": null, "stages": [{"stage": "message", "answer_yes": false, "probability_yes": 0.02}]}
+03:29:26 WO-004 participant_decision_recorded {"actor": "handyman", "question_id": "0e889e009a0045ebac1c022c689749f8", "proposal_id": "819eb683f555466bb6cd3bbc547c30eb", "proposal_version": 1, "decision": "yes"}
+03:29:26 WO-004 workflow_transition {"actor": "handyman", "node": "handyman_confirmation", "workflow_version": 11, "schedule_version": 58, "terminal_status": "scheduled"}
+03:29:26 WO-004 outgoing_message {"direction": "out", "role": "tenant", "body": "Estimado/a participante:\n\nLe confirmamos su visita programada para el viernes 2026-10-16, de 11:00 a 13:00.\n\nSi necesi
+03:29:26 WO-004 order_transition_delivered {}
+03:29:31 WO-004 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 11, "schedule_version": 58, "terminal_status": "scheduled"}
+03:29:31 WO-004 outgoing_message {"direction": "out", "role": "handyman", "body": "Estimado participante:\n\nLe confirmamos su visita programada para el viernes 2026-10-16, de 11:00 a 13:00.\n\nSi necesi
+03:29:31 WO-004 workflow_transition {"actor": "system", "node": "handyman_confirmation", "workflow_version": 11, "schedule_version": 58, "terminal_status": "scheduled"}
+03:29:31 WO-004 terminal_result {"result": "scheduled", "detail": "SCHEDULED_FOR:2026-10-16T11:00:00+02:00"}
+03:29:31 WO-004 order_worker_finished {}
+03:29:58 None run_completed {}

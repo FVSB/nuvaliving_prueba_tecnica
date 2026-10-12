@@ -76,9 +76,11 @@ Intervals are semi-open `[start,end)`, allowing adjacent visits. The authority c
 Graph progress may move through language recognition, tenant availability request/wait, candidate creation, handyman availability request/wait, proposal/consent request/wait, confirmation, and terminal finalization. These are graph cursors and pending questions, not terminal business statuses.
 
 ```text
-active negotiation ── exact <NO RESPONSE> ──> requires_review + role/question reason
+active negotiation ── exact <NO RESPONSE> ──> RETRYING (reminders in retry heap)
+RETRYING ── normal message from silent role ──> active negotiation (retries cancelled)
+RETRYING ── retries exhausted + one more wait, or EOF ──> requires_review + role/question reason
 active negotiation ── confirmed no common time + tenant yes ──> requires_review + availability evidence reason
 active negotiation ── matching tenant+handyman yes + atomic commit ──> scheduled (finalization pending)
 ```
 
-Every other path remains active, requests missing information, clarifies a response, or creates a new proposal. `<NO RESPONSE>` closes only an order whose terminal status is still null; delayed messages during scheduled finalization cannot change it. There is no third terminal status.
+Every other path remains active, requests missing information, clarifies a response, or creates a new proposal. `<NO RESPONSE>` starts `RETRYING` only for an order whose terminal status is still null; it closes as `requires_review` only after the retries are exhausted and one more wait elapses (or at EOF). `RETRYING` is a negotiation sub-state, not a terminal status; delayed messages during scheduled finalization cannot change it. There is no third terminal status.

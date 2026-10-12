@@ -47,7 +47,7 @@ run 09:00-19:00 and asks for another time; `events.jsonl` has `availability_reje
 A clarification answer is processed according to the role that sent it, not the action of the
 pending question. Participants can cancel or correct previously given availability. A handyman's
 natural acceptance containing the date and time counts as acceptance. `<NO RESPONSE>` names the
-silent role correctly.
+silent role correctly. The same attribution applies to the reminders and the final REASON of 004's RETRYING rule (the silent role is the role owed the pending answer, not necessarily the sentinel sender).
 
 **Independent Test**: After a tenant clarification, the tenant's answer is processed on the tenant
 path; a tenant who answers "cancela" to a proposal triggers a rejection of that proposal.

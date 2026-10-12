@@ -55,7 +55,7 @@ No operation holds the agenda lock across conversation, model, human, or output 
 
 The terminal model is `TerminalStatus(StrEnum)` with exactly `SCHEDULED = "scheduled"` and `REQUIRES_REVIEW = "requires_review"`; state stores `None` before terminal. Its exact `.value` is written to existing terminal frame format. Graph cursor/wait phases and pending actions are not terminal status values.
 
-Scheduled commit records the terminal domain outcome immediately, then sends confirmations sequentially and idempotently before emitting the terminal protocol frame. Failed delivery retains the appointment and pending finalization; no frame is emitted prematurely. Exact incoming `<NO RESPONSE>` from either participant closes only an unfinished order as `requires_review`; extra prefix, suffix, or whitespace does not match, and a delayed signal cannot change scheduled status.
+Scheduled commit records the terminal domain outcome immediately, then sends confirmations sequentially and idempotently before emitting the terminal protocol frame. Failed delivery retains the appointment and pending finalization; no frame is emitted prematurely. Exact incoming `<NO RESPONSE>` from either participant starts `RETRYING` for an unfinished order (reminders to the silent role, then `requires_review` after the final retry wait or at EOF; a normal message from the silent role cancels retries). Extra prefix, suffix, or whitespace does not match, and a delayed signal cannot change scheduled status.
 
 ## Serialization and Trace
 

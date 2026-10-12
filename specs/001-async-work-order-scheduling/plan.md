@@ -94,7 +94,7 @@ availability or acceptance, nor emit output after their work order has closed.
 The implementation must enforce explicit matching acceptance, the two-hour non-overlap invariant,
 the prescribed CLI framing, clean terminal, and JSONL traces. The following require separate
 approval before code assigns behavior: tenant-language inference; relative-date reference;
-repeated `<NO RESPONSE>` and clarification budgets; priority tie-breaks and late competition;
+repeated `<NO RESPONSE>` and clarification budgets (repeated-sentinel behavior is now defined by 004's RETRYING rule, 2026-10-12); priority tie-breaks and late competition;
 invalid or duplicate CSV data; malformed/unknown input; EOF; terminal separator; and DST
 semantics.
 

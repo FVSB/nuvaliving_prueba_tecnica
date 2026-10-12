@@ -19,7 +19,7 @@
 3. Ask tenant availability first; split explicit windows into two-hour candidates; pre-filter shared occupancy/priority before asking the handyman. Transfer holds only after tenant selects/authorizes a candidate.
 4. Availability is not consent. Get explicit yes/no for the immutable proposal from both participants. Ambiguous interpretation is null plus clarification-required.
 5. Use one global schedule authority for every read/write. Retain graph state across queued inbound messages; nodes do not read stdin or block waiting for future human input.
-6. Atomic schedule commit also writes the scheduled domain status and sets finalization pending. Confirm both participants sequentially before emitting the scheduled frame. Commit and review closure are mutually exclusive. Exact `<NO RESPONSE>` closes only an unfinished order immediately; do not retry it or let delayed input change a terminal outcome.
+6. Atomic schedule commit also writes the scheduled domain status and sets finalization pending. Confirm both participants sequentially before emitting the scheduled frame. Commit and review closure are mutually exclusive. Exact `<NO RESPONSE>` starts `RETRYING` for an unfinished order (reminders on a real-UTC retry heap, `requires_review` after the final wait or at EOF); do not let delayed input change a terminal outcome.
 7. Preserve the two-line CLI terminal frames, provide deterministic evidence-based single-line review reasons, and never fabricate unknown availability or dates.
 8. Reuse the existing injected Anthropic client and trace facilities. Keep network/model/provider errors distinct from participant silence. Report checks only when actually run.
 

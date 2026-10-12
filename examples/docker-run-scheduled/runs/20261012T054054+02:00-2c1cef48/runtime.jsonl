@@ -1,0 +1,2 @@
+{"run_id": "2c1cef48", "sequence": 1, "timestamp": "2026-10-12T05:40:54.318339+02:00", "scope": "application", "work_order_id": null, "event_type": "csv_read_start", "detail": {}}
+{"run_id": "2c1cef48", "sequence": 2, "timestamp": "2026-10-12T05:40:54.319142+02:00", "scope": "application", "work_order_id": null, "event_type": "csv_read_complete", "detail": {"count": 2}}

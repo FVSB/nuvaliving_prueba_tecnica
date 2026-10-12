@@ -24,6 +24,7 @@ Format: `[ID] [P?] [Story] Description`. Waves: 0 (done) -> 1 (A, B1, C in paral
 - [x] T010 [US2] Dispatch clarification answers by role in `handle`, `_ask`, `_clarify` (error 8)
 - [x] T011 [US2] Cancel/correct availability decisions in `domain/decisions.py` and decision branches (error 9)
 - [x] T012 [US2] Attribute `<NO RESPONSE>` to the sending role (error 10)
+  - Note: since the 2026-10-12 retry rule (004), attribution applies to the silent role (the role owed the pending answer) for reminders and the final REASON.
 - [x] T013 [US2] Handyman natural acceptance with restated date/time (error 14)
 
 ## Package C: Inbound input validation (wave 1)

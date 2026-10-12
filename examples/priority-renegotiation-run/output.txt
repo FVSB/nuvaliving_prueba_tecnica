@@ -1,0 +1,608 @@
+WOID:WO-003|ROLE:tenant
+Hello,
+
+We are writing about a maintenance request for your home at 5 South Street. The tenant reported a slowly dripping kitchen tap on Monday 2026-10-12 at 11:00. This has been logged as work order "Leaky tap - 5 South Street."
+
+To arrange the visit, please tell us all the time intervals when you are available. Include each day and time window that works for you, and we will schedule the visit within one of them.
+
+Thank you,
+Property Maintenance Team
+
+WOID:WO-005|ROLE:tenant
+Hello,
+
+We have received a maintenance request for your home at 9 Elm Road: the heating has stopped working in the whole flat. The request was reported on Monday 2026-10-12 at 12:00 and is recorded as work order "No heating - 9 Elm Road".
+
+To arrange a visit, please let us know all the times when you are available, as explicit date and time intervals. Please include every interval that works for you so we can find the earliest suitable slot.
+
+Thank you,
+Property Maintenance Team
+
+WOID:WO-002|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos en relación con el aviso de fuga de agua debajo del fregadero en Calle Mayor 18, registrado el lunes 2026-10-12 a las 10:40 (orden de trabajo: Fuga de agua - Calle Mayor 18).
+
+Para programar la visita de mantenimiento, le rogamos que nos indique todos los intervalos de disponibilidad en los que pueda recibir al técnico, con la fecha y la franja horaria de cada uno.
+
+Gracias por su colaboración.
+
+Atentamente,
+Servicio de Mantenimiento
+
+WOID:WO-001|ROLE:tenant
+Hello,
+
+We are writing about a maintenance request for 24 Oak Street. The tenant reported a strong smell of gas in the kitchen on Monday 2026-10-12 at 09:15. This has been logged as work order "Gas leak - 24 Oak Street."
+
+Because this is a potential gas safety issue, we need to arrange a maintenance visit as soon as possible. Please reply with all the time intervals when you are available for a visit, including the day and time range for each interval.
+
+Thank you,
+Property Maintenance Team
+
+WOID:WO-008|ROLE:tenant
+Hello,
+
+We are writing about the maintenance request for 12 River Lane. You reported a cracked bedroom window that does not close, logged on Monday 2026-10-12 at 13:30 under the work order "Broken window - 12 River Lane."
+
+To arrange a visit, please tell us all the times you are available, with the date and start and end time for each interval. Listing every available window helps us schedule the repair as soon as possible.
+
+Thank you,
+Maintenance Team
+
+WOID:WO-004|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para informarle de que hemos registrado una solicitud de visita de mantenimiento para Calle Sol 7. El problema reportado es el siguiente: la puerta de entrada no cierra bien y la cerradura está atascada. La solicitud fue registrada el lunes 2026-10-12 a las 11:30, con el título "Puerta rota - Calle Sol 7".
+
+Para coordinar la visita, le rogamos que nos indique todos los intervalos de disponibilidad en los que pueda recibir al técnico, indicando fecha y hora de inicio y de fin de cada uno.
+
+Muchas gracias por su colaboración.
+
+WOID:WO-007|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para informarle de que hemos registrado una solicitud de visita de mantenimiento para la vivienda de Avenida Norte 40, con número de orden de trabajo "Cortocircuito - Avenida Norte 40". Según lo que nos comunicó el lunes 2026-10-12 a las 13:00, saltan los plomos y huele a quemado en el cuadro eléctrico.
+
+Por su seguridad, le pedimos que no utilice el cuadro eléctrico hasta que el técnico lo revise.
+
+Para poder coordinar la visita, le rogamos que nos indique todos los intervalos horarios en los que usted esté disponible, indicando día y franja horaria para cada uno.
+
+Gracias por su colaboración.
+
+WOID:WO-006|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para informarle de una solicitud de mantenimiento registrada en Calle Luna 3: hay que cambiar una bombilla del pasillo. La solicitud (orden de trabajo: "Bombilla fundida - Calle Luna 3") fue reportada el lunes 2026-10-12 a las 12:30.
+
+Para coordinar la visita, le rogamos que nos indique todos los intervalos de disponibilidad en los que pueda recibir al técnico, con día y hora de inicio y de fin de cada uno.
+
+Muchas gracias por su colaboración.
+
+WOID:WO-005|RESULT:requires_review
+REASON:No response from tenant while awaiting tenant_availability. Evidence: silent role tenant; current node tenant_availability; question f200286ed898475495cc8dc57efcd744; tenant requested intervals unknown.
+WOID:WO-004|ROLE:handyman
+Hola, le escribimos para confirmar la disponibilidad de su visita. ¿Puede realizar la visita completa de dos horas el miércoles 2026-10-14, de 12:00 a 14:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-003|ROLE:handyman
+Hola, ¿puede usted hacer la visita completa de dos horas el miércoles 2026-10-14 de 10:00 a 12:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-003|ROLE:tenant
+Hello,
+
+We would like to confirm a visit to the property on Wednesday 2026-10-14, from 10:00 to 12:00.
+
+Please reply to let us know whether you accept or reject this visit.
+
+Thank you.
+
+WOID:WO-004|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para solicitar su confirmación sobre la siguiente visita a su vivienda:
+
+Fecha: miércoles 2026-10-14
+Horario: de 12:00 a 14:00
+
+Le agradeceríamos que nos indique si acepta o rechaza esta visita en el horario indicado. Por favor, responda a este mensaje con una de las dos opciones.
+
+Muchas gracias por su atención.
+
+WOID:WO-003|ROLE:tenant
+Hello,
+
+To confirm your visit, please reply with a clear yes or no to the following proposed time: Wednesday 2026-10-14, 10:00-12:00.
+
+Thank you.
+
+WOID:WO-004|ROLE:tenant
+Para confirmar, ¿le parece bien la visita propuesta para el miércoles 2026-10-14, de 12:00 a 14:00? Por favor, responda únicamente con «sí» o «no».
+
+WOID:WO-003|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos, con un sí o un no, si acepta esta visita exacta: miércoles 2026-10-14 de 10:00 a 12:00? Gracias por su respuesta.
+
+WOID:WO-004|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos, con un sí o un no, si acepta esta visita exacta: miércoles 2026-10-14, de 12:00 a 14:00? Gracias por su respuesta.
+
+WOID:WO-001|ROLE:handyman
+Hola, le escribo para consultarle si puede realizar la visita completa de dos horas el miércoles 2026-10-14, de 10:00 a 12:00. Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-007|ROLE:handyman
+Buenas tardes:
+
+Le escribimos para confirmar su disponibilidad para la visita completa de dos horas el miércoles 2026-10-14, de 12:00 a 14:00. ¿Puede realizar la visita completa en ese horario?
+
+Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-001|ROLE:tenant
+Hello,
+
+We would like to confirm a visit to your property on Wednesday 2026-10-14, from 10:00 to 12:00.
+
+Please reply to let us know whether you accept or reject this visit.
+
+Thank you.
+
+WOID:WO-007|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para solicitar su confirmación sobre la siguiente visita: el miércoles 2026-10-14, de 12:00 a 14:00.
+
+Por favor, indíquenos si acepta o rechaza esta visita exacta respondiendo a este mensaje.
+
+Gracias por su atención.
+
+WOID:WO-007|ROLE:tenant
+Para confirmar, ¿le viene bien la visita del miércoles 2026-10-14, de 12:00 a 14:00? Por favor, responda sí o no.
+
+WOID:WO-001|ROLE:tenant
+Hello, we would like to confirm your visit. Could you please reply with a clear yes or no to the following proposed visit: Wednesday 2026-10-14, 10:00-12:00? Thank you.
+
+WOID:WO-001|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos por separado si acepta exactamente esta visita: miércoles 2026-10-14, de 10:00 a 12:00? Por favor, responda únicamente sí o no. Muchas gracias.
+
+WOID:WO-007|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos por separado si acepta exactamente esta visita: miércoles 2026-10-14, de 12:00 a 14:00? Por favor, responda únicamente "sí" o "no". Muchas gracias.
+
+WOID:WO-003|ROLE:tenant
+Hello,
+
+We're sorry to let you know that your tentative visit has been displaced by a higher-priority work order, so we are no longer able to hold that time for you.
+
+To help us find a new time, could you please share all of your current availability? We will do our best to fit you in as soon as possible.
+
+Thank you for your understanding.
+
+WOID:WO-004|ROLE:tenant
+Le informamos de que su visita provisional ha sido reasignada, ya que otra orden de trabajo de mayor prioridad ocupó ese espacio. Le pedimos amablemente que nos indique toda su disponibilidad actual para que podamos encontrar un nuevo horario lo antes posible. Gracias por su comprensión.
+
+WOID:WO-001|ROLE:tenant
+Hello,
+
+This is a reminder confirming your scheduled visit on Wednesday 2026-10-14, from 10:00 to 12:00.
+
+We look forward to seeing you. If you have any questions, please let us know.
+
+WOID:WO-007|ROLE:tenant
+Le confirmamos su visita programada para el miércoles 2026-10-14, de 12:00 a 14:00.
+
+Si necesita cambiar la hora o tiene alguna pregunta, por favor comuníquese con nosotros antes de la visita.
+
+WOID:WO-001|ROLE:handyman
+Estimado/a participante:
+
+Le confirmamos su visita programada para el miércoles 2026-10-14, de 10:00 a 12:00.
+
+Si tiene alguna pregunta o necesita hacer algún cambio, por favor comuníquese con nosotros.
+
+Gracias.
+
+WOID:WO-001|RESULT:scheduled
+SCHEDULED_FOR:2026-10-14T10:00:00+02:00
+WOID:WO-007|ROLE:handyman
+Le confirmamos su visita programada para el miércoles 2026-10-14, de 12:00 a 14:00.
+
+WOID:WO-007|RESULT:scheduled
+SCHEDULED_FOR:2026-10-14T12:00:00+02:00
+WOID:WO-003|ROLE:tenant
+Hello,
+
+We want to check something with you. The availability you shared now differs from what you told us earlier. Could you please confirm whether the new time interval is correct?
+
+Thank you for your help.
+
+WOID:WO-004|ROLE:tenant
+Hemos recibido una disponibilidad distinta a la que nos indicó anteriormente. ¿Podría confirmarnos si el nuevo intervalo de disponibilidad es correcto?
+
+WOID:WO-003|ROLE:tenant
+Hello,
+
+We want to confirm a change in your availability. Please reply "yes" if the newly stated availability is correct, and we will keep the new time interval. If it is not correct, reply "no" and we will keep your previous availability.
+
+Thank you for your help.
+
+WOID:WO-004|ROLE:tenant
+Hemos registrado un cambio en su disponibilidad. ¿Es correcto este nuevo horario? Responda "sí" para mantener el nuevo intervalo o "no" para mantener el intervalo anterior.
+
+WOID:WO-004|ROLE:handyman
+Buenos días. Le escribo para confirmar la disponibilidad para una visita completa de dos horas: jueves 2026-10-15, de 10:00 a 12:00. ¿Puede usted realizar la visita completa en ese horario? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-003|ROLE:handyman
+Buenas tardes:
+
+¿Puede usted realizar la visita completa de dos horas el jueves 2026-10-15, de 16:00 a 18:00?
+
+Por favor, responda únicamente «sí» o «no».
+
+WOID:WO-003|ROLE:handyman
+Hemos recibido una disponibilidad que es distinta a la que nos indicó anteriormente. ¿Podría confirmarnos si el nuevo intervalo de disponibilidad es correcto? Gracias por su ayuda.
+
+WOID:WO-004|ROLE:handyman
+Estimado técnico:
+
+Gracias por su respuesta. Lamentamos informarle que el horario indicado no le resulta conveniente, así que le agradeceríamos que nos indique los intervalos completos en los que usted estaría disponible, con la fecha, la hora de inicio y la hora de fin de cada uno.
+
+Quedamos atentos a su respuesta.
+
+Un cordial saludo.
+
+WOID:WO-003|ROLE:tenant
+Hello,
+
+Our handyman's availability has changed, so we need to double-check the times that work for you. Could you please restate or confirm your availability for the repair visit? Once we have your confirmed times, we will schedule the visit accordingly.
+
+Thank you for your patience and cooperation.
+
+WOID:WO-004|ROLE:handyman
+Hola, le escribimos para pedirle que confirme si estos son los horarios en los que tiene disponibilidad:
+
+- jueves 2026-10-15, de 12:00 a 14:00
+- viernes 2026-10-16, de 10:00 a 12:00
+
+Por favor, responda para confirmarlos. Hasta que nos lo confirme, los tomaremos solo como una propuesta.
+
+Muchas gracias.
+
+WOID:WO-004|ROLE:handyman
+Hemos notado que la disponibilidad que nos indicó ahora es distinta a la que nos comentó antes. ¿Es correcto el nuevo intervalo que nos ha indicado? Si no lo es, por favor indíquenos cuál es su disponibilidad correcta para que podamos ajustarla.
+
+WOID:WO-003|ROLE:tenant
+Hello, we want to check something with you. The availability you shared now differs from what you told us earlier. Could you please confirm whether the new time interval is correct? Thank you for your help.
+
+WOID:WO-004|ROLE:tenant
+Estimado inquilino:
+
+La disponibilidad del técnico de mantenimiento ha cambiado. Le pedimos que nos confirme nuevamente su disponibilidad para la visita, indicando los días y horarios en los que puede recibirlo.
+
+Gracias por su colaboración.
+
+WOID:WO-003|ROLE:handyman
+Hola, ¿puede usted realizar la visita completa de dos horas el jueves 2026-10-15 de 16:00 a 18:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-003|ROLE:tenant
+Hello,
+
+We would like to confirm a visit to your unit on Thursday 2026-10-15, from 16:00 to 18:00.
+
+Please reply to let us know whether you accept or reject this visit.
+
+Thank you.
+
+WOID:WO-004|ROLE:tenant
+Hemos notado que la disponibilidad que nos indica ahora es distinta a la que nos comunicó anteriormente. ¿Podría confirmarnos si el nuevo intervalo es correcto?
+
+WOID:WO-003|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico. ¿Podría responder con un sí o un no a esta visita concreta: jueves 2026-10-15, de 16:00 a 18:00? Gracias por su respuesta.
+
+WOID:WO-004|ROLE:handyman
+Hola, le escribimos para confirmar la disponibilidad para un trabajo de dos horas. Por favor, indique cuál de estas fechas le viene bien: jueves 2026-10-15 de 10:00 a 12:00, o viernes 2026-10-16 de 10:00 a 12:00. Responda con la fecha y el horario que acepta, o escriba "no" si ninguna le funciona. Muchas gracias.
+
+WOID:WO-003|ROLE:tenant
+Dear participant,
+
+This is to confirm your scheduled visit on Thursday 2026-10-15, from 16:00 to 18:00.
+
+We look forward to seeing you. If you have any questions before then, please contact us.
+
+Kind regards
+
+WOID:WO-003|ROLE:handyman
+Estimado/a participante:
+
+Le confirmamos su visita programada para el jueves 2026-10-15, de 16:00 a 18:00.
+
+Si necesita hacer algún cambio, por favor comuníquese con nosotros con antelación.
+
+Muchas gracias.
+
+WOID:WO-003|RESULT:scheduled
+SCHEDULED_FOR:2026-10-15T16:00:00+02:00
+WOID:WO-004|ROLE:handyman
+Hemos notado que la disponibilidad que nos indica ahora es distinta a la que nos comunicó anteriormente. ¿Podría confirmarnos si el nuevo intervalo de disponibilidad es correcto? Gracias por su ayuda.
+
+WOID:WO-008|ROLE:handyman
+Hola, le escribimos para consultarle qué franjas le vendrían bien. Las opciones disponibles de dos horas completas son: viernes 2026-10-16 de 14:00 a 16:00, o viernes 2026-10-16 de 16:00 a 18:00. Por favor, responda indicando la fecha y el tramo horario que acepta, o escriba "no" si ninguno le funciona. Muchas gracias.
+
+WOID:WO-002|ROLE:tenant
+Gracias por su mensaje; entendemos que necesita una visita de mantenimiento y le presentamos los horarios disponibles a continuación.
+
+| Date         | Day        | Time (local) |
+|--------------|------------|--------------|
+| 2026-10-16   | Friday     | 09:00–11:00 |
+Nota: estos horarios están libres únicamente en la agenda de trabajo compartida; no garantiza que el técnico esté disponible. Una visita dura dos horas.
+
+Por favor, indíquenos un horario de su preferencia indicando fecha y hora exactas, o bien confirme todos sus intervalos de disponibilidad con fechas de calendario y horas de inicio y fin precisas.
+
+WOID:WO-006|ROLE:tenant
+Ese horario ya no está disponible: está reservado para otra visita confirmada.
+
+Gracias por su mensaje. Entendemos que necesita una visita de mantenimiento, pero su solicitud no indica un horario preciso, así que le presentamos las franjas disponibles para ayudarle a elegir.
+
+| Date         | Day        | Time (local) |
+|--------------|------------|--------------|
+| 2026-10-13   | Tuesday    | 09:00–11:00 |
+| 2026-10-13   | Tuesday    | 11:00–13:00 |
+| 2026-10-13   | Tuesday    | 13:00–15:00 |
+| 2026-10-13   | Tuesday    | 15:00–17:00 |
+| 2026-10-13   | Tuesday    | 17:00–19:00 |
+| 2026-10-14   | Wednesday  | 15:00–17:00 |
+| 2026-10-14   | Wednesday  | 17:00–19:00 |
+| 2026-10-15   | Thursday   | 09:00–11:00 |
+| 2026-10-15   | Thursday   | 11:00–13:00 |
+| 2026-10-15   | Thursday   | 13:00–15:00 |
+| 2026-10-16   | Friday     | 09:00–11:00 |
+| 2026-10-16   | Friday     | 11:00–13:00 |
+| 2026-10-16   | Friday     | 13:00–15:00 |
+| 2026-10-16   | Friday     | 15:00–17:00 |
+| 2026-10-16   | Friday     | 17:00–19:00 |
+| 2026-10-17   | Saturday   | 09:00–11:00 |
+| 2026-10-17   | Saturday   | 11:00–13:00 |
+| 2026-10-17   | Saturday   | 13:00–15:00 |
+| 2026-10-17   | Saturday   | 15:00–17:00 |
+| 2026-10-17   | Saturday   | 17:00–19:00 |
+| 2026-10-18   | Sunday     | 09:00–11:00 |
+| 2026-10-18   | Sunday     | 11:00–13:00 |
+| 2026-10-18   | Sunday     | 13:00–15:00 |
+| 2026-10-18   | Sunday     | 15:00–17:00 |
+| 2026-10-18   | Sunday     | 17:00–19:00 |
+| 2026-10-19   | Monday     | 09:00–11:00 |
+| 2026-10-19   | Monday     | 11:00–13:00 |
+| 2026-10-19   | Monday     | 13:00–15:00 |
+| 2026-10-19   | Monday     | 15:00–17:00 |
+| 2026-10-19   | Monday     | 17:00–19:00 |
+| 2026-10-20   | Tuesday    | 09:00–11:00 |
+| 2026-10-20   | Tuesday    | 11:00–13:00 |
+| 2026-10-20   | Tuesday    | 13:00–15:00 |
+| 2026-10-20   | Tuesday    | 15:00–17:00 |
+| 2026-10-20   | Tuesday    | 17:00–19:00 |
+Nota: estos horarios están libres únicamente en la agenda de trabajo compartida; no garantiza que el técnico esté disponible. Una visita dura dos horas.
+
+Por favor, indíquenos una fecha y franja horaria de las que le presentamos, o bien especifique sus intervalos de disponibilidad con fechas de calendario exactas y horas de inicio y fin.
+
+WOID:WO-004|ROLE:tenant
+Estimado inquilino:
+
+La disponibilidad del técnico de mantenimiento ha cambiado. Le pedimos amablemente que nos confirme nuevamente su disponibilidad para la visita, o que nos indique sus horarios disponibles.
+
+Muchas gracias por su colaboración.
+
+WOID:WO-008|ROLE:tenant
+Hello,
+
+We would like to arrange a visit to your home on Friday 2026-10-16, from 14:00 to 16:00.
+
+Please reply to let us know whether you accept or reject this exact visit.
+
+Thank you.
+
+WOID:WO-002|ROLE:handyman
+Hola, buenos días. Le escribo para confirmar la disponibilidad de la visita de dos horas. ¿Podría realizarla completa el viernes 2026-10-16, de 09:00 a 11:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-006|ROLE:handyman
+Hola, ¿puede usted realizar la visita completa de dos horas el jueves 2026-10-15 de 09:00 a 11:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-006|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para solicitar su confirmación de la siguiente visita: el jueves 2026-10-15, de 09:00 a 11:00.
+
+Por favor, indíquenos si acepta o rechaza esta visita exacta.
+
+Gracias.
+
+WOID:WO-008|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico. ¿Podría indicarnos, con un sí o un no, si le viene bien esta visita exacta: viernes 2026-10-16, de 14:00 a 16:00? Gracias por su respuesta.
+
+WOID:WO-004|ROLE:tenant
+Hemos notado que la disponibilidad que nos indica ahora es distinta a la que nos comunicó anteriormente. ¿Puede confirmarnos si el nuevo intervalo es correcto? Gracias por su ayuda.
+
+WOID:WO-002|ROLE:tenant
+Estimado inquilino:
+
+Le solicitamos que confirme explícitamente si acepta o rechaza la siguiente visita:
+
+Fecha: viernes 2026-10-16
+Horario: de 09:00 a 11:00
+
+Por favor, responda indicando "acepto" o "rechazo" a esta visita.
+
+Gracias por su atención.
+
+WOID:WO-008|ROLE:tenant
+Hello,
+
+This is a confirmation of your scheduled visit on Friday 2026-10-16, from 14:00 to 16:00.
+
+We look forward to seeing you. If you have any questions before then, please let us know.
+
+Thank you.
+
+WOID:WO-002|ROLE:handyman
+Estimado/a participante:
+
+Le escribimos para pedirle una confirmación específica sobre la visita del técnico de mantenimiento el viernes 2026-10-16, de 09:00 a 11:00.
+
+¿Acepta usted esta visita exacta? Por favor, responda por separado con un "sí" o un "no". Su respuesta nos ayuda a organizar la agenda correctamente.
+
+Gracias por su tiempo.
+
+WOID:WO-006|ROLE:handyman
+Hola, le escribimos para confirmar la visita del técnico de mantenimiento. Por favor, respóndanos de forma explícita con un sí o un no para esta visita exacta: jueves 2026-10-15, de 09:00 a 11:00. Gracias.
+
+WOID:WO-008|ROLE:handyman
+Estimado/a participante:
+
+Le confirmamos su visita programada para el viernes 2026-10-16, de 14:00 a 16:00.
+
+Si necesita cambiar la hora o tiene alguna pregunta, por favor comuníquese con nosotros antes de la fecha de su visita.
+
+Gracias por su atención.
+
+WOID:WO-008|RESULT:scheduled
+SCHEDULED_FOR:2026-10-16T14:00:00+02:00
+WOID:WO-004|ROLE:tenant
+Ese horario no está disponible ahora: está retenido para otra visita de igual o mayor prioridad.
+
+Gracias por su mensaje. Entendemos que necesita una visita de mantenimiento, por lo que le presentamos a continuación las franjas horarias disponibles para programarla.
+
+| Date         | Day        | Time (local) |
+|--------------|------------|--------------|
+| 2026-10-13   | Tuesday    | 09:00–11:00 |
+| 2026-10-13   | Tuesday    | 11:00–13:00 |
+| 2026-10-13   | Tuesday    | 13:00–15:00 |
+| 2026-10-13   | Tuesday    | 15:00–17:00 |
+| 2026-10-13   | Tuesday    | 17:00–19:00 |
+| 2026-10-14   | Wednesday  | 15:00–17:00 |
+| 2026-10-14   | Wednesday  | 17:00–19:00 |
+| 2026-10-15   | Thursday   | 11:00–13:00 |
+| 2026-10-15   | Thursday   | 13:00–15:00 |
+| 2026-10-16   | Friday     | 11:00–13:00 |
+| 2026-10-16   | Friday     | 17:00–19:00 |
+| 2026-10-17   | Saturday   | 09:00–11:00 |
+| 2026-10-17   | Saturday   | 11:00–13:00 |
+| 2026-10-17   | Saturday   | 13:00–15:00 |
+| 2026-10-17   | Saturday   | 15:00–17:00 |
+| 2026-10-17   | Saturday   | 17:00–19:00 |
+| 2026-10-18   | Sunday     | 09:00–11:00 |
+| 2026-10-18   | Sunday     | 11:00–13:00 |
+| 2026-10-18   | Sunday     | 13:00–15:00 |
+| 2026-10-18   | Sunday     | 15:00–17:00 |
+| 2026-10-18   | Sunday     | 17:00–19:00 |
+| 2026-10-19   | Monday     | 09:00–11:00 |
+| 2026-10-19   | Monday     | 11:00–13:00 |
+| 2026-10-19   | Monday     | 13:00–15:00 |
+| 2026-10-19   | Monday     | 15:00–17:00 |
+| 2026-10-19   | Monday     | 17:00–19:00 |
+| 2026-10-20   | Tuesday    | 09:00–11:00 |
+| 2026-10-20   | Tuesday    | 11:00–13:00 |
+| 2026-10-20   | Tuesday    | 13:00–15:00 |
+| 2026-10-20   | Tuesday    | 15:00–17:00 |
+| 2026-10-20   | Tuesday    | 17:00–19:00 |
+Nota: estos horarios están libres únicamente en la agenda de trabajo compartida; no garantiza que el técnico esté disponible. Una visita dura dos horas.
+
+Por favor, elija una franja por fecha y hora, o indíquenos todos sus intervalos de disponibilidad con fechas de calendario exactas y horas de inicio y fin.
+
+WOID:WO-002|ROLE:tenant
+Estimado/a participante:
+
+Le confirmamos su visita programada para el viernes 2026-10-16, de 09:00 a 11:00.
+
+Si necesita cambiar la hora o tiene alguna pregunta, por favor póngase en contacto con nosotros antes de la fecha.
+
+Gracias por su colaboración.
+
+WOID:WO-002|ROLE:handyman
+Estimado participante:
+
+Le confirmamos su visita programada para el viernes 2026-10-16, de 09:00 a 11:00.
+
+Si necesita cambiar la fecha u hora, por favor comuníquese con nosotros con antelación.
+
+Gracias por su participación.
+
+WOID:WO-002|RESULT:scheduled
+SCHEDULED_FOR:2026-10-16T09:00:00+02:00
+WOID:WO-006|ROLE:tenant
+Estimado/a participante:
+
+Le confirmamos su visita programada para el jueves 2026-10-15, de 09:00 a 11:00.
+
+Si necesita hacer algún cambio, por favor comuníquese con nosotros con antelación.
+
+Gracias por su atención.
+
+WOID:WO-006|ROLE:handyman
+Estimado/a participante:
+
+Le confirmamos su visita programada para el jueves 2026-10-15, de 09:00 a 11:00.
+
+Si necesita hacer algún cambio, le agradecemos que se comunique con nosotros con antelación.
+
+Atentamente,
+El equipo del estudio
+
+WOID:WO-006|RESULT:scheduled
+SCHEDULED_FOR:2026-10-15T09:00:00+02:00
+WOID:WO-004|ROLE:handyman
+Hola, le escribo para confirmar la disponibilidad de la visita. ¿Puede realizar la visita completa de dos horas el viernes 2026-10-16 de 11:00 a 13:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-004|ROLE:tenant
+Hemos recibido su mensaje. Por el momento, la visita no puede avanzar hasta que la otra parte responda la pregunta pendiente. No necesita responder nada ahora; nos pondremos en contacto con usted de nuevo cuando haya novedades.
+
+WOID:WO-004|ROLE:handyman
+Hemos notado que la disponibilidad que nos indicó ahora es diferente a la que mencionó anteriormente. ¿Podría confirmarnos si el nuevo intervalo de disponibilidad es correcto?
+
+WOID:WO-004|ROLE:tenant
+Estimado inquilino:
+
+La disponibilidad del técnico de mantenimiento ha cambiado. Le pedimos que nos confirme nuevamente su disponibilidad para la visita.
+
+Quedamos atentos a su respuesta. Gracias por su colaboración.
+
+WOID:WO-004|ROLE:handyman
+Hemos recibido su mensaje, gracias. Por el momento la visita no puede avanzar hasta que la otra parte responda la pregunta pendiente. No necesita responder nada ahora; nos pondremos en contacto con usted de nuevo.
+
+WOID:WO-004|ROLE:tenant
+Para poder programar su participación, le pedimos que nos indique sus intervalos de disponibilidad completos, con fecha y hora explícitas. Por favor, indique el día de inicio y el día de fin de cada intervalo en formato de calendario, junto con la hora de inicio y la hora de fin. Gracias por su colaboración.
+
+WOID:WO-004|ROLE:handyman
+Hemos recibido su mensaje, gracias. Por el momento no es necesario que responda nada. La visita no puede avanzar hasta que la otra parte conteste la pregunta pendiente, y nos pondremos en contacto con usted de nuevo cuando haya novedades.
+
+WOID:WO-004|ROLE:handyman
+Hola, ¿puede usted realizar la visita completa de dos horas el viernes 2026-10-16 de 11:00 a 13:00? Por favor, responda únicamente "sí" o "no".
+
+WOID:WO-004|ROLE:tenant
+Hemos recibido su mensaje. Por el momento, la visita no puede avanzar hasta que la otra parte responda la pregunta pendiente. No necesita responder nada ahora; nos pondremos en contacto con usted nuevamente cuando haya novedades.
+
+WOID:WO-004|ROLE:tenant
+Estimado inquilino:
+
+Le escribimos para solicitar su confirmación de la siguiente visita: el viernes 2026-10-16, de 11:00 a 13:00.
+
+Por favor, indíquenos si acepta o rechaza esta visita exacta.
+
+Gracias por su atención.
+
+WOID:WO-004|ROLE:handyman
+Hola. Para confirmar la visita del viernes 2026-10-16 de 11:00 a 13:00, ¿nos puede indicar por favor un sí o un no? Gracias.
+
+WOID:WO-004|ROLE:tenant
+Estimado/a participante:
+
+Le confirmamos su visita programada para el viernes 2026-10-16, de 11:00 a 13:00.
+
+Si necesita cambiar la fecha u hora, le rogamos que nos avise con antelación.
+
+Muchas gracias.
+
+WOID:WO-004|ROLE:handyman
+Estimado participante:
+
+Le confirmamos su visita programada para el viernes 2026-10-16, de 11:00 a 13:00.
+
+Si necesita cambiar la fecha u hora, por favor avísenos con antelación.
+
+Gracias por su atención.
+
+WOID:WO-004|RESULT:scheduled
+SCHEDULED_FOR:2026-10-16T11:00:00+02:00
