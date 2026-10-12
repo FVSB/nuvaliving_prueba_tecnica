@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from maintenance_agent.business_rules import active_rules
 from maintenance_agent.domain.decisions import interpret_explicit_decision
 from maintenance_agent.domain.negotiation import (
     DecisionValue,
@@ -41,11 +42,14 @@ def test_merge_then_slice_and_keep_distinct_overlapping_starts() -> None:
     assert overlaps(offset[0].interval, merged[0].interval)
 
 
+RANKS = active_rules().urgency_rank
+
+
 def test_common_window_includes_two_hour_intersection_and_urgency_order() -> None:
     assert common_windows((interval(9, 13),), (interval(10, 12),)) == (interval(10, 12),)
-    assert urgency_comparison(Urgency.CRITICAL, Urgency.HIGH) > 0
-    assert urgency_comparison(Urgency.HIGH, Urgency.HIGH) == 0
-    assert urgency_comparison(Urgency.LOW, Urgency.MEDIUM) < 0
+    assert urgency_comparison(Urgency.CRITICAL, Urgency.HIGH, RANKS) > 0
+    assert urgency_comparison(Urgency.HIGH, Urgency.HIGH, RANKS) == 0
+    assert urgency_comparison(Urgency.LOW, Urgency.MEDIUM, RANKS) < 0
 
 
 def test_terminal_enum_and_review_reason_are_closed_and_safe() -> None:

@@ -23,3 +23,12 @@ def test_prompt_injects_index_at_start_of_interpretation() -> None:
     )
     assert "read_skill" in prompt and "- ambiguity-reasons:" in prompt
     assert "Monday and Tuesday" not in prompt
+
+
+def test_skill_markdown_is_declared_as_package_data():
+    import tomllib
+    from pathlib import Path
+
+    pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    package_data = pyproject["tool"]["setuptools"]["package-data"]
+    assert "*.md" in package_data["maintenance_agent.skills"]

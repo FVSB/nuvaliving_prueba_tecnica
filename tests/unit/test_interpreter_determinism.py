@@ -17,8 +17,9 @@ from maintenance_agent.infrastructure.anthropic_conversation import (
 from maintenance_agent.prompts.compose_message import build_composition_prompt
 from maintenance_agent.prompts.interpret_availability import build_availability_prompt
 from maintenance_agent.prompts.slot_reply import (
+    build_language_detect_prompt,
     build_slot_compose_prompt,
-    build_slot_validate_prompt,
+    build_translate_prompt,
 )
 
 ZONE = "Europe/Madrid"
@@ -232,10 +233,14 @@ def test_compose_prompt_pins_dates_to_the_facts() -> None:
     assert build_composition_prompt("ask", "es", {"x": "y"}).endswith('Facts: {"x": "y"}')
 
 
-def test_slot_prompts_do_not_demand_a_single_short_sentence() -> None:
+def test_slot_compose_prompt_does_not_demand_a_single_short_sentence() -> None:
     compose = build_slot_compose_prompt("es", "| t |", "w", "")
-    validate = build_slot_validate_prompt("reply", "| t |", "w", "es")
-    for prompt in (compose, validate):
-        assert "one short sentence" not in prompt
-    assert "do not reject for length" in validate
+    assert "one short sentence" not in compose
     assert "invent" in compose and "promise" in compose
+
+
+def test_language_prompts_carry_only_their_text() -> None:
+    detect = build_language_detect_prompt("Hola")
+    assert "Hola" in detect and "lowercase" in detect
+    translate = build_translate_prompt("Hello", "Spanish")
+    assert "into Spanish" in translate and "Hello" in translate

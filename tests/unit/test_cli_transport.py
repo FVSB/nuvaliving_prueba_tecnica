@@ -46,7 +46,7 @@ def test_validator_accepts_no_response_sentinel_and_limit_length_body() -> None:
     from maintenance_agent.application.messages import InboundMessage
     from maintenance_agent.infrastructure.cli_transport import validate_inbound_line
 
-    assert isinstance(validate_inbound_line("WO-1|tenant <NO RESPONSE>"), InboundMessage)
+    assert isinstance(validate_inbound_line("WO-1|tenant <NO RESPONSE>", 2000), InboundMessage)
     assert isinstance(validate_inbound_line("WO-1|tenant " + "a" * 10, 10), InboundMessage)
 
 
@@ -55,7 +55,7 @@ def test_validator_rejects_empty_body_keeping_sender(line: str) -> None:
     from maintenance_agent.application.messages import RejectedInbound
     from maintenance_agent.infrastructure.cli_transport import validate_inbound_line
 
-    rejected = validate_inbound_line(line)
+    rejected = validate_inbound_line(line, 2000)
 
     assert isinstance(rejected, RejectedInbound)
     assert (rejected.work_order_id, rejected.reason) == ("WO-1", "empty_body")
@@ -81,7 +81,7 @@ def test_validator_raises_when_sender_cannot_be_identified(line: str) -> None:
     from maintenance_agent.infrastructure.cli_transport import validate_inbound_line
 
     with pytest.raises(InputFormatError):
-        validate_inbound_line(line)
+        validate_inbound_line(line, 2000)
 
 
 def test_rejection_notices_are_fixed_and_localized() -> None:

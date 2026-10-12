@@ -4,10 +4,13 @@ from pathlib import Path
 import pytest
 
 from maintenance_agent.__main__ import parse_arguments
+from maintenance_agent.config import Settings
 
 
-def test_default_csv_retains_docker_contract() -> None:
-    assert parse_arguments([]).csv == Path("/app/work_orders.csv")
+def test_default_csv_comes_from_settings_so_docker_contract_holds() -> None:
+    # No CLI default: Settings owns the path (WORK_ORDERS_CSV_PATH, /app/work_orders.csv by default).
+    assert parse_arguments([]).csv is None
+    assert Settings.model_fields["work_orders_csv_path"].default == Path("/app/work_orders.csv")
 
 
 def test_local_csv_path_can_be_selected() -> None:

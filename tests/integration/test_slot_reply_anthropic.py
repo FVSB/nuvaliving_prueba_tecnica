@@ -2,7 +2,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from maintenance_agent.infrastructure.anthropic_conversation import AnthropicConversationHandler
+from maintenance_agent.infrastructure.anthropic_conversation import (
+    AnthropicConversationHandler,
+    LlmOutputError,
+)
 
 
 class _Messages:
@@ -34,16 +37,24 @@ async def test_compose_slot_reply_returns_prose_only_with_schema() -> None:
 
 
 @pytest.mark.asyncio
-async def test_validator_maps_verdict_and_feedback() -> None:
-    client = _Client('{"valid":false,"feedback":"Wrong language"}')
-    verdict = await AnthropicConversationHandler(client).validate_slot_reply("draft", FACTS)
-    assert verdict.valid is False and verdict.feedback == "Wrong language"
+async def test_detect_language_returns_a_lowercase_name() -> None:
+    client = _Client('{"language":" Spanish "}')
+    assert await AnthropicConversationHandler(client).detect_language("Hola") == "spanish"
+    assert client.messages.calls[0]["output_config"]["format"]["type"] == "json_schema"
 
 
 @pytest.mark.asyncio
-async def test_malformed_validator_output_is_invalid_never_valid() -> None:
-    verdict = await AnthropicConversationHandler(_Client("nope")).validate_slot_reply("d", FACTS)
-    assert verdict.valid is False and verdict.feedback
+async def test_malformed_language_output_raises() -> None:
+    with pytest.raises(LlmOutputError):
+        await AnthropicConversationHandler(_Client("nope")).detect_language("Hola")
+
+
+@pytest.mark.asyncio
+async def test_translate_asks_for_the_target_language_only() -> None:
+    client = _Client("Hola")
+    assert await AnthropicConversationHandler(client).translate("Hello", "Spanish") == "Hola"
+    prompt = client.messages.calls[0]["messages"][0]["content"]
+    assert "Spanish" in prompt and "Hello" in prompt
 
 
 @pytest.mark.asyncio
@@ -159,15 +170,6 @@ async def test_compose_without_text_block_names_block_types() -> None:
         await AnthropicConversationHandler(client).compose_slot_reply("Spanish", FACTS)
 
 
-@pytest.mark.asyncio
-async def test_unreadable_validator_verdict_keeps_diagnostic_out_of_feedback() -> None:
-    client = SimpleNamespace(messages=_TruncatedMessages(['{"valid":']))
-    verdict = await AnthropicConversationHandler(client).validate_slot_reply("d", FACTS)
-    assert verdict.valid is False
-    assert verdict.feedback == "The validator returned an unreadable verdict."
-    assert "truncated at max_tokens" in (verdict.diagnostic or "")
-
-
 def _availability_json(start: str, end: str) -> str:
     return (
         '{"intervals":[{"start":"%s","end":"%s"}],"suggested_intervals":[],'
@@ -194,15 +196,17 @@ async def test_every_model_call_disables_thinking() -> None:
     client = _Client(
         _availability_json("2026-10-13T10:00:00+02:00", "2026-10-13T12:00:00+02:00"),
         '{"intro":"a","ask":"b"}',
-        '{"valid":true,"feedback":""}',
+        '{"language":"spanish"}',
+        "Hola",
         "Hola",
     )
     handler = AnthropicConversationHandler(client)
     await _interpret(client)
     await handler.compose_slot_reply("Spanish", FACTS)
-    await handler.validate_slot_reply("draft", FACTS)
+    await handler.detect_language("Hola")
+    await handler.translate("Hello", "Spanish")
     await handler.compose("intent", "Spanish", {})
-    assert len(client.messages.calls) == 4
+    assert len(client.messages.calls) == 5
     assert all(call["thinking"] == {"type": "disabled"} for call in client.messages.calls)
 
 

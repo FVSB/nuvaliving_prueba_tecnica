@@ -24,7 +24,8 @@ def _work_order(order_id: str) -> WorkOrder:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", ["tenant", "handyman"])
-async def test_exact_no_response_closes_one_unfinished_order(role: str) -> None:
+@pytest.mark.usefixtures("retries_enabled")
+async def test_exact_no_response_requests_a_retry_instead_of_closing(role: str) -> None:
     agenda = InMemoryScheduleAuthority()
     workflow = NegotiationWorkflow(FakeConversationHandler(), agenda)
     state = await workflow.start(
@@ -33,8 +34,41 @@ async def test_exact_no_response_closes_one_unfinished_order(role: str) -> None:
     )
     order_id = state["work_order"].work_order_id
     state = await workflow.handle(state, InboundMessage(order_id, role, "<NO RESPONSE>"))
+    assert state.get("terminal_status") is None
+    assert state.get("terminal_frame") is None
+    assert state["retry_request"] == "tenant"  # the pending question is the tenant's
+
+
+@pytest.mark.asyncio
+async def test_retry_sends_a_reminder_with_the_unanswered_message() -> None:
+    workflow = NegotiationWorkflow(FakeConversationHandler(), InMemoryScheduleAuthority())
+    state = await workflow.start(
+        _work_order("WO-REMIND"),
+        LanguageRecognitionResult(language_code=LanguageCode.ENGLISH),
+    )
+    state = {**state, "last_outbound": {"tenant": "When are you available?"}}
+    event = {"role": "tenant", "attempt": 0, "exhausted": False}
+    state = await workflow.handle_retry(state, event)
+    body = state["outbound_message"].body
+    assert state["outbound_message"].role == "tenant"
+    assert body.startswith("Reminder:") and body.endswith("When are you available?")
+    assert state["trace_events"][0]["detail"]["retry"] == 1
+    assert state.get("terminal_status") is None
+
+
+@pytest.mark.asyncio
+async def test_exhausted_retries_close_the_order_naming_the_silent_role() -> None:
+    workflow = NegotiationWorkflow(FakeConversationHandler(), InMemoryScheduleAuthority())
+    state = await workflow.start(
+        _work_order("WO-EXHAUST"),
+        LanguageRecognitionResult(language_code=LanguageCode.ENGLISH),
+    )
+    event = {"role": "tenant", "attempt": 3, "exhausted": True}
+    state = await workflow.handle_retry(state, event)
     assert state["terminal_status"] is TerminalStatus.REQUIRES_REVIEW
-    assert state["terminal_frame"].detail.startswith("REASON:No response")
+    detail = state["terminal_frame"].detail
+    assert detail.startswith("REASON:No response from tenant while awaiting")
+    assert "after 3 retries" in detail
 
 
 @pytest.mark.asyncio

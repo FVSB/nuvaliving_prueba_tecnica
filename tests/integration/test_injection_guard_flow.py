@@ -37,7 +37,7 @@ async def _run(lines: list[str], tmp_path: Path, monkeypatch, handler=None, guar
         language_recognizer=StaticLanguageRecognizer(
             LanguageRecognitionResult(language_code=LanguageCode.SPANISH)
         ),
-        injection_guard=guard or InjectionGuard(_KeywordClassifier()),
+        injection_guard=guard or InjectionGuard(_KeywordClassifier(), 0.6),
     )
     events = next((tmp_path / "traces" / "runs").iterdir()) / "events.jsonl"
     return handler, events.read_text(encoding="utf-8")
@@ -81,7 +81,7 @@ async def test_clean_message_and_no_response_sentinel_bypass_the_extra_calls(
         ["WO-001|tenant Puedo el 2026-10-13 de 10:00 a 12:00", "WO-002|tenant <NO RESPONSE>"],
         tmp_path,
         monkeypatch,
-        guard=InjectionGuard(classifier),
+        guard=InjectionGuard(classifier, 0.6),
     )
 
     assert classifier.assessed == ["Puedo el 2026-10-13 de 10:00 a 12:00"]
@@ -97,7 +97,7 @@ async def test_classifier_failure_fails_open_and_is_recorded(tmp_path, monkeypat
         ["WO-001|tenant Puedo el 2026-10-13 de 10:00 a 12:00"],
         tmp_path,
         monkeypatch,
-        guard=InjectionGuard(_Broken()),
+        guard=InjectionGuard(_Broken(), 0.6),
     )
 
     assert len(handler.availability_calls) == 1

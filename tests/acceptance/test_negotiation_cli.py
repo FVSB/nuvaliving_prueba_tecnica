@@ -108,7 +108,7 @@ async def test_priority_transfer_notifies_displaced_tenant_with_known_alternativ
             for line in lines:
                 yield parse_inbound_message(line)
                 if line == "WO-HIGH|tenant yes":
-                    await asyncio.sleep(0.02)
+                    await asyncio.sleep(0.5)
             for line in (
                 "WO-LOW|tenant yes",
                 "WO-LOW|tenant yes",

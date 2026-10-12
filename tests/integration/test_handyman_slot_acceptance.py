@@ -136,3 +136,79 @@ async def test_single_offer_is_a_yes_no_question_and_no_asks_for_intervals() -> 
     assert state.get("handyman_evidence") is None
     assert state["pending_question"].action is PendingAction.HANDYMAN_AVAILABILITY
     assert handler.availability_calls[-1][1].value == "tenant"
+
+
+@pytest.mark.asyncio
+async def test_declined_slot_is_not_reoffered_or_accepted_by_a_later_yes() -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 11)))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "no"))
+    assert state["candidates"] == ()
+    assert state["handyman_declined"] == (_interval(9, 11),)
+    assert any(e["event_type"] == "handyman_slots_declined" for e in state["trace_events"])
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "sí"))
+    assert state.get("handyman_evidence") is None
+    assert state.get("proposal") is None
+    assert state["pending_question"].action is PendingAction.HANDYMAN_AVAILABILITY
+
+
+@pytest.mark.asyncio
+async def test_tenant_message_while_handyman_pending_says_we_are_waiting() -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 11)))
+    question = state["pending_question"]
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "tenant", "yes"))
+    assert state["pending_question"] == question
+    assert state["outbound_message"].role == "tenant"
+    assert "other party answers" in state["outbound_message"].body
+
+
+@pytest.mark.asyncio
+async def test_natural_acceptance_binds_the_single_slot_offered() -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 11)))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "ok me gusta"))
+    assert state["handyman_evidence"].intervals == (_interval(9, 11),)
+    assert state["pending_question"].action is PendingAction.TENANT_CONFIRMATION
+
+
+@pytest.mark.asyncio
+async def test_natural_acceptance_with_several_slots_asks_which() -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 13)))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "ok me gusta"))
+    assert state.get("handyman_evidence") is None
+    assert state["pending_question"].action is PendingAction.HANDYMAN_AVAILABILITY
+
+
+@pytest.mark.asyncio
+async def test_natural_acceptance_confirms_the_single_proposal_for_the_tenant() -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 11)))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "si puedo"))
+    assert state["pending_question"].action is PendingAction.TENANT_CONFIRMATION
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "tenant", "ok me gusta"))
+    assert state["pending_question"].action is PendingAction.HANDYMAN_CONFIRMATION
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "ok me gusta"))
+    assert state["terminal_status"].value == "scheduled"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tenant_text",
+    [
+        "Yes, I accept 2026-10-13 9:00-11:00.",
+        "Sí, acepto el 13 de octubre de 9:00 a 11:00",
+    ],
+)
+async def test_acceptance_restating_the_proposed_date_and_time_counts(tenant_text: str) -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 11)))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "si puedo"))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "tenant", tenant_text))
+    assert state["pending_question"].action is PendingAction.HANDYMAN_CONFIRMATION
+
+
+@pytest.mark.asyncio
+async def test_acceptance_naming_a_different_time_does_not_count() -> None:
+    workflow, state = await _awaiting_handyman(_tenant_handler(_interval(9, 11)))
+    state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "si puedo"))
+    state = await workflow.handle(
+        state, InboundMessage(ORDER_ID, "tenant", "Yes, I accept 2026-10-13 15:00-17:00.")
+    )
+    assert state["pending_question"].action is PendingAction.TENANT_CONFIRMATION
+    assert state.get("terminal_status") is None

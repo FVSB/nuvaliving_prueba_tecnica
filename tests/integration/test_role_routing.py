@@ -95,6 +95,7 @@ async def test_handyman_still_answers_after_tenant_reminder() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("retries_enabled")
 async def test_no_response_is_attributed_to_the_role_with_the_pending_question() -> None:
     handler = FakeConversationHandler(
         availability_results={
@@ -103,6 +104,9 @@ async def test_no_response_is_attributed_to_the_role_with_the_pending_question()
     )
     workflow, _, state = await _awaiting_handyman(handler)
     state = await workflow.handle(state, InboundMessage(ORDER_ID, "handyman", "<NO RESPONSE>"))
+    assert state["retry_request"] == "handyman"
+    event = {"role": state["retry_request"], "attempt": 3, "exhausted": True}
+    state = await workflow.handle_retry(state, event)
     assert state["terminal_status"] is TerminalStatus.REQUIRES_REVIEW
     line = state["terminal_frame"].detail
     assert line.startswith("REASON:No response from handyman while awaiting")
@@ -111,6 +115,7 @@ async def test_no_response_is_attributed_to_the_role_with_the_pending_question()
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("retries_enabled")
 async def test_no_response_sentinel_from_other_role_blames_pending_role() -> None:
     handler = FakeConversationHandler(
         availability_results={
@@ -119,4 +124,7 @@ async def test_no_response_sentinel_from_other_role_blames_pending_role() -> Non
     )
     workflow, _, state = await _awaiting_handyman(handler)
     state = await workflow.handle(state, InboundMessage(ORDER_ID, "tenant", "<NO RESPONSE>"))
+    assert state["retry_request"] == "handyman"
+    event = {"role": state["retry_request"], "attempt": 3, "exhausted": True}
+    state = await workflow.handle_retry(state, event)
     assert state["terminal_frame"].detail.startswith("REASON:No response from handyman")

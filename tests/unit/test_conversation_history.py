@@ -44,3 +44,22 @@ def test_history_is_filtered_per_role_and_reaches_the_prompt() -> None:
     )
     assert "mañana temprano" in prompt
     assert "otro" not in prompt
+
+
+def test_history_replaces_slot_table_with_a_summary() -> None:
+    table = (
+        "Intro line.\n\n| Date | Day | Time (local) |\n|---|---|---|\n"
+        "| 2026-10-12   | Monday     | 13:00–15:00 |\n"
+        "| 2026-10-13   | Tuesday    | 09:00–11:00 |\n"
+        "Note: free in the shared schedule.\n\nPick one."
+    )
+    state = {"outbound_message": OutboundMessage("WO-1", "tenant", table)}
+    ((_, _, body),) = _extend_history(state)
+    assert "|" not in body
+    assert "[Slot table shown: 2 slots, dates 2026-10-12..2026-10-13, times 09:00-15:00]" in body
+    assert body.startswith("Intro line.") and body.endswith("Pick one.")
+
+
+def test_history_keeps_text_without_a_table_untouched() -> None:
+    state = {"outbound_message": OutboundMessage("WO-1", "tenant", "Hello there")}
+    assert _extend_history(state) == (("assistant", "tenant", "Hello there"),)

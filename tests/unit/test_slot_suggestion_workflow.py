@@ -9,7 +9,6 @@ from maintenance_agent.application.conversation import (
     AvailabilityInterpretation,
     MessageClass,
     PartOfDay,
-    ValidationVerdict,
 )
 from maintenance_agent.application.messages import InboundMessage
 from maintenance_agent.application.workflow import NegotiationWorkflow
@@ -18,7 +17,7 @@ from maintenance_agent.domain.negotiation import (
     PendingAction,
     TimeInterval,
 )
-from tests.integration.fakes import FakeConversationHandler
+from tests.integration.fakes import BAD_PROSE, FakeConversationHandler
 from tests.unit.slot_helpers import MADRID, NOW, VAGUE, StubAgenda, appointment_at, started
 
 
@@ -104,22 +103,22 @@ async def test_unambiguous_relative_time_keeps_confirmation_path() -> None:
 
 
 @pytest.mark.asyncio
-async def test_validator_feedback_loops_into_next_composition() -> None:
+async def test_prose_feedback_loops_into_next_composition() -> None:
     handler = FakeConversationHandler(
-        availability_results={"tenant": [VAGUE]},
-        slot_verdicts=[ValidationVerdict(False, "Too long"), ValidationVerdict(True, None)],
+        availability_results={"tenant": [VAGUE]}, slot_prose=[BAD_PROSE]
     )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg())
     assert handler.slot_compose_calls[0][1]["feedback"] == ""
-    assert handler.slot_compose_calls[1][1]["feedback"] == "Too long"
+    feedback = handler.slot_compose_calls[1][1]["feedback"]
+    assert "promise or guarantee" in feedback
     kinds = [e["event_type"] for e in state["trace_events"]]
     assert kinds == [
         "slot_suggestion_attempt",
         "slot_suggestion_feedback",
         "slot_suggestion_attempt",
     ]
-    assert state["trace_events"][1]["detail"]["feedback"] == "Too long"
+    assert state["trace_events"][1]["detail"]["feedback"] == feedback
     assert "Spanish: intro" in state["outbound_message"].body
 
 
@@ -127,12 +126,11 @@ async def test_validator_feedback_loops_into_next_composition() -> None:
 async def test_third_failure_emits_deterministic_fallback() -> None:
     handler = FakeConversationHandler(
         availability_results={"tenant": [VAGUE]},
-        slot_verdicts=[ValidationVerdict(False, f"bad {n}") for n in range(3)],
+        slot_prose=[BAD_PROSE] * 3,
     )
     workflow = _workflow(handler, appointment_at(9))
     state = await workflow.handle(await started(workflow), _msg())
     assert len(handler.slot_compose_calls) == 3
-    assert len(handler.slot_validate_calls) == 3
     body = state["outbound_message"].body
     assert "SLOT-" not in body and "| Date" in body  # fixed text plus the deterministic table
     assert "Su mensaje no indica" in body
@@ -147,7 +145,7 @@ async def test_third_failure_emits_deterministic_fallback() -> None:
 async def test_counter_resets_on_next_tenant_message() -> None:
     handler = FakeConversationHandler(
         availability_results={"tenant": [VAGUE, VAGUE]},
-        slot_verdicts=[ValidationVerdict(False, "x")] * 3,
+        slot_prose=[BAD_PROSE] * 3,
     )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg())
@@ -200,7 +198,7 @@ async def test_fallback_explains_why_the_request_was_ambiguous() -> None:
     )
     handler = FakeConversationHandler(
         availability_results={"tenant": [early]},
-        slot_verdicts=[ValidationVerdict(False, "x")] * 3,
+        slot_prose=[BAD_PROSE] * 3,
     )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("mañana temprano puedo"))
@@ -282,3 +280,77 @@ async def test_taken_time_offers_open_slots_instead_of_reasking() -> None:
     assert "| 2026-10-13   | Tuesday    | 09:00–11:00" not in body
     assert state["pending_question"].action is PendingAction.TENANT_AVAILABILITY
     assert state.get("tenant_evidence") is None
+
+
+@pytest.mark.asyncio
+async def test_wrong_language_is_translated_and_rechecked() -> None:
+    handler = FakeConversationHandler(
+        availability_results={"tenant": [VAGUE]}, detected_languages=["english", "spanish"]
+    )
+    workflow = _workflow(handler)
+    state = await workflow.handle(await started(workflow), _msg())
+    assert len(handler.detect_calls) == 2
+    assert [call[1] for call in handler.translate_calls] == ["Spanish", "Spanish"]
+    events = state["trace_events"]
+    translated = next(e for e in events if e["event_type"] == "slot_reply_translated")
+    assert translated["detail"] == {
+        "actor": "system",
+        "expected_language": "spanish",
+        "translations": 1,
+    }
+    assert not any(e["event_type"] == "slot_fallback_emitted" for e in events)
+    assert "| Date" in state["outbound_message"].body or "| Fecha" in state["outbound_message"].body
+
+
+@pytest.mark.asyncio
+async def test_language_cycle_is_capped_and_traces_expected_and_detected() -> None:
+    handler = FakeConversationHandler(
+        availability_results={"tenant": [VAGUE]}, detected_languages=["english"] * 4
+    )
+    workflow = _workflow(handler)
+    state = await workflow.handle(await started(workflow), _msg())
+    assert len(handler.detect_calls) == 4  # first check plus three translate-and-check cycles
+    assert len(handler.translate_calls) == 6  # intro and ask, three times
+    mismatch = next(
+        e for e in state["trace_events"] if e["event_type"] == "slot_reply_language_mismatch"
+    )
+    assert mismatch["detail"]["expected_language"] == "spanish"
+    assert mismatch["detail"]["detected_language"] == "english"
+    assert "3 translate-and-check cycles" in mismatch["detail"]["reason"]
+    # The reply still goes out (as is) with the deterministic table, not the fixed fallback.
+    assert "Spanish: intro" in state["outbound_message"].body
+    assert not any(e["event_type"] == "slot_fallback_emitted" for e in state["trace_events"])
+
+
+@pytest.mark.asyncio
+async def test_language_detection_failure_is_traced_and_reply_still_sent() -> None:
+    class Broken(FakeConversationHandler):
+        async def detect_language(self, text):
+            raise RuntimeError("down")
+
+    handler = Broken(availability_results={"tenant": [VAGUE]})
+    workflow = _workflow(handler)
+    state = await workflow.handle(await started(workflow), _msg())
+    mismatch = next(
+        e for e in state["trace_events"] if e["event_type"] == "slot_reply_language_mismatch"
+    )
+    assert mismatch["detail"]["reason"] == "language detection failed: RuntimeError"
+    assert "Spanish: intro" in state["outbound_message"].body
+
+
+@pytest.mark.asyncio
+async def test_vague_weekday_in_alternatives_is_answered_from_the_agenda() -> None:
+    handler = FakeConversationHandler(availability_results={"tenant": [VAGUE]})
+    workflow = _workflow(handler)
+    state = await started(workflow)
+    state = {
+        **state,
+        "pending_question": workflow._question(
+            state["pending_question"].role, PendingAction.TENANT_ALTERNATIVES
+        ),
+    }
+    state = await workflow.handle(state, _msg("puede ser el sábado?"))
+    body = state["outbound_message"].body
+    assert "| 2026-10-17" in body and "2026-10-13" not in body  # only Saturday is listed
+    assert not any(c[0] == "clarify_tenant_alternatives" for c in handler.compositions)
+    assert state["pending_question"].action is PendingAction.TENANT_AVAILABILITY

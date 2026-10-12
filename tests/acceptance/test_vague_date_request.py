@@ -8,12 +8,11 @@ from maintenance_agent.__main__ import run
 from maintenance_agent.application.conversation import (
     AvailabilityInterpretation,
     MessageClass,
-    ValidationVerdict,
 )
 from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
 from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
 from maintenance_agent.domain.negotiation import TimeInterval
-from tests.integration.fakes import FakeConversationHandler, FakeStdinReader
+from tests.integration.fakes import BAD_PROSE, FakeConversationHandler, FakeStdinReader
 
 _NOW = datetime.fromisoformat("2026-10-16T12:00:00+02:00")
 
@@ -72,7 +71,7 @@ async def test_three_failures_emit_fallback_then_next_message_resumes(
     )
     handler = FakeConversationHandler(
         availability_results={"tenant": [VAGUE, explicit]},
-        slot_verdicts=[ValidationVerdict(False, f"bad {n}") for n in range(3)],
+        slot_prose=[BAD_PROSE] * 3,
     )
     await _run(
         tmp_path,

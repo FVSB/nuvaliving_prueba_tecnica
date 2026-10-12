@@ -12,6 +12,7 @@ from maintenance_agent.agents.scheduling.nodes.reflect_inbound_message import (
 )
 from maintenance_agent.application.coordinator import AsyncCoordinator
 from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
+from maintenance_agent.application.retry_queue import NoResponseRetryQueue
 from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
 from maintenance_agent.domain.work_orders import Urgency, WorkOrder
 from maintenance_agent.infrastructure.cli_transport import AsyncStdoutWriter
@@ -44,6 +45,9 @@ async def test_coordinator_starts_each_work_order_then_reflects_live_message(
     runtime = _writer(tmp_path / "runtime.jsonl")
     manifest = _writer(tmp_path / "manifest.jsonl")
     coordinator = AsyncCoordinator(
+        max_message_length=2000,
+        retry_queue=NoResponseRetryQueue(300.0, 3),
+        retry_poll_seconds=10.0,
         reader=FakeStdinReader(["WO-4|tenant Need help | urgent"]),
         writer=AsyncStdoutWriter(output),
         startup_graph=build_scheduling_graph(
@@ -88,6 +92,9 @@ async def test_coordinator_writes_language_recognition_event_to_events_jsonl(
     runtime = _writer(tmp_path / "runtime.jsonl")
     manifest = _writer(tmp_path / "manifest.jsonl")
     coordinator = AsyncCoordinator(
+        max_message_length=2000,
+        retry_queue=NoResponseRetryQueue(300.0, 3),
+        retry_poll_seconds=10.0,
         reader=FakeStdinReader([]),
         writer=AsyncStdoutWriter(output),
         startup_graph=build_scheduling_graph(
@@ -134,6 +141,9 @@ async def test_coordinator_writes_inbound_dispatch_and_reflection_events(
     runtime = _writer(tmp_path / "runtime.jsonl")
     manifest = _writer(tmp_path / "manifest.jsonl")
     coordinator = AsyncCoordinator(
+        max_message_length=2000,
+        retry_queue=NoResponseRetryQueue(300.0, 3),
+        retry_poll_seconds=10.0,
         reader=FakeStdinReader(["WO-4|tenant Need help | urgent"]),
         writer=AsyncStdoutWriter(output),
         startup_graph=build_scheduling_graph(
@@ -164,3 +174,49 @@ async def test_coordinator_writes_inbound_dispatch_and_reflection_events(
         and "Need help | urgent" in line
         for line in payloads
     )
+
+
+class _FailingInboundNode:
+    async def __call__(self, message) -> object:
+        raise RuntimeError("provider exploded")
+
+
+async def test_inbound_node_failure_closes_order_with_requires_review_without_killing_run(
+    tmp_path: Path,
+) -> None:
+    output = StringIO()
+    events = _writer(tmp_path / "events.jsonl")
+    runtime = _writer(tmp_path / "runtime.jsonl")
+    manifest = _writer(tmp_path / "manifest.jsonl")
+    coordinator = AsyncCoordinator(
+        max_message_length=2000,
+        retry_queue=NoResponseRetryQueue(300.0, 3),
+        retry_poll_seconds=10.0,
+        reader=FakeStdinReader(["WO-4|tenant Need help"]),
+        writer=AsyncStdoutWriter(output),
+        startup_graph=build_scheduling_graph(
+            StaticLanguageRecognizer(
+                LanguageRecognitionResult(language_code=LanguageCode.UNDETERMINED)
+            ),
+            InitializeCoordinationNode(),
+            events,
+        ),
+        inbound_node=_FailingInboundNode(),
+        trace_writer=events,
+        runtime_writer=runtime,
+        manifest_writer=manifest,
+    )
+
+    await coordinator.run([work_order()])
+
+    text = output.getvalue()
+    assert "WOID:WO-4|ROLE:tenant\nNueva orden de trabajo iniciada.\n\n" in text
+    assert "WOID:WO-4|RESULT:requires_review\nERROR:RuntimeError\n" in text
+    runtime_lines = runtime.path.read_text(encoding="utf-8").splitlines()
+    assert any(
+        '"event_type": "inbound_node_error"' in line
+        and '"work_order_id": "WO-4"' in line
+        and '"error_type": "RuntimeError"' in line
+        for line in runtime_lines
+    )
+    assert '"status": "completed"' in manifest.path.read_text(encoding="utf-8")

@@ -8,7 +8,6 @@ from maintenance_agent.application.conversation import (
     AvailabilityInterpretation,
     MessageClass,
     PartOfDay,
-    ValidationVerdict,
 )
 from maintenance_agent.application.messages import InboundMessage
 from maintenance_agent.application.slot_table import (
@@ -19,7 +18,7 @@ from maintenance_agent.application.slot_table import (
 )
 from maintenance_agent.application.workflow import NegotiationWorkflow
 from maintenance_agent.domain.negotiation import PendingAction, TimeInterval
-from tests.integration.fakes import FakeConversationHandler
+from tests.integration.fakes import BAD_PROSE, FakeConversationHandler
 from tests.integration.test_cancellation import (
     ORDER_ID,
     _handler,
@@ -53,8 +52,8 @@ def _workflow(handler: FakeConversationHandler) -> NegotiationWorkflow:
     return NegotiationWorkflow(handler, StubAgenda(), "Europe/Madrid", clock=lambda: NOW)
 
 
-def _failing_verdicts() -> list[ValidationVerdict]:
-    return [ValidationVerdict(False, "bad")] * 6
+def _failing_prose() -> list[tuple[str, str]]:
+    return [BAD_PROSE] * 6
 
 
 # 1(b) fallback with table ------------------------------------------------------------------
@@ -64,7 +63,7 @@ def _failing_verdicts() -> list[ValidationVerdict]:
 async def test_fallback_after_exhausted_attempts_includes_table_and_keeps_it_linkable() -> None:
     handler = FakeConversationHandler(
         availability_results={"tenant": [_vague("2026-10-16", "2026-10-16"), _vague()]},
-        slot_verdicts=_failing_verdicts(),
+        slot_prose=_failing_prose(),
     )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("el viernes"))
@@ -79,7 +78,7 @@ async def test_fallback_after_exhausted_attempts_includes_table_and_keeps_it_lin
 async def test_fallback_for_window_partly_beyond_horizon_adds_the_limit_phrase() -> None:
     handler = FakeConversationHandler(
         availability_results={"tenant": [_vague("2026-10-19", "2026-10-25")]},
-        slot_verdicts=_failing_verdicts(),
+        slot_prose=_failing_prose(),
     )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("la semana que viene"))
@@ -95,7 +94,7 @@ async def test_fallback_for_window_partly_beyond_horizon_adds_the_limit_phrase()
 async def test_friday_after_fallback_table_links_to_friday_slots_before_suggesting() -> None:
     handler = FakeConversationHandler(
         availability_results={"tenant": [VAGUE, VAGUE]},
-        slot_verdicts=[*_failing_verdicts()[:3]],
+        slot_prose=_failing_prose()[:3],
     )
     workflow = _workflow(handler)
     state = await workflow.handle(await started(workflow), _msg("algo"))

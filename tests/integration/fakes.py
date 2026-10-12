@@ -3,10 +3,7 @@
 from collections.abc import AsyncIterator, Iterable
 from datetime import datetime
 
-from maintenance_agent.application.conversation import (
-    AvailabilityInterpretation,
-    ValidationVerdict,
-)
+from maintenance_agent.application.conversation import AvailabilityInterpretation
 from maintenance_agent.application.messages import InboundMessage
 from maintenance_agent.domain.negotiation import ParticipantRole, TimeInterval
 from maintenance_agent.infrastructure.cli_transport import parse_inbound_message
@@ -23,13 +20,26 @@ class FakeStdinReader:
             yield parse_inbound_message(line)
 
 
+# Prose that the deterministic slot-prose check always rejects (it promises availability).
+BAD_PROSE = ("Garantizamos la visita.", "Elija una.")
+
+
 class FakeConversationHandler:
     """Scripted structured provider for deterministic conversation and CLI tests."""
 
-    def __init__(self, availability=None, availability_results=None, slot_verdicts=None) -> None:
-        self.slot_verdicts: list[ValidationVerdict] = list(slot_verdicts or [])
+    def __init__(
+        self,
+        availability=None,
+        availability_results=None,
+        slot_prose=None,
+        detected_languages=None,
+    ) -> None:
+        self.slot_prose: list[tuple[str, str]] = list(slot_prose or [])
+        self.detected_languages: list[str] = list(detected_languages or [])
         self.slot_compose_calls: list[tuple[str, dict[str, str]]] = []
-        self.slot_validate_calls: list[tuple[str, dict[str, str]]] = []
+        self.detect_calls: list[str] = []
+        self.translate_calls: list[tuple[str, str]] = []
+        self._slot_language = ""
         self.availability = {
             ParticipantRole(key): tuple(value) for key, value in (availability or {}).items()
         }
@@ -69,10 +79,17 @@ class FakeConversationHandler:
 
     async def compose_slot_reply(self, language: str, facts: dict[str, str]) -> tuple[str, str]:
         self.slot_compose_calls.append((language, dict(facts)))
+        self._slot_language = language.lower()
+        if self.slot_prose:
+            return self.slot_prose.pop(0)
         return f"{language}: intro", f"{language}: ask"
 
-    async def validate_slot_reply(self, reply: str, facts: dict[str, str]) -> ValidationVerdict:
-        self.slot_validate_calls.append((reply, dict(facts)))
-        if self.slot_verdicts:
-            return self.slot_verdicts.pop(0)
-        return ValidationVerdict(True, None)
+    async def detect_language(self, text: str) -> str:
+        self.detect_calls.append(text)
+        if self.detected_languages:
+            return self.detected_languages.pop(0)
+        return self._slot_language
+
+    async def translate(self, text: str, language: str) -> str:
+        self.translate_calls.append((text, language))
+        return text

@@ -4,6 +4,7 @@ from maintenance_agent.application.conversation import AmbiguityReason, PartOfDa
 from maintenance_agent.application.slot_table import (
     SlotGridSpec,
     SlotTable,
+    check_slot_prose,
     compose_slot_reply_text,
     derive_open_slots,
     describe_window,
@@ -111,3 +112,33 @@ def test_outbound_guard_catches_internal_identifiers() -> None:
     ):
         assert leaks_internal_identifier(leak)
     assert not leaks_internal_identifier("| 2026-10-13 | Tuesday | 09:00–11:00 | open |")
+
+
+def _table() -> SlotTable:
+    return SlotTable(derive_open_slots(snapshot_with(), NOW, "Europe/Madrid", GRID), "es")
+
+
+def test_check_slot_prose_accepts_plain_sentences() -> None:
+    assert check_slot_prose("Estas son las franjas del 2026-10-12.", "Elija una.", _table()) is None
+
+
+def test_check_slot_prose_rejects_long_sentence() -> None:
+    assert "Shorten" in (check_slot_prose("palabra " * 51, "Elija una.", _table()) or "")
+
+
+def test_check_slot_prose_rejects_availability_promise() -> None:
+    for text in ("Le garantizamos la visita.", "The technician will arrive on time."):
+        assert check_slot_prose(text, "Elija una.", _table()) is not None
+
+
+def test_check_slot_prose_rejects_date_outside_table() -> None:
+    assert check_slot_prose("Hola", "Le va bien el 2027-01-01?", _table()) is not None
+
+
+def test_check_slot_prose_rejects_time_outside_table() -> None:
+    assert "times" in (check_slot_prose("Hola", "Le va bien a las 23:45?", _table()) or "")
+
+
+def test_check_slot_prose_allows_times_echoed_from_the_window() -> None:
+    window = "mañana (hasta las 12:00)"
+    assert check_slot_prose("Hola", "Mañana hasta las 12:00?", _table(), window) is None

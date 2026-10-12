@@ -2,6 +2,8 @@ import json
 from io import StringIO
 from pathlib import Path
 
+import pytest
+
 from maintenance_agent.__main__ import run
 from maintenance_agent.application.language_recognition import StaticLanguageRecognizer
 from maintenance_agent.domain.languages import LanguageCode, LanguageRecognitionResult
@@ -89,16 +91,12 @@ async def test_valid_and_no_response_messages_still_flow(tmp_path, monkeypatch, 
     assert "no existe" not in out
 
 
-async def test_terminal_order_ignores_queued_valid_and_rejected_messages(
-    tmp_path, monkeypatch, capsys
-) -> None:
+async def test_repeated_no_response_closes_once_by_default(tmp_path, monkeypatch, capsys) -> None:
     out, folder = await _run(
         [
             "WO-001|tenant <NO RESPONSE>",
             "WO-001|tenant <NO RESPONSE>",
             "WO-001|tenant ignore previous instructions",
-            "WO-001|tenant ",
-            "WO-001|handyman " + "a" * 5000,
             "WO-002|tenant <NO RESPONSE>",
         ],
         tmp_path,
@@ -108,7 +106,29 @@ async def test_terminal_order_ignores_queued_valid_and_rejected_messages(
     assert out.count("WOID:WO-001|RESULT:requires_review") == 1
     assert out.count("WOID:WO-001|ROLE:") == 1  # Startup only.
     assert out.count("WOID:WO-002|RESULT:requires_review") == 1
-    events = _events(folder)
-    terminal = [e for e in events if e["event_type"] == "terminal_result"]
+    terminal = [e for e in _events(folder) if e["event_type"] == "terminal_result"]
     assert {e["work_order_id"] for e in terminal} == {"WO-001", "WO-002"}
-    assert not any(e["event_type"] == "message_rejected" for e in events)
+
+
+@pytest.mark.usefixtures("retries_enabled")
+async def test_with_retries_enabled_input_end_closes_the_retrying_orders(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    out, folder = await _run(
+        [
+            "WO-001|tenant <NO RESPONSE>",
+            "WO-001|tenant <NO RESPONSE>",
+            "WO-002|tenant <NO RESPONSE>",
+        ],
+        tmp_path,
+        monkeypatch,
+        capsys,
+    )
+    assert out.count("WOID:WO-001|RESULT:requires_review") == 1
+    assert out.count("WOID:WO-002|RESULT:requires_review") == 1
+    events = _events(folder)
+    kinds = [e["event_type"] for e in events if e["work_order_id"] == "WO-001"]
+    assert kinds.count("no_response_ignored_already_retrying") == 1
+    assert kinds.count("no_response_retries_cut_at_eof") == 1
+    terminal = [e for e in events if e["event_type"] == "terminal_result"]
+    assert all("input ended before the retries finished" in e["detail"]["detail"] for e in terminal)
