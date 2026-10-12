@@ -1,0 +1,19 @@
+{
+  "urgency_rank": {
+    "Low": 0,
+    "Medium": 1,
+    "High": 2,
+    "Critical": 3
+  },
+  "no_response_retries_enabled": false,
+  "messages": {
+    "retry_reminder": {
+      "es": "Recordatorio: seguimos esperando su respuesta a nuestro mensaje anterior.",
+      "en": "Reminder: we are still waiting for your reply to our previous message."
+    },
+    "proposal_withdrawn": {
+      "es": "La propuesta anterior se ha anulado. Le avisaremos si hay una nueva propuesta.",
+      "en": "The previous proposal has been withdrawn. We will let you know if there is a new proposal."
+    }
+  }
+}

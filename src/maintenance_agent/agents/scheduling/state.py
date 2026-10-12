@@ -49,6 +49,8 @@ class SchedulingState(TypedDict):
     agenda_blockers: NotRequired[tuple[str, ...]]
     disputed_availability: NotRequired[dict | None]
     displaced_hold_event: NotRequired[bool]
+    retry_request: NotRequired[str | None]
+    retry_event: NotRequired[dict | None]
     displaced_candidate: NotRequired[VisitCandidate | None]
     guard_blocked: NotRequired[bool]
     last_outbound: NotRequired[dict[str, str]]

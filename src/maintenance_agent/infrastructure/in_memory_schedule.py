@@ -1,6 +1,7 @@
 """Single-lock process-local authority for the shared visit schedule."""
 
 import asyncio
+from collections.abc import Mapping
 
 from maintenance_agent.application.scheduling import (
     Appointment,
@@ -10,6 +11,7 @@ from maintenance_agent.application.scheduling import (
     ScheduleBlocker,
     ScheduleSnapshot,
 )
+from maintenance_agent.business_rules import active_rules
 from maintenance_agent.domain.negotiation import (
     AvailabilityEvidence,
     DecisionValue,
@@ -30,7 +32,10 @@ from maintenance_agent.domain.work_orders import Urgency
 class InMemoryScheduleAuthority:
     """Serialize agenda reads and state transitions; never expose mutable internals."""
 
-    def __init__(self) -> None:
+    def __init__(self, urgency_ranks: Mapping[str, int] | None = None) -> None:
+        self._urgency_ranks = (
+            urgency_ranks if urgency_ranks is not None else active_rules().urgency_rank
+        )
         self._lock = asyncio.Lock()
         self._version = 0
         self._holds: dict[str, Hold] = {}
@@ -70,7 +75,7 @@ class InMemoryScheduleAuthority:
                         )
                         if (
                             hold.work_order_id == candidate.work_order_id
-                            or urgency_comparison(urgency, hold.urgency) <= 0
+                            or urgency_comparison(urgency, hold.urgency, self._urgency_ranks) <= 0
                         ):
                             preemptible = False
                 availability = (
@@ -115,7 +120,7 @@ class InMemoryScheduleAuthority:
                 ]
                 if any(
                     hold.work_order_id == work_order_id
-                    or urgency_comparison(urgency, hold.urgency) <= 0
+                    or urgency_comparison(urgency, hold.urgency, self._urgency_ranks) <= 0
                     for hold in conflicts
                 ):
                     continue
@@ -138,7 +143,7 @@ class InMemoryScheduleAuthority:
             ]
             if any(
                 hold.work_order_id == candidate.work_order_id
-                or urgency_comparison(urgency, hold.urgency) <= 0
+                or urgency_comparison(urgency, hold.urgency, self._urgency_ranks) <= 0
                 for hold in conflicts
             ):
                 return False, ()

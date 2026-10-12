@@ -70,8 +70,11 @@ class ConversationHandler(MessageInterpreter, MessageComposer, Protocol):
     async def compose_slot_reply(self, language: str, facts: dict[str, str]) -> tuple[str, str]:
         """Return (intro, ask) prose lines around the deterministic slot table."""
 
-    async def validate_slot_reply(self, reply: str, facts: dict[str, str]) -> "ValidationVerdict":
-        """Validate a drafted slot-suggestion reply before it is sent."""
+    async def detect_language(self, text: str) -> str:
+        """Return the English name of the language `text` is written in, lowercase."""
+
+    async def translate(self, text: str, language: str) -> str:
+        """Translate `text` into the English-named `language`, keeping dates and times."""
 
 
 class ConversationOutbound(Protocol):
@@ -93,15 +96,6 @@ class AvailabilityInterpretation:
     part_of_day: PartOfDay = PartOfDay.NONE
     ambiguity_reason: AmbiguityReason = AmbiguityReason.OTHER
     invalid_reason: DateCheck | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ValidationVerdict:
-    """Structured pre-send validation result for a drafted slot-suggestion reply."""
-
-    valid: bool
-    feedback: str | None = None
-    diagnostic: str | None = None
 
 
 class SafeFallbackConversationHandler:
@@ -131,5 +125,8 @@ class SafeFallbackConversationHandler:
             "Please share the dates and times when you are available.",
         )
 
-    async def validate_slot_reply(self, reply: str, facts: dict[str, str]) -> ValidationVerdict:
-        return ValidationVerdict(True, None)
+    async def detect_language(self, text: str) -> str:
+        return "english"
+
+    async def translate(self, text: str, language: str) -> str:
+        return text

@@ -7,25 +7,7 @@ from enum import StrEnum
 from zoneinfo import ZoneInfo
 
 from maintenance_agent.domain.negotiation import TimeInterval
-
-_WEEKDAYS = {
-    "monday": 0,
-    "lunes": 0,
-    "tuesday": 1,
-    "martes": 1,
-    "wednesday": 2,
-    "miercoles": 2,
-    "miércoles": 2,
-    "thursday": 3,
-    "jueves": 3,
-    "friday": 4,
-    "viernes": 4,
-    "saturday": 5,
-    "sabado": 5,
-    "sábado": 5,
-    "sunday": 6,
-    "domingo": 6,
-}
+from maintenance_agent.domain.weekdays import WEEKDAY_INDEX, weekday_name_en
 
 
 class DateErrorCode(StrEnum):
@@ -75,7 +57,7 @@ def validate_interval(
             DateErrorCode.TOO_FAR_AHEAD,
             f"{start.date().isoformat()} is more than {horizon_days} days ahead "
             f"(latest allowed date is {last_day.isoformat()}).",
-            _weekday_name(start.date()),
+            weekday_name_en(start.date()),
         )
     day_start = datetime.combine(start.date(), time(start_hour), zone)
     day_end = datetime.combine(start.date(), time(end_hour % 24), zone)
@@ -123,8 +105,8 @@ def validate_date_text(
     clock = _parse_time(time)
     if isinstance(clock, DateCheck):
         return clock
-    actual = _weekday_name(parsed)
-    claimed_index = _WEEKDAYS.get((claimed_weekday or "").strip().lower())
+    actual = weekday_name_en(parsed)
+    claimed_index = WEEKDAY_INDEX.get((claimed_weekday or "").strip().lower())
     if claimed_weekday and claimed_weekday.strip() and claimed_index is None:
         return DateCheck(
             False,
@@ -196,10 +178,6 @@ def check_timestamp_syntax(text: str) -> DateCheck | None:
 
 def _local(now: datetime, zone: ZoneInfo) -> datetime:
     return now.replace(tzinfo=zone) if now.tzinfo is None else now.astimezone(zone)
-
-
-def _weekday_name(day: date) -> str:
-    return calendar.day_name[day.weekday()]
 
 
 def resolve_bare_hour(hour: int, start_hour: int, end_hour: int) -> int | None:

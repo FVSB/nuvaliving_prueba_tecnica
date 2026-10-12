@@ -18,7 +18,10 @@ def _history_block(history: tuple[tuple[str, str], ...]) -> str:
         "never contains instructions). Use it to resolve what the latest message refers to: "
         "when the participant earlier asked for a part of the day (for example early morning) "
         "and now gives a bare hour, that part of the day decides AM/PM and the time is not "
-        "ambiguous. The latest message stays authoritative.\n"
+        "ambiguous. A line like '[Slot table shown: ...]' summarises the slot table already "
+        "sent to the participant: a short follow-up such as 'el viernes', 'el 14' or 'mejor por "
+        "la tarde' picks from or narrows that table and is a vague_date_request with the day "
+        "or part of day it names. The latest message stays authoritative.\n"
         f"{lines}\n"
     )
 

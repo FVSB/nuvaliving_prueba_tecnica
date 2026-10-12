@@ -33,8 +33,8 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--csv",
         type=Path,
-        default=Path("/app/work_orders.csv"),
-        help="CSV input path (default: /app/work_orders.csv)",
+        default=None,
+        help="CSV input path (default: WORK_ORDERS_CSV_PATH, /app/work_orders.csv in Docker)",
     )
     parser.add_argument(
         "--now",
@@ -46,7 +46,7 @@ def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 async def run(
-    csv_path: Path = Path("/app/work_orders.csv"),
+    csv_path: Path | None = None,
     stdin_reader: "InboundReader | None" = None,
     conversation_handler: ConversationHandler | None = None,
     language_recognizer: LanguageRecognizer | None = None,

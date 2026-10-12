@@ -1,6 +1,7 @@
 """Per-work-order queues, retained graph state and concurrent independent orders."""
 
 import asyncio
+import re
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
@@ -10,6 +11,7 @@ from maintenance_agent.application.messages import (
     InboundMessage,
     OutboundMessage,
     RejectedInbound,
+    TerminalFrame,
 )
 from maintenance_agent.application.outbound_guard import leaks_internal_identifier
 from maintenance_agent.application.rejections import (
@@ -17,6 +19,7 @@ from maintenance_agent.application.rejections import (
     preview,
     render_rejection,
 )
+from maintenance_agent.application.retry_queue import NoResponseRetryQueue, RetryEntry
 from maintenance_agent.application.slot_table import render_slot_fallback_reply
 from maintenance_agent.domain.work_orders import WorkOrder
 from maintenance_agent.infrastructure.cli_transport import AsyncStdoutWriter
@@ -30,7 +33,16 @@ class DisplacedHoldEvent:
     work_order_id: str
 
 
-CoordinatorEvent = InboundMessage | RejectedInbound | DisplacedHoldEvent
+@dataclass(frozen=True, slots=True)
+class RetryDueEvent:
+    """A silent participant's wait expired: send a reminder or, if exhausted, close the order."""
+
+    entry: RetryEntry
+    exhausted: bool
+    at_eof: bool = False
+
+
+CoordinatorEvent = InboundMessage | RejectedInbound | DisplacedHoldEvent | RetryDueEvent
 
 
 class InboundReader(Protocol):
@@ -53,7 +65,9 @@ class AsyncCoordinator:
         trace_writer: TraceWriter,
         runtime_writer: TraceWriter,
         manifest_writer: TraceWriter,
-        max_message_length: int = 2000,
+        max_message_length: int,
+        retry_queue: NoResponseRetryQueue,
+        retry_poll_seconds: float,
     ) -> None:
         self._reader = reader
         self._writer = writer
@@ -69,9 +83,13 @@ class AsyncCoordinator:
         self._known_ids: frozenset[str] = frozenset()
         self._completed_ids: set[str] = set()
         self._max_message_length = max_message_length
+        self._retry_queue = retry_queue
+        self._silenced: dict[str, str] = {}
+        self._retry_poll_seconds = retry_poll_seconds
 
     async def run(self, work_orders: Sequence[WorkOrder]) -> None:
         status = "completed"
+        poller: asyncio.Task[None] | None = None
         self._known_ids = frozenset(order.work_order_id for order in work_orders)
         try:
             self._trace_writer.write(
@@ -81,6 +99,7 @@ class AsyncCoordinator:
             self._trace_writer.write(
                 event_type="work_orders_started", detail={"count": len(work_orders)}
             )
+            poller = asyncio.create_task(self._poll_retries())
             async for message in self._reader.messages():
                 if isinstance(message, RejectedInbound):
                     if message.work_order_id in self._known_ids:
@@ -100,17 +119,41 @@ class AsyncCoordinator:
                     )
                 else:
                     self._dispatch(message)
-            if self._all_workers:
+            poller.cancel()
+            while self._all_workers:  # let queued messages register their retry first
+                await asyncio.gather(*self._all_workers)
+            self._drain_retries_at_eof()
+            while self._all_workers:
                 await asyncio.gather(*self._all_workers)
             self._trace_writer.write(event_type="run_completed", detail={})
         except Exception as error:
             status = "failed"
+            if poller is not None:
+                poller.cancel()
             self._runtime_writer.write(
                 event_type="run_error", detail={"error_type": type(error).__name__}
             )
             raise
         finally:
             self._manifest_writer.write(event_type="run_finished", detail={"status": status})
+
+    async def _poll_retries(self) -> None:
+        """Every few seconds, hand the orders whose wait expired to their own worker."""
+        while True:
+            await asyncio.sleep(self._retry_poll_seconds)
+            for entry in self._retry_queue.pop_due():
+                exhausted = self._retry_queue.exhausted(entry)
+                self._enqueue(entry.work_order_id, RetryDueEvent(entry, exhausted))
+
+    def _drain_retries_at_eof(self) -> None:
+        """No human can answer once input ended: close the retrying orders without waiting."""
+        for entry in self._retry_queue.drain():
+            self._trace_writer.write(
+                event_type="no_response_retries_cut_at_eof",
+                work_order_id=entry.work_order_id,
+                detail={"role": entry.role, "retries_sent": entry.attempt},
+            )
+            self._enqueue(entry.work_order_id, RetryDueEvent(entry, exhausted=True, at_eof=True))
 
     async def _start(self, work_order: WorkOrder) -> None:
         try:
@@ -177,6 +220,32 @@ class AsyncCoordinator:
         )
 
     def _dispatch(self, message: InboundMessage) -> None:
+        order_id = message.work_order_id
+        if order_id in self._completed_ids:
+            self._trace_writer.write(
+                event_type="message_ignored_after_terminal",
+                work_order_id=order_id,
+                detail={"role": message.role, "is_no_response": message.body == "<NO RESPONSE>"},
+            )
+            return
+        if message.body == "<NO RESPONSE>":
+            if order_id in self._silenced:
+                self._trace_writer.write(
+                    event_type="no_response_ignored_already_retrying",
+                    work_order_id=order_id,
+                    detail={"role": message.role},
+                )
+                return
+            question = (self._states.get(order_id) or {}).get("pending_question")
+            self._silenced[order_id] = question.role.value if question else message.role
+        elif self._silenced.get(order_id) == message.role:
+            del self._silenced[order_id]
+            self._retry_queue.cancel(order_id)
+            self._trace_writer.write(
+                event_type="no_response_retry_cancelled",
+                work_order_id=order_id,
+                detail={"role": message.role, "reason": "participant answered"},
+            )
         self._trace_writer.write(
             event_type="inbound_dispatched",
             work_order_id=message.work_order_id,
@@ -214,7 +283,29 @@ class AsyncCoordinator:
                         await self._reject(event)
                         continue
                     current = self._states.get(work_order_id)
-                    if current is not None and "graph_cursor" in current:
+                    if isinstance(event, RetryDueEvent):
+                        if (
+                            current is None
+                            or "graph_cursor" not in current
+                            or work_order_id not in self._silenced  # answered meanwhile
+                        ):
+                            continue
+                        graph_input = {
+                            **current,
+                            "resume_finalization": False,
+                            "retry_event": {
+                                "role": event.entry.role,
+                                "attempt": event.entry.attempt,
+                                "exhausted": event.exhausted,
+                                "at_eof": event.at_eof,
+                            },
+                        }
+                        result = await self._startup_graph.ainvoke(graph_input)
+                        if not event.exhausted:
+                            self._retry_queue.schedule(
+                                work_order_id, event.entry.role, event.entry.attempt + 1
+                            )
+                    elif current is not None and "graph_cursor" in current:
                         graph_input = {**current, "resume_finalization": False}
                         if isinstance(event, DisplacedHoldEvent):
                             graph_input["displaced_hold_event"] = True
@@ -227,6 +318,17 @@ class AsyncCoordinator:
                         response = await self._inbound_node(event)
                         result = {"outbound_message": response}
                     await self._deliver_state(work_order_id, result, previous=current)
+                    retry_role = result.get("retry_request")
+                    if retry_role and work_order_id not in self._completed_ids:
+                        self._retry_queue.schedule(work_order_id, retry_role)
+                        self._trace_writer.write(
+                            event_type="no_response_retry_scheduled",
+                            work_order_id=work_order_id,
+                            detail={
+                                "role": retry_role,
+                                "max_retries": self._retry_queue.max_retries,
+                            },
+                        )
                     self._trace_writer.write(
                         event_type="order_transition_delivered",
                         work_order_id=work_order_id,
@@ -241,7 +343,8 @@ class AsyncCoordinator:
                         work_order_id=work_order_id,
                         detail={"error_type": type(error).__name__},
                     )
-                    raise
+                    await self._fail_to_review(work_order_id, error)
+                    continue
                 finally:
                     queue.task_done()
         finally:
@@ -249,6 +352,20 @@ class AsyncCoordinator:
                 event_type="order_worker_finished", work_order_id=work_order_id, detail={}
             )
             self._workers.pop(work_order_id, None)
+
+    async def _fail_to_review(self, work_order_id: str, error: Exception) -> None:
+        """Close a failed order with the protocol alert instead of killing the worker."""
+        if work_order_id in self._completed_ids:
+            return
+        frame = TerminalFrame(work_order_id, "requires_review", f"ERROR:{type(error).__name__}")
+        await self._writer.write_terminal(frame)
+        self._completed_ids.add(work_order_id)
+        self._retry_queue.cancel(work_order_id)
+        self._trace_writer.write(
+            event_type="terminal_result",
+            work_order_id=work_order_id,
+            detail={"result": frame.result, "detail": frame.detail},
+        )
 
     async def _deliver_state(
         self, work_order_id: str, state: dict[str, Any], previous: dict[str, Any] | None = None
@@ -275,13 +392,17 @@ class AsyncCoordinator:
         if terminal is not None:
             await self._writer.write_terminal(terminal)
             self._completed_ids.add(work_order_id)
+            self._retry_queue.cancel(work_order_id)
+            self._silenced.pop(work_order_id, None)
             self._trace_writer.write(
                 event_type="terminal_result",
                 work_order_id=work_order_id,
                 detail={"result": terminal.result, "detail": terminal.detail},
             )
         saved = dict(state)
-        if outbound is not None and not state.get("guard_blocked"):
+        # A reminder must not replace the original message it re-sends.
+        is_reminder = bool(state.get("retry_event"))
+        if outbound is not None and not state.get("guard_blocked") and not is_reminder:
             saved["last_outbound"] = {
                 **(state.get("last_outbound") or {}),
                 outbound.role: outbound.body,
@@ -295,6 +416,8 @@ class AsyncCoordinator:
         saved["inbound_message"] = None
         saved["resume_finalization"] = False
         saved["displaced_hold_event"] = False
+        saved["retry_request"] = None
+        saved["retry_event"] = None
         saved["displaced_work_orders"] = ()
         self._states[work_order_id] = saved
 
@@ -320,6 +443,34 @@ class AsyncCoordinator:
 
 _HISTORY_LIMIT = 8
 _HISTORY_TEXT_LIMIT = 500
+_TABLE_ROW = re.compile(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|.*?(\d{2}:\d{2})\D+(\d{2}:\d{2})\s*\|\s*$")
+
+
+def _compact_tables(body: str) -> str:
+    """Replace each slot table by one summary line so the model sees what was shown."""
+    lines: list[str] = []
+    rows: list[tuple[str, str, str]] = []
+    for line in body.splitlines():
+        if line.startswith("|"):
+            match = _TABLE_ROW.match(line)
+            if match:
+                rows.append((match[1], match[2], match[3]))
+            continue  # table header, separator and rows are replaced by the summary
+        if rows:
+            lines.append(_table_summary(rows))
+            rows = []
+        lines.append(line)
+    if rows:
+        lines.append(_table_summary(rows))
+    return "\n".join(lines)
+
+
+def _table_summary(rows: list[tuple[str, str, str]]) -> str:
+    days = sorted({day for day, _, _ in rows})
+    first = min(start for _, start, _ in rows)
+    last = max(end for _, _, end in rows)
+    span = days[0] if len(days) == 1 else f"{days[0]}..{days[-1]}"
+    return f"[Slot table shown: {len(rows)} slots, dates {span}, times {first}-{last}]"
 
 
 def _extend_history(state: dict[str, Any]) -> tuple[tuple[str, str, str], ...]:
@@ -330,5 +481,7 @@ def _extend_history(state: dict[str, Any]) -> tuple[tuple[str, str, str], ...]:
         history += (("participant", inbound.role, inbound.body[:_HISTORY_TEXT_LIMIT]),)
     outbound = state.get("outbound_message")
     if outbound is not None:
-        history += (("assistant", outbound.role, outbound.body[:_HISTORY_TEXT_LIMIT]),)
+        history += (
+            ("assistant", outbound.role, _compact_tables(outbound.body)[:_HISTORY_TEXT_LIMIT]),
+        )
     return history[-_HISTORY_LIMIT:]

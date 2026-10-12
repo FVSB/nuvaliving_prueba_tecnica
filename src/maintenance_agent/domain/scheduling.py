@@ -1,5 +1,6 @@
 """Pure interval and urgency rules for the shared handyman agenda."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
@@ -9,12 +10,6 @@ from maintenance_agent.domain.negotiation import TimeInterval, VisitCandidate
 from maintenance_agent.domain.work_orders import Urgency
 
 VISIT_DURATION = timedelta(hours=2)
-_URGENCY_RANK = {
-    Urgency.LOW: 0,
-    Urgency.MEDIUM: 1,
-    Urgency.HIGH: 2,
-    Urgency.CRITICAL: 3,
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,9 +115,12 @@ def common_windows(
     return merge_intervals(intersections)
 
 
-def urgency_comparison(requester: Urgency, incumbent: Urgency) -> int:
-    """Return positive only when the requester strictly outranks the incumbent."""
-    return _URGENCY_RANK[requester] - _URGENCY_RANK[incumbent]
+def urgency_comparison(requester: Urgency, incumbent: Urgency, ranks: Mapping[str, int]) -> int:
+    """Return positive only when the requester strictly outranks the incumbent.
+
+    ``ranks`` comes from the business rules file (``urgency_rank``), never from code.
+    """
+    return ranks[requester.value] - ranks[incumbent.value]
 
 
 def local_interval(interval: TimeInterval, timezone_name: str) -> tuple[datetime, datetime]:

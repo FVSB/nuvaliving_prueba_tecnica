@@ -15,8 +15,11 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     anthropic_language_model: str = "claude-haiku-5-5"
     anthropic_conversation_model: str = "claude-haiku-5-5"
+    anthropic_injection_model: str = "claude-haiku-5-5"
     local_timezone: str = "Europe/Madrid"
     traces_dir: Path = Path("traces")
+    work_orders_csv_path: Path = Path("/app/work_orders.csv")
+    business_rules_path: Path = Path("config/business_rules.json")
     slot_lookahead_days: int = 7
     slot_daily_start_hour: int = 9
     slot_daily_end_hour: int = 19
@@ -24,6 +27,9 @@ class Settings(BaseSettings):
     injection_threshold: float = 0.6
     visit_horizon_days: int = 7
     max_message_length: int = 2000
+    no_response_retry_wait_seconds: float = 300.0
+    no_response_max_retries: int = 3
+    no_response_poll_seconds: float = 10.0
 
     @field_validator("anthropic_language_model", "anthropic_conversation_model")
     @classmethod
@@ -41,12 +47,41 @@ class Settings(BaseSettings):
             raise ValueError("INJECTION_THRESHOLD must satisfy 0 <= value < 1.")
         return threshold
 
-    @field_validator("visit_horizon_days", "max_message_length")
+    @field_validator(
+        "visit_horizon_days",
+        "max_message_length",
+    )
     @classmethod
     def validate_positive(cls, value: int) -> int:
-        """Both limits only make sense as positive integers."""
+        """Limits only make sense as positive integers."""
         if value < 1:
-            raise ValueError("VISIT_HORIZON_DAYS and MAX_MESSAGE_LENGTH must be positive.")
+            raise ValueError("Positive integer limits must be at least 1.")
+        return value
+
+    @field_validator("anthropic_injection_model")
+    @classmethod
+    def validate_injection_model(cls, model: str) -> str:
+        """Same rule as the other Anthropic model identifiers."""
+        if not model.strip():
+            raise ValueError("Anthropic model names must not be empty.")
+        return model
+
+    @field_validator("no_response_retry_wait_seconds", "no_response_poll_seconds")
+    @classmethod
+    def validate_positive_seconds(cls, value: float) -> float:
+        """Waiting and polling intervals only make sense as positive durations."""
+        if value <= 0:
+            raise ValueError(
+                "NO_RESPONSE_RETRY_WAIT_SECONDS and NO_RESPONSE_POLL_SECONDS must be positive."
+            )
+        return value
+
+    @field_validator("no_response_max_retries")
+    @classmethod
+    def validate_non_negative_retries(cls, value: int) -> int:
+        """Zero retries closes on the first expiry; negative values are meaningless."""
+        if value < 0:
+            raise ValueError("NO_RESPONSE_MAX_RETRIES must not be negative.")
         return value
 
     @model_validator(mode="after")

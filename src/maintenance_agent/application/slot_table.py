@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 
 from maintenance_agent.application.conversation import AmbiguityReason, PartOfDay
 from maintenance_agent.domain.negotiation import TimeInterval
+from maintenance_agent.domain.scheduling import overlaps
+from maintenance_agent.domain.weekdays import WEEKDAYS_EN, WEEKDAYS_ES
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,16 +32,6 @@ class OpenSlot:
     start_local: str
     end_local: str
 
-
-_WEEKDAYS = (
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-)
 
 _DISCLAIMERS = {
     "es": (
@@ -150,10 +142,6 @@ class SlotTable:
         return slot_disclaimer(self.language)
 
 
-def _overlaps(left: TimeInterval, right: TimeInterval) -> bool:
-    return left.start < right.end and right.start < left.end
-
-
 def derive_open_slots(
     snapshot, reference_time: datetime, timezone_name: str, grid: SlotGridSpec
 ) -> tuple[OpenSlot, ...]:
@@ -175,13 +163,13 @@ def derive_open_slots(
             if start_local < local_reference:
                 start_hour += grid.slot_hours
                 continue
-            if not any(_overlaps(interval, item) for item in occupied):
+            if not any(overlaps(interval, item) for item in occupied):
                 slots.append(
                     OpenSlot(
                         _slot_id(interval),
                         interval,
                         current.isoformat(),
-                        _WEEKDAYS[start_local.weekday()],
+                        WEEKDAYS_EN[start_local.weekday()],
                         start_local.strftime("%H:%M"),
                         end_local.strftime("%H:%M"),
                     )
@@ -280,6 +268,38 @@ def render_slot_fallback_table_reply(table: SlotTable, reason: AmbiguityReason) 
 def compose_slot_reply_text(intro: str, table: SlotTable, ask: str) -> str:
     """Join LLM prose around the verbatim deterministic table and disclaimer."""
     return f"{intro.strip()}\n\n{table.render_markdown()}\n{table.disclaimer()}\n\n{ask.strip()}"
+
+
+_PROSE_MAX_WORDS = 50
+_ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+_CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\b")
+_AVAILABILITY_PROMISE = re.compile(
+    r"garantiz\w*|guarant\w*|prometemos|we promise|"
+    r"t[eé]cnico (?:estar[aá]|llegar[aá]|acudir[aá])|technician (?:will|is sure)",
+    re.IGNORECASE,
+)
+
+
+def check_slot_prose(intro: str, ask: str, table: SlotTable, window: str = "") -> str | None:
+    """Cheap deterministic pre-check of the LLM prose; return actionable feedback or None."""
+    for label, text in (("opening", intro), ("closing", ask)):
+        if len(text.split()) > _PROSE_MAX_WORDS:
+            return f"Shorten the {label} sentence to at most {_PROSE_MAX_WORDS} words."
+        if _AVAILABILITY_PROMISE.search(text):
+            return f"The {label} sentence must not promise or guarantee technician availability."
+    if table.slots:
+        listed = {slot.local_date for slot in table.slots}
+        for text in (intro, ask):
+            if any(day not in listed for day in _ISO_DATE.findall(text)):
+                return "Mention only dates that appear in the table."
+        # The interpreted window ("mañana, hasta las 12:00") may legitimately be echoed back.
+        listed_times = {
+            (int(h), int(m)) for h, m in _CLOCK.findall(f"{table.render_markdown()}\n{window}")
+        }
+        for text in (intro, ask):
+            if any((int(h), int(m)) not in listed_times for h, m in _CLOCK.findall(text)):
+                return "Mention only times that appear in the table."
+    return None
 
 
 def reply_embeds_table(reply: str, table: SlotTable) -> bool:
@@ -381,16 +401,6 @@ def match_table_reference(
     return tuple(slot for slot in slots if keep(slot))
 
 
-_WEEKDAYS_ES = (
-    "lunes",
-    "martes",
-    "miércoles",
-    "jueves",
-    "viernes",
-    "sábado",
-    "domingo",
-)
-
 _HORIZON_LIMIT = {
     "es": "Solo conozco la disponibilidad hasta el {weekday} {date}. "
     "Indíqueme una fecha dentro de ese límite.",
@@ -401,14 +411,14 @@ _HORIZON_LIMIT = {
 
 def render_horizon_limit(language: str, last_known: date) -> str:
     """Deterministic statement of how far the agenda is known, asking for an earlier date."""
-    weekday = (_WEEKDAYS_ES if language == "es" else _WEEKDAYS)[last_known.weekday()]
+    weekday = (WEEKDAYS_ES if language == "es" else WEEKDAYS_EN)[last_known.weekday()]
     template = _HORIZON_LIMIT.get(language, _HORIZON_LIMIT["en"])
     return template.format(weekday=weekday, date=last_known.isoformat())
 
 
 def format_local_date(day: date, language: str) -> str:
     """Date with its correct weekday, e.g. 'martes 2026-10-13' / 'Tuesday 2026-10-13'."""
-    names = _WEEKDAYS_ES if language == "es" else _WEEKDAYS
+    names = WEEKDAYS_ES if language == "es" else WEEKDAYS_EN
     return f"{names[day.weekday()]} {day.isoformat()}"
 
 
@@ -419,7 +429,7 @@ def resolve_reference_dates(reference: TableReference, today: date) -> tuple[str
     first = 1 if reference.day_of_month is None else 0
     for offset in range(first, 70):
         day = today + timedelta(days=offset)
-        if reference.weekday is not None and _WEEKDAYS[day.weekday()] != reference.weekday:
+        if reference.weekday is not None and WEEKDAYS_EN[day.weekday()] != reference.weekday:
             continue
         if reference.day_of_month is not None and day.day != reference.day_of_month:
             continue

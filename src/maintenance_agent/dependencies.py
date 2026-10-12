@@ -14,8 +14,10 @@ from maintenance_agent.agents.scheduling.nodes.reflect_inbound_message import (
 )
 from maintenance_agent.application.coordinator import AsyncCoordinator
 from maintenance_agent.application.injection_guard import InjectionGuard
+from maintenance_agent.application.retry_queue import NoResponseRetryQueue
 from maintenance_agent.application.slot_table import SlotGridSpec
 from maintenance_agent.application.workflow import NegotiationWorkflow
+from maintenance_agent.business_rules import BusinessRules
 from maintenance_agent.config import Settings
 from maintenance_agent.infrastructure.cli_transport import AsyncStdinReader, AsyncStdoutWriter
 from maintenance_agent.infrastructure.csv_work_orders import CsvWorkOrderReader
@@ -34,7 +36,8 @@ class Container(containers.DeclarativeContainer):
     """Explicitly wire application components from bootstrap only."""
 
     settings = providers.Dependency(instance_of=Settings)
-    csv_path = providers.Object(Path("/app/work_orders.csv"))
+    csv_path = providers.Dependency(instance_of=Path)
+    business_rules = providers.Dependency(instance_of=BusinessRules)
     clock = providers.Object(None)
     run_context = providers.Dependency(instance_of=RunContext)
     manifest_writer = providers.Dependency(instance_of=TraceWriter)
@@ -90,6 +93,11 @@ class Container(containers.DeclarativeContainer):
         workflow=negotiation_workflow,
         guard_node=injection_guard_node,
     )
+    retry_queue = providers.Singleton(
+        NoResponseRetryQueue,
+        wait_seconds=settings.provided.no_response_retry_wait_seconds,
+        max_retries=settings.provided.no_response_max_retries,
+    )
     coordinator = providers.Factory(
         AsyncCoordinator,
         reader=stdin_reader,
@@ -100,4 +108,6 @@ class Container(containers.DeclarativeContainer):
         runtime_writer=runtime_writer,
         manifest_writer=manifest_writer,
         max_message_length=settings.provided.max_message_length,
+        retry_queue=retry_queue,
+        retry_poll_seconds=settings.provided.no_response_poll_seconds,
     )

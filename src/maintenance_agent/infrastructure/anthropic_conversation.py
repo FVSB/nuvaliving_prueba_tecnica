@@ -15,7 +15,6 @@ from maintenance_agent.application.conversation import (
     DecisionInterpretation,
     MessageClass,
     PartOfDay,
-    ValidationVerdict,
 )
 from maintenance_agent.domain.calendar_ranges import KINDS, resolve_range
 from maintenance_agent.domain.date_validation import (
@@ -31,11 +30,13 @@ from maintenance_agent.domain.date_validation import (
 from maintenance_agent.domain.decisions import interpret_explicit_decision
 from maintenance_agent.domain.negotiation import ParticipantRole, TimeInterval
 from maintenance_agent.domain.scheduling import visit_interval_from_start
+from maintenance_agent.infrastructure.trace_writer import TraceWriter
 from maintenance_agent.prompts.compose_message import build_composition_prompt
 from maintenance_agent.prompts.interpret_availability import build_availability_prompt
 from maintenance_agent.prompts.slot_reply import (
+    build_language_detect_prompt,
     build_slot_compose_prompt,
-    build_slot_validate_prompt,
+    build_translate_prompt,
 )
 from maintenance_agent.skills import load_skills, read_skill
 
@@ -95,11 +96,10 @@ class _SlotReplyOutput(BaseModel):
     ask: str
 
 
-class _ValidationOutput(BaseModel):
+class _LanguageOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    valid: bool
-    feedback: str = ""
+    language: str
 
 
 _ISO_DATE = re.compile(r"\b\d{4}-\d{1,2}-\d{1,2}\b")
@@ -122,10 +122,18 @@ class AnthropicConversationHandler:
         start_hour: int = 9,
         end_hour: int = 19,
         horizon_days: int = 7,
+        runtime_writer: TraceWriter | None = None,
     ) -> None:
         self._client = client
         self._model = model
         self._limits = _DateLimits(start_hour, end_hour, horizon_days)
+        self._runtime_writer = runtime_writer
+        self._skills = load_skills()
+        if not self._skills and self._runtime_writer is not None:
+            self._runtime_writer.write(
+                event_type="skills_unavailable",
+                detail={"action": "read_skill tool disabled; continuing without skills"},
+            )
 
     async def _text(self, prompt: str, max_tokens: int = 300) -> str:
         response = await self._client.messages.create(
@@ -315,7 +323,7 @@ class AnthropicConversationHandler:
                     _resolve_range_tool(),
                     _resolve_bare_hour_tool(),
                     _validate_date_tool(),
-                    _read_skill_tool(),
+                    *([_read_skill_tool(self._skills)] if self._skills else []),
                 ],
                 tool_choice={"type": "auto"},
                 output_config={
@@ -381,32 +389,19 @@ class AnthropicConversationHandler:
         output = _structured_output(response, _SlotReplyOutput, "compose_slot_reply")
         return output.intro.strip(), output.ask.strip()
 
-    async def validate_slot_reply(self, reply: str, facts: dict[str, str]) -> ValidationVerdict:
-        """Judge the prose around the table; any malformed verdict is invalid."""
-        try:
-            response = await self._client.messages.create(
-                model=self._model,
-                max_tokens=1000,
-                thinking={"type": "disabled"},
-                messages=[
-                    {
-                        "role": "user",
-                        "content": build_slot_validate_prompt(
-                            reply,
-                            facts.get("table", ""),
-                            facts.get("window", ""),
-                            facts.get("language", ""),
-                        ),
-                    }
-                ],
-                output_config={"format": {"type": "json_schema", "schema": _VALIDATION_SCHEMA}},
-            )
-            verdict = _structured_output(response, _ValidationOutput, "validate_slot_reply")
-        except (TypeError, ValueError) as error:
-            return ValidationVerdict(
-                False, "The validator returned an unreadable verdict.", diagnostic=str(error)
-            )
-        return ValidationVerdict(verdict.valid, verdict.feedback.strip() or None)
+    async def detect_language(self, text: str) -> str:
+        response = await self._client.messages.create(
+            model=self._model,
+            max_tokens=50,
+            thinking={"type": "disabled"},
+            messages=[{"role": "user", "content": build_language_detect_prompt(text)}],
+            output_config={"format": {"type": "json_schema", "schema": _LANGUAGE_SCHEMA}},
+        )
+        output = _structured_output(response, _LanguageOutput, "detect_language")
+        return output.language.strip().lower()
+
+    async def translate(self, text: str, language: str) -> str:
+        return await self._text(build_translate_prompt(text, language), 400)
 
 
 class LlmOutputError(ValueError):
@@ -655,10 +650,10 @@ _SLOT_REPLY_SCHEMA: dict[str, object] = {
     "additionalProperties": False,
 }
 
-_VALIDATION_SCHEMA: dict[str, object] = {
+_LANGUAGE_SCHEMA: dict[str, object] = {
     "type": "object",
-    "properties": {"valid": {"type": "boolean"}, "feedback": {"type": "string"}},
-    "required": ["valid", "feedback"],
+    "properties": {"language": {"type": "string"}},
+    "required": ["language"],
     "additionalProperties": False,
 }
 
@@ -843,7 +838,7 @@ def _validate_date_tool() -> dict[str, object]:
     }
 
 
-def _read_skill_tool() -> dict[str, object]:
+def _read_skill_tool(skills: dict[str, object]) -> dict[str, object]:
     return {
         "name": "read_skill",
         "description": (
@@ -853,7 +848,7 @@ def _read_skill_tool() -> dict[str, object]:
         "strict": True,
         "input_schema": {
             "type": "object",
-            "properties": {"name": {"type": "string", "enum": list(load_skills())}},
+            "properties": {"name": {"type": "string", "enum": list(skills)}},
             "required": ["name"],
             "additionalProperties": False,
         },

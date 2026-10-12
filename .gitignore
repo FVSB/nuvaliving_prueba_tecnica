@@ -31,3 +31,6 @@ dist/
 # Development tool install and generated traces
 .devcontainer/node_modules/
 traces/
+
+# Sample/evaluator input CSV (the evaluator mounts its own at /app/work_orders.csv)
+/work_orders.csv

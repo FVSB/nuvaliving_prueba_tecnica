@@ -66,6 +66,8 @@ def build_scheduling_graph(
         context = {**state, **updates}
         if state.get("resume_finalization"):
             result = await workflow.continue_finalization(context)
+        elif state.get("retry_event"):
+            result = await workflow.handle_retry(context, state["retry_event"])
         elif state.get("displaced_hold_event"):
             result = await workflow.handle_displaced_hold(context)
         elif state.get("inbound_message") is not None:

@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
 
-DEFAULT_THRESHOLD = 0.6
-
 
 class GuardAction(StrEnum):
     PASS = "pass"
@@ -73,9 +71,7 @@ class InjectionGuard:
        empty -> PASS_CLEANED (only the remainder continues); otherwise BLOCK.
     """
 
-    def __init__(
-        self, classifier: InjectionClassifier, threshold: float = DEFAULT_THRESHOLD
-    ) -> None:
+    def __init__(self, classifier: InjectionClassifier, threshold: float) -> None:
         if not 0.0 <= threshold < 1.0:
             raise ValueError("The injection threshold must satisfy 0 <= threshold < 1.")
         self._classifier = classifier

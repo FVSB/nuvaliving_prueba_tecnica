@@ -18,6 +18,7 @@ from maintenance_agent.application.scheduling import CandidateAvailability
 from maintenance_agent.application.slot_table import (
     SlotGridSpec,
     SlotTable,
+    check_slot_prose,
     compose_slot_reply_text,
     derive_open_slots,
     describe_window,
@@ -31,10 +32,12 @@ from maintenance_agent.application.slot_table import (
     reply_embeds_table,
     resolve_reference_dates,
 )
+from maintenance_agent.business_rules import BusinessRules, active_rules
 from maintenance_agent.domain.date_validation import DateCheck, DateErrorCode, validate_interval
 from maintenance_agent.domain.decisions import (
     interpret_cancellation,
     interpret_explicit_decision,
+    interpret_single_offer_reply,
     parse_affirmed_slot,
 )
 from maintenance_agent.domain.languages import LanguageRecognitionResult
@@ -64,10 +67,7 @@ from maintenance_agent.domain.work_orders import WorkOrder
 from maintenance_agent.infrastructure.in_memory_schedule import InMemoryScheduleAuthority
 
 SLOT_MAX_ATTEMPTS = 3
-
-_PROPOSAL_WITHDRAWN = (
-    "La propuesta anterior se ha anulado. Le avisaremos si hay una nueva propuesta."
-)
+SLOT_LANGUAGE_MAX_TRANSLATIONS = 3
 
 _LANGUAGES = {
     "es": "Spanish",
@@ -96,7 +96,9 @@ class NegotiationWorkflow:
         clock: Callable[[], datetime] | None = None,
         slot_grid: SlotGridSpec | None = None,
         visit_horizon_days: int = 7,
+        rules: BusinessRules | None = None,
     ) -> None:
+        self._rules = rules or active_rules()
         self._conversation = conversation
         self._agenda = agenda
         self._timezone = local_timezone
@@ -152,31 +154,11 @@ class NegotiationWorkflow:
         if message.body == "<NO RESPONSE>":
             question = state.get("pending_question")
             silent_role = question.role if question else ParticipantRole(message.role)
-            reason = ReviewReason(
-                ReviewCode.NO_RESPONSE,
-                "No response from "
-                f"{silent_role.value} while awaiting "
-                f"{question.action.value if question else 'a reply'}.",
-                silent_role,
-                state.get("graph_cursor"),
-                question.question_id if question else None,
-                tuple(state.get("tenant_evidence").intervals)
-                if state.get("tenant_evidence")
-                else (),
-                timezone_name=self._timezone,
-            )
-            if await self._agenda.close_review(message.work_order_id, reason):
-                return {
-                    **state,
-                    "terminal_status": TerminalStatus.REQUIRES_REVIEW,
-                    "review_reason": reason,
-                    "pending_question": None,
-                    "outbound_message": None,
-                    "terminal_frame": TerminalFrame(
-                        message.work_order_id, "requires_review", f"REASON:{reason.render_line()}"
-                    ),
-                }
-            return state
+            if not self._rules.no_response_retries_enabled:
+                # Retries are opt-in: by default the first silence closes the order for review.
+                return await self._close_no_response(state, silent_role, 0)
+            # The silence starts the RETRYING state; the coordinator's timer owns what follows.
+            return {**state, "retry_request": silent_role.value}
 
         question: PendingQuestion | None = state.get("pending_question")
         if (
@@ -190,9 +172,17 @@ class NegotiationWorkflow:
                 state, message.work_order_id, ParticipantRole(message.role)
             )
         if question is None or question.role.value != message.role:
-            return await self._clarify(
-                state, ParticipantRole(message.role), "Please reply to the pending question."
-            )
+            sender = ParticipantRole(message.role)
+            if question is not None:
+                # The open question belongs to the other party: say we are waiting on them.
+                return await self._clarify(
+                    state,
+                    sender,
+                    "Tell the sender that their message was received but the visit cannot "
+                    "advance until the other party answers the open question; they need not "
+                    "reply to anything now and will be contacted again.",
+                )
+            return await self._clarify(state, sender, "Please reply to the pending question.")
         if question.action in (
             PendingAction.TENANT_AVAILABILITY,
             PendingAction.SLOT_SUGGESTION,
@@ -217,6 +207,67 @@ class NegotiationWorkflow:
             return await self._human_choice(state, message)
         if question.action is PendingAction.AVAILABILITY_CHANGE:
             return await self._change_choice(state, message)
+        return state
+
+    async def handle_retry(self, state: dict, event: dict) -> dict:
+        """Remind the silent role, or close the order once every retry went unanswered."""
+        state = {
+            **state,
+            "outbound_message": None,
+            "terminal_frame": None,
+            "extra_outbound": (),
+            "trace_events": (),
+        }
+        if state.get("terminal_status") is not None:
+            return state
+        role = ParticipantRole(event["role"])
+        if event["exhausted"]:
+            return await self._close_no_response(
+                state, role, event["attempt"], event.get("at_eof", False)
+            )
+        language = "es" if role is ParticipantRole.HANDYMAN else state.get("tenant_language", "en")
+        reminder = self._rules.messages.retry_reminder.for_language(language)
+        pending = (state.get("last_outbound") or {}).get(role.value, "")
+        body = f"{reminder}\n\n{pending}" if pending else reminder
+        order_id = state["work_order"].work_order_id
+        event_trace = {
+            "event_type": "no_response_retry_sent",
+            "detail": {"actor": "system", "role": role.value, "retry": event["attempt"] + 1},
+        }
+        return {
+            **state,
+            "outbound_message": OutboundMessage(order_id, role.value, body),
+            "trace_events": [event_trace],
+        }
+
+    async def _close_no_response(
+        self, state: dict, silent_role: ParticipantRole, retries: int, at_eof: bool = False
+    ) -> dict:
+        question = state.get("pending_question")
+        order_id = state["work_order"].work_order_id
+        reason = ReviewReason(
+            ReviewCode.NO_RESPONSE,
+            f"No response from {silent_role.value} while awaiting "
+            f"{question.action.value if question else 'a reply'}"
+            + (f" after {retries} retries" if retries or at_eof else "")
+            + ("; input ended before the retries finished." if at_eof else "."),
+            silent_role,
+            state.get("graph_cursor"),
+            question.question_id if question else None,
+            tuple(state.get("tenant_evidence").intervals) if state.get("tenant_evidence") else (),
+            timezone_name=self._timezone,
+        )
+        if await self._agenda.close_review(order_id, reason):
+            return {
+                **state,
+                "terminal_status": TerminalStatus.REQUIRES_REVIEW,
+                "review_reason": reason,
+                "pending_question": None,
+                "outbound_message": None,
+                "terminal_frame": TerminalFrame(
+                    order_id, "requires_review", f"REASON:{reason.render_line()}"
+                ),
+            }
         return state
 
     async def _tenant_availability(self, state: dict, message: InboundMessage) -> dict:
@@ -518,9 +569,16 @@ class NegotiationWorkflow:
         table = await self._open_slot_table(lang, *request)
         window = describe_window(*request[:3], lang)
         for attempt in range(1, SLOT_MAX_ATTEMPTS + 1):
-            verdict_valid, verdict_feedback, draft, diagnostic = await self._attempt_slot_reply(
+            (
+                verdict_valid,
+                verdict_feedback,
+                draft,
+                diagnostic,
+                language_events,
+            ) = await self._attempt_slot_reply(
                 table, language_name, lang, feedback, window, request
             )
+            events.extend(language_events)
             attempt_detail: dict[str, object] = {
                 "actor": "system",
                 "attempt": attempt,
@@ -596,8 +654,8 @@ class NegotiationWorkflow:
         feedback: str,
         window: str,
         request: tuple[str | None, str | None, PartOfDay, frozenset[str] | None],
-    ) -> tuple[bool, str, str, str]:
-        """Compose once and gate it; return (valid, feedback, reply, diagnostic).
+    ) -> tuple[bool, str, str, str, list[dict]]:
+        """Compose once and gate it; return (valid, feedback, reply, diagnostic, events).
 
         The diagnostic is for traces only and is never fed back into the next prompt.
         """
@@ -610,29 +668,79 @@ class NegotiationWorkflow:
         try:
             intro, ask = await self._conversation.compose_slot_reply(language_name, facts)
         except Exception as error:  # noqa: BLE001 - provider failure counts as a failed attempt
-            return False, f"Composition failed: {type(error).__name__}.", "", str(error)
+            return False, f"Composition failed: {type(error).__name__}.", "", str(error), []
+        intro, ask, events = await self._ensure_slot_language(intro, ask, language_name, lang)
         reply = compose_slot_reply_text(intro, table, ask)
         if leaks_internal_identifier(reply):
-            return False, "Never mention internal slot identifiers.", reply, ""
+            return False, "Never mention internal slot identifiers.", reply, "", events
         if not intro.strip() or not ask.strip():
-            return False, "Both an introduction and a closing ask are required.", reply, ""
+            return False, "Both an introduction and a closing ask are required.", reply, "", events
         if not reply_embeds_table(reply, table):
-            return False, "The table or disclaimer was altered.", reply, ""
+            return False, "The table or disclaimer was altered.", reply, "", events
+        prose_feedback = check_slot_prose(intro, ask, table, window)
+        if prose_feedback is not None:
+            return False, prose_feedback, reply, "", events
         current = await self._open_slot_table(lang, *request)
         if current.render_markdown() != table.render_markdown():
-            return False, "The shared agenda changed; slot openness no longer matches.", reply, ""
-        try:
-            verdict = await self._conversation.validate_slot_reply(reply, facts)
-        except Exception as error:  # noqa: BLE001 - provider failure counts as invalid
-            return False, f"Validation failed: {type(error).__name__}.", reply, str(error)
-        if not verdict.valid:
-            return (
-                False,
-                verdict.feedback or "The reply was rejected by the validator.",
-                reply,
-                verdict.diagnostic or "",
-            )
-        return True, "", reply, ""
+            msg = "The shared agenda changed; slot openness no longer matches."
+            return False, msg, reply, "", events
+        return True, "", reply, "", events
+
+    async def _ensure_slot_language(
+        self, intro: str, ask: str, language_name: str, lang: str
+    ) -> tuple[str, str, list[dict]]:
+        """Check the prose is in the tenant's language; translate and re-check up to 3 times.
+
+        Internal analysis runs in English, so an English draft is the usual miss. If the prose
+        is still in the wrong language after the last cycle it is sent as is, with a trace
+        naming the expected and detected language and why.
+        """
+        if lang == "undetermined":
+            return intro, ask, []
+        expected = language_name.strip().lower()
+        detected, reason = "", ""
+        for translations in range(SLOT_LANGUAGE_MAX_TRANSLATIONS + 1):
+            try:
+                detected = await self._conversation.detect_language(f"{intro}\n{ask}")
+            except Exception as error:  # noqa: BLE001 - provider failure ends the cycle
+                reason = f"language detection failed: {type(error).__name__}"
+                break
+            if detected.strip().lower() == expected:
+                events = []
+                if translations:
+                    events.append(
+                        {
+                            "event_type": "slot_reply_translated",
+                            "detail": {
+                                "actor": "system",
+                                "expected_language": expected,
+                                "translations": translations,
+                            },
+                        }
+                    )
+                return intro, ask, events
+            if translations == SLOT_LANGUAGE_MAX_TRANSLATIONS:
+                reason = (
+                    f"still not in the expected language after {translations} "
+                    "translate-and-check cycles; sent as is"
+                )
+                break
+            try:
+                intro = await self._conversation.translate(intro, language_name)
+                ask = await self._conversation.translate(ask, language_name)
+            except Exception as error:  # noqa: BLE001 - provider failure ends the cycle
+                reason = f"translation failed: {type(error).__name__}"
+                break
+        event = {
+            "event_type": "slot_reply_language_mismatch",
+            "detail": {
+                "actor": "system",
+                "expected_language": expected,
+                "detected_language": detected.strip().lower(),
+                "reason": reason,
+            },
+        }
+        return intro, ask, [event]
 
     async def _record_tenant_intervals(
         self, state: dict, intervals: tuple[TimeInterval, ...], source_text: str = ""
@@ -658,7 +766,7 @@ class NegotiationWorkflow:
             hold.interval
             for hold in snapshot.holds
             if hold.work_order_id == order.work_order_id
-            or urgency_comparison(order.urgency, hold.urgency) <= 0
+            or urgency_comparison(order.urgency, hold.urgency, self._rules.urgency_rank) <= 0
         )
         feasibility = {
             candidate.slot_id: check_visit_feasibility(
@@ -679,6 +787,7 @@ class NegotiationWorkflow:
             for item in inspection
             if item.availability is not CandidateAvailability.BLOCKED
             and feasibility[item.candidate.slot_id].feasible
+            and item.candidate.interval not in state.get("handyman_declined", ())
         )
         blocking = [
             blocker
@@ -759,26 +868,30 @@ class NegotiationWorkflow:
         mention = parse_affirmed_slot(text)
         if mention is None:
             return None
-        matches = []
-        for candidate in state.get("candidates", ()):
-            start, end = local_interval(candidate.interval, self._timezone)
-            if (start.time(), end.time()) != (mention.start, mention.end):
-                continue
-            if mention.day is not None and (start.month, start.day) != (mention.month, mention.day):
-                continue
-            if mention.year is not None and start.year != mention.year:
-                continue
-            matches.append(candidate)
-        return tuple(matches)
+        return tuple(
+            candidate
+            for candidate in state.get("candidates", ())
+            if self._mention_names(candidate, mention)
+        )
+
+    def _mention_names(self, candidate: VisitCandidate, mention) -> bool:
+        """True when an affirmed date/time range is exactly this candidate's local interval."""
+        start, end = local_interval(candidate.interval, self._timezone)
+        if (start.time(), end.time()) != (mention.start, mention.end):
+            return False
+        if mention.day is not None and (start.month, start.day) != (mention.month, mention.day):
+            return False
+        return mention.year is None or start.year == mention.year
 
     async def _handyman_availability(self, state: dict, message: InboundMessage) -> dict:
         accepted = self._match_affirmed_slots(state, message.body)
         offered = state.get("candidates", ())
-        if (
-            accepted is None
-            and offered
-            and interpret_explicit_decision(message.body) is DecisionValue.YES
-        ):
+        yes_reply = (
+            interpret_single_offer_reply(message.body)
+            if len(offered) == 1
+            else interpret_explicit_decision(message.body)
+        )
+        if accepted is None and offered and yes_reply is DecisionValue.YES:
             # A bare yes answers the slots we just listed; it only binds when one was offered.
             accepted = tuple(offered) if len(offered) == 1 else None
             if accepted is None:
@@ -794,12 +907,60 @@ class NegotiationWorkflow:
             and offered
             and interpret_explicit_decision(message.body) is DecisionValue.NO
         ):
+            # The declined slots must never be offered or accepted again for this order.
+            declined = tuple(candidate.interval for candidate in offered)
+            declined_event = {
+                "event_type": "handyman_slots_declined",
+                "detail": {
+                    "actor": "handyman",
+                    "intervals": [
+                        {"start": item.start.isoformat(), "end": item.end.isoformat()}
+                        for item in declined
+                    ],
+                },
+            }
+            state = {
+                **state,
+                "candidates": (),
+                "handyman_declined": (*state.get("handyman_declined", ()), *declined),
+                "trace_events": [*state.get("trace_events", ()), declined_event],
+            }
             return await self._ask(
                 state,
                 "handyman",
                 "clarify_handyman_availability",
-                "Tell the handyman in Spanish that the offered time does not work and ask "
+                "Write to the handyman (not the tenant), in Spanish and in the formal 'usted' "
+                "register, acknowledging that the listed time does not work for them, and ask "
                 "for the complete intervals (date, start and end) when they are available.",
+            )
+        if (
+            accepted is None
+            and not offered
+            and interpret_explicit_decision(message.body) is DecisionValue.YES
+        ):
+            return await self._ask(
+                state,
+                "handyman",
+                "clarify_handyman_availability",
+                "Write to the handyman in Spanish, formal 'usted' register: there is no "
+                "pending slot to accept, so ask for the complete intervals (date, start and "
+                "end) when they are available.",
+            )
+        if (
+            accepted is None
+            and len(offered) == 1
+            and yes_reply is None
+            and interpret_explicit_decision(message.body) is None
+            and not any(char.isdigit() for char in message.body)
+        ):
+            # A yes/no question with no yes, no no and no time: ask again instead of guessing.
+            return await self._ask(
+                state,
+                "handyman",
+                "clarify_handyman_availability",
+                "Write to the handyman in Spanish, formal 'usted' register: the reply was not "
+                "a clear yes or no. Ask them to answer only 'sí' or 'no' for the listed slot, "
+                f"naming the date: {self._format_windows(tuple(c.interval for c in offered), 'es')}",
             )
         if accepted is not None and len(accepted) > 1:
             return await self._ask(
@@ -855,7 +1016,7 @@ class NegotiationWorkflow:
 
     async def _confirm_handyman_intervals(self, state: dict, message: InboundMessage) -> dict:
         intervals = state.get("handyman_pending_intervals", ())
-        decision = interpret_explicit_decision(message.body)
+        decision = interpret_single_offer_reply(message.body)
         if decision is None and intervals:
             return await self._ask(
                 state,
@@ -979,7 +1140,10 @@ class NegotiationWorkflow:
         self, state: dict, message: InboundMessage, role: ParticipantRole
     ) -> dict:
         proposal: Proposal = state["proposal"]
-        decision = interpret_explicit_decision(message.body)
+        decision = interpret_single_offer_reply(message.body)
+        mention = parse_affirmed_slot(message.body) if decision is None else None
+        if mention is not None and self._mention_names(proposal.candidate, mention):
+            decision = DecisionValue.YES  # "Yes, I accept 2026-10-14 10:00-12:00" restates it
         if decision is None:
             corrected = await self._availability_correction(state, message, role)
             if corrected is not None:
@@ -1097,7 +1261,11 @@ class NegotiationWorkflow:
                 **state,
                 "extra_outbound": (
                     *state.get("extra_outbound", ()),
-                    OutboundMessage(work_order_id, "handyman", _PROPOSAL_WITHDRAWN),
+                    OutboundMessage(
+                        work_order_id,
+                        "handyman",
+                        self._rules.messages.proposal_withdrawn.for_language("es"),
+                    ),
                 ),
             }
         return await self._ask(
@@ -1216,7 +1384,7 @@ class NegotiationWorkflow:
         }
 
     async def _displaced_choice(self, state: dict, message: InboundMessage) -> dict:
-        choice = interpret_explicit_decision(message.body)
+        choice = interpret_single_offer_reply(message.body)
         candidate: VisitCandidate = state["displaced_candidate"]
         if choice is None:
             return await self._ask(
@@ -1257,7 +1425,7 @@ class NegotiationWorkflow:
         return (await self._agenda.snapshot()).version
 
     async def _human_choice(self, state: dict, message: InboundMessage) -> dict:
-        decision = interpret_explicit_decision(message.body)
+        decision = interpret_single_offer_reply(message.body)
         if decision is None:
             return await self._ask(
                 state,
@@ -1310,6 +1478,14 @@ class NegotiationWorkflow:
                 and not result.date_confirmation_required
             ):
                 return await self._record_tenant_intervals(state, result.intervals, message.body)
+            if (
+                result.classification is MessageClass.VAGUE_DATE_REQUEST
+                and not result.intervals
+                and not result.suggested_intervals
+            ):
+                # "¿puede ser el sábado?": answer from the shared agenda (table or no open slots).
+                vague = self._with_reference_dates(result, message)
+                return await self._slot_suggestion(state, vague)
             return await self._ask(
                 state,
                 "tenant",
@@ -1343,7 +1519,7 @@ class NegotiationWorkflow:
             if intervals
             else "the proposed calendar date"
         )
-        result = interpret_explicit_decision(message.body)
+        result = interpret_single_offer_reply(message.body)
         if result is None:
             return await self._ask(
                 state,
@@ -1374,7 +1550,7 @@ class NegotiationWorkflow:
         dispute = state.get("disputed_availability")
         if dispute is None or dispute["role"].value != message.role:
             return state
-        answer = interpret_explicit_decision(message.body)
+        answer = interpret_single_offer_reply(message.body)
         if answer is None:
             return await self._ask(
                 state,

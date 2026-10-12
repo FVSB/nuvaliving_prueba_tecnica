@@ -14,6 +14,8 @@ def build_composition_prompt(intent: str, language: str, facts: dict[str, str]) 
         "out a weekday yourself. Never invent dates, times, years or examples of dates or times; "
         "when you need to illustrate a format, describe it in words without digits. When `today` "
         "is absent, mention no date that is not in the facts.\n"
+        "Register: when the language is Spanish, address the reader consistently with the formal "
+        "'usted' form (never 'tú', 'tu' or 'estás'); in other languages stay polite and neutral.\n"
         f"Language: {language}\nIntent: {intent}\n"
         f"Facts: {json.dumps(facts, ensure_ascii=False, sort_keys=True)}"
     )

@@ -23,7 +23,6 @@ INBOUND_MESSAGE_PATTERN = re.compile(
 ADDRESSABLE_LINE_PATTERN = re.compile(
     r"^(?P<work_order_id>[^|\s]+)\|(?P<role>tenant|handyman)(?: (?P<body>.*))?$"
 )
-DEFAULT_MAX_MESSAGE_LENGTH = 2000
 
 
 class InputFormatError(ValueError):
@@ -38,9 +37,7 @@ def parse_inbound_message(line: str) -> InboundMessage:
     return InboundMessage(**match.groupdict())
 
 
-def validate_inbound_line(
-    line: str, max_message_length: int = DEFAULT_MAX_MESSAGE_LENGTH
-) -> InboundMessage | RejectedInbound:
+def validate_inbound_line(line: str, max_message_length: int) -> InboundMessage | RejectedInbound:
     """Classify a line; raise InputFormatError when no sender can be identified."""
     match = ADDRESSABLE_LINE_PATTERN.fullmatch(line)
     if match is None:
@@ -66,7 +63,8 @@ class AsyncStdinReader:
         self,
         stream: TextIOBase | None = None,
         runtime_writer: TraceWriter | None = None,
-        max_message_length: int = DEFAULT_MAX_MESSAGE_LENGTH,
+        *,
+        max_message_length: int,
     ) -> None:
         self._stream = stream or sys.stdin
         self._runtime_writer = runtime_writer
